@@ -47,7 +47,7 @@ GROQ_API_KEY=               # Optional fallback
 
 ### Rule 1: Surgical Frontend Edits Only
 - **DO NOT** refactor Timeline Studio's core WebCodecs encoder, WebGPU shaders, color wheels, or depth-map pipelines.
-- **DO** inspect the existing timeline store (`src/store` or `src/features/timeline`) and `skills/edit-timeline-studio` to reuse existing track-mutation actions (splitting clips, adding text/caption tracks, adding overlay/PiP images, adding audio tracks).
+- **DO** inspect the existing timeline store (`src/store` or `src/features/timeline`) and `.agent/skills/edit-timeline-studio` to reuse existing track-mutation actions (splitting clips, adding text/caption tracks, adding overlay/PiP images, adding audio tracks).
 - **DO** keep all new UI additions minimal and cohesive (one **"⚡ Desi Auto-Cut"** button, loading state indicator, and optional language/caption-style toggle: *Romanized Hinglish* vs *Dual Hinglish + English*).
 
 ### Rule 2: Never Burn Sarvam Credits in Automated Tests
@@ -68,7 +68,13 @@ GROQ_API_KEY=               # Optional fallback
   ```
 - Alternatively, configure a Vite proxy (`/api` and `/dynamic_stickers` -> `http://localhost:8000`) in `vite.config.ts` so all assets appear same-origin to the browser. **Prefer the Vite proxy approach.**
 
-### Rule 5: Graceful Fallbacks on External Failures
+### Rule 5: No Emojis in UI — Lucide React Icons Only
+- **NEVER** use emojis anywhere in the React/TypeScript UI — not in button labels, status text, tooltips, track headers, panel titles, toasts, or any other interface element.
+- **ALWAYS** use icons from `lucide-react` for all iconography in the UI. Import named exports only (e.g. `import { Zap, ChevronRight, Scissors } from 'lucide-react'`).
+- Use `strokeWidth={1.25}` for all Lucide icons to match the premium ultra-light aesthetic. Adjust to `strokeWidth={1.5}` only for small icons under 14px.
+- **Exception:** Emojis are permitted exclusively inside the actual video content output — e.g. text overlays, karaoke captions, or sticker labels that get burned into the exported MP4. Never in any UI chrome.
+
+### Rule 6: Graceful Fallbacks on External Failures
 - **Sticker Scraping:** `duckduckgo_search` can fail or return irrelevant images. Wrap `fetch_and_make_sticker()` in a `try/except` with a 4-second timeout. If it fails, fall back to a matching icon in `public/assets/stickers/` or skip that sticker cleanly without crashing the pipeline.
 - **LLM Output:** Always request `response_format={"type": "json_object"}` from `sarvam-105b-conversations` and validate the response with Pydantic before returning it to the frontend.
 

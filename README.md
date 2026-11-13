@@ -54,19 +54,51 @@ Over 40 million Indian content creators publish short-form vertical videos (Inst
 
 ## Getting Started
 
-### 1. Prerequisites
+### 1-Click Launch (Recommended)
+
+Run both the FastAPI backend and Next.js frontend concurrently with a single command:
+
+**macOS & Linux:**
+```bash
+./run.sh
+```
+
+**Windows (Command Prompt / Double-Click):**
+```cmd
+run.bat
+```
+
+**Windows (PowerShell):**
+```powershell
+.\run.ps1
+```
+
+The runner automatically:
+1. Validates Node.js and Python (3.10+) installations.
+2. Creates and configures the Python virtual environment (`backend/.venv`) if missing.
+3. Installs backend and frontend dependencies if needed.
+4. Generates initial `.env` files with mock mode enabled (`USE_MOCK=true`).
+5. Launches FastAPI on [http://localhost:8000](http://localhost:8000) (Docs at [/docs](http://localhost:8000/docs)).
+6. Launches Next.js on [http://localhost:3000](http://localhost:3000).
+7. Gracefully stops all services when you press `Ctrl+C`.
+
+---
+
+### Manual Setup (Alternative)
+
+#### 1. Prerequisites
 - Node.js 20+ and `npm`
 - Python 3.10+ (for FastAPI backend)
 
-### 2. Frontend (Timeline Studio)
+#### 2. Frontend (Timeline Studio)
 ```bash
-cd "timeline studio"
+cd timeline_studio
 npm install
-npm run dev        # Starts Vite dev server (preserves COOP/COEP headers)
+npm run dev        # Starts Next.js dev server on port 3000
 npm run build      # Production bundle check
 ```
 
-### 3. Backend (FastAPI + Sarvam AI)
+#### 3. Backend (FastAPI + Sarvam AI)
 ```bash
 cd backend
 python -m venv .venv

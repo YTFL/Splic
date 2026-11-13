@@ -27,6 +27,7 @@ PORT = int(os.getenv("PORT", 8000))
 # Project root references (read-only)
 BACKEND_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BACKEND_DIR.parent
-TIMELINE_STUDIO_STICKERS_DIR = PROJECT_ROOT / "timeline studio" / "public" / "assets" / "stickers"
+_STUDIO_DIR = PROJECT_ROOT / "timeline_studio" if (PROJECT_ROOT / "timeline_studio").exists() else PROJECT_ROOT / "timeline studio"
+TIMELINE_STUDIO_STICKERS_DIR = _STUDIO_DIR / "public" / "assets" / "stickers"
 TIMELINE_STUDIO_MANIFEST = TIMELINE_STUDIO_STICKERS_DIR / "stickers-manifest.json"
-TIMELINE_STUDIO_SFX_DIR = PROJECT_ROOT / "timeline studio" / "public" / "assets" / "sound-effects"
+TIMELINE_STUDIO_SFX_DIR = _STUDIO_DIR / "public" / "assets" / "sound-effects"

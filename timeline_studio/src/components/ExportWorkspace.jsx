@@ -36,11 +36,11 @@ export function ExportWorkspace({
 }) {
   const [selectedPreset, setSelectedPreset] = useState("instagram-reels");
   const [socialPlatform, setSocialPlatform] = useState("instagram");
-  const [videoTitle, setVideoTitle] = useState("My Desi Reel — Splic Studio");
+  const [videoTitle, setVideoTitle] = useState("My Reel — Splic Studio");
   const [videoDescription, setVideoDescription] = useState(
-    "Created with Splic Studio #DesiAutoCut #SarvamAI #Reels #IndicCreators"
+    "Created with Splic Studio #AutoCut #SarvamAI #Reels #IndicCreators"
   );
-  const [tags, setTags] = useState("desi, reel, viral, sarvam, hinglish, ai");
+  const [tags, setTags] = useState("reel, viral, sarvam, hinglish, ai");
   const [privacy, setPrivacy] = useState("public");
   const [qualityPreset, setQualityPreset] = useState("high");
   const [burnCaptions, setBurnCaptions] = useState(true);

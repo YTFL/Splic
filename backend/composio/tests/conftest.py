@@ -54,7 +54,7 @@ def mock_firebase_token_verifier(token: str, check_revoked: bool = True) -> Dict
     uid = token.replace("token_for_", "")
     return {
         "uid": uid,
-        "email": f"{uid}@splic.desi",
+        "email": f"{uid}@splic.studio",
         "auth_time": 1700000000,
         "is_dev": False,
     }
@@ -108,8 +108,8 @@ class MockConnectedAccountsResource:
                 toolkit="instagram",
                 user_id="test_user",
                 status="ACTIVE",
-                account_name="Desi Food Reels",
-                account_handle="@desifoodreels",
+                account_name="Food Reels",
+                account_handle="@foodreels",
                 metadata={"follower_count": 125000, "access_token": "SENSITIVE_SHOULD_BE_STRIPPED"},
             ),
             "ca_yt_01": MockConnectedAccount(

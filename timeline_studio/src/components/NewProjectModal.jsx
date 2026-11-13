@@ -59,7 +59,7 @@ export function NewProjectModal({
   onClose,
   onCreateProject,
 }) {
-  const [title, setTitle] = useState("Untitled Desi Reel #01");
+  const [title, setTitle] = useState("Untitled Reel #01");
   const [selectedRatioId, setSelectedRatioId] = useState("9:16");
   const [fps, setFps] = useState(30);
   const [languageMode, setLanguageMode] = useState("hinglish");

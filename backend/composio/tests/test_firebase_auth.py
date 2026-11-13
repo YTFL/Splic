@@ -141,7 +141,7 @@ class TestFirebaseAuth(unittest.TestCase):
 
     def test_instagram_oauth_initiation_uses_firebase_uid(self):
         """Verify Instagram connection initiation binds to the verified Firebase UID."""
-        custom_uid = "firebase_desi_creator_01"
+        custom_uid = "firebase_creator_01"
         payload = {"redirect_url": "http://localhost:3000/auth/callback"}
         response = self.client.post(
             "/api/v1/composio/connect/instagram",
@@ -155,7 +155,7 @@ class TestFirebaseAuth(unittest.TestCase):
 
     def test_youtube_oauth_initiation_uses_firebase_uid(self):
         """Verify YouTube connection initiation binds to the verified Firebase UID."""
-        custom_uid = "firebase_desi_creator_02"
+        custom_uid = "firebase_creator_02"
         payload = {"redirect_url": "http://localhost:3000/auth/callback"}
         response = self.client.post(
             "/api/v1/composio/connect/youtube",
@@ -169,7 +169,7 @@ class TestFirebaseAuth(unittest.TestCase):
 
     def test_action_execution_uses_firebase_uid(self):
         """Verify action execution binds to the verified Firebase UID."""
-        custom_uid = "firebase_desi_creator_03"
+        custom_uid = "firebase_creator_03"
         payload = {
             "action_slug": "INSTAGRAM_GET_USER_INFO",
             "parameters": {"fields": "id,username"},

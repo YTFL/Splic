@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Wand2,
   Upload,
@@ -8,9 +8,15 @@ import {
   Scissors,
   Music,
   Smile,
-  Play,
+  Zap,
+  Loader2,
+  Film,
+  CheckCircle2,
 } from "lucide-react";
-import { normalizeEditPlan, SAMPLE_EDIT_PLAN } from "../lib/editPlanEngine.js";
+import { normalizeEditPlan } from "../lib/editPlanEngine.js";
+import { AUTO_CUT_LIVE_STATUS, extractEditPlan, isBackendEditPlan } from "../lib/autoCut.js";
+
+const PHASE_LABELS = AUTO_CUT_LIVE_STATUS;
 
 /**
  * AutoEditModal:
@@ -22,19 +28,51 @@ export function AutoEditModal({
   isOpen = false,
   onClose,
   onStartAutoEdit,
+  onRunAutoCut,
+  targetClipName = "",
+  autoStart = false,
+  onAutoStartConsumed,
   userAssets = [],
 }) {
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState("");
+  const [summary, setSummary] = useState(null);
+  const runRef = useRef(null);
+
+  // Opening Auto Edit from an editor button starts the backend run immediately.
+  useEffect(() => {
+    if (!isOpen || !autoStart) return;
+    onAutoStartConsumed?.();
+    if (targetClipName) runRef.current?.();
+  }, [isOpen, autoStart, targetClipName, onAutoStartConsumed]);
 
   if (!isOpen) return null;
 
+  const running = Boolean(phase);
+
   const handleClose = () => {
+    if (running) return;
     setError(null);
     setLoading(false);
+    setSummary(null);
     onClose?.();
+  };
+
+  const runAutoCut = async (plan = null) => {
+    if (running || !onRunAutoCut) return;
+    setError(null);
+    setSummary(null);
+    setPhase("uploading");
+    try {
+      setSummary(await onRunAutoCut({ plan, onPhase: setPhase }));
+    } catch (err) {
+      setError(err?.message || "Auto-Cut failed");
+    } finally {
+      setPhase("");
+    }
   };
 
   const processFile = (file) => {
@@ -51,10 +89,20 @@ export function AutoEditModal({
     reader.onload = (e) => {
       try {
         const text = e.target?.result;
-        const parsed = JSON.parse(text);
-        // Validate with schema normalizer
-        normalizeEditPlan(parsed, userAssets);
+        const raw = JSON.parse(typeof text === "string" ? text.trim() : text);
+        const parsed = extractEditPlan(raw);
         setLoading(false);
+        if (!parsed) {
+          const keys = raw && typeof raw === "object" ? Object.keys(raw).slice(0, 8).join(", ") : typeof raw;
+          setError(`"${file.name}" is not an EditPlan: expected cuts / captions / stickers / sfx, found: ${keys || "nothing"}`);
+          return;
+        }
+        if (isBackendEditPlan(parsed)) {
+          void runAutoCut(parsed);
+          return;
+        }
+        // Legacy demo JSON: validate with schema normalizer and play the animated demo
+        normalizeEditPlan(parsed, userAssets);
         handleClose();
         onStartAutoEdit?.(parsed);
       } catch (err) {
@@ -69,6 +117,8 @@ export function AutoEditModal({
     reader.readAsText(file);
   };
 
+  runRef.current = () => runAutoCut();
+
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) processFile(file);
@@ -79,11 +129,6 @@ export function AutoEditModal({
     setDragOver(false);
     const file = e.dataTransfer.files?.[0];
     if (file) processFile(file);
-  };
-
-  const handleLoadSample = () => {
-    handleClose();
-    onStartAutoEdit?.(SAMPLE_EDIT_PLAN);
   };
 
   return (
@@ -112,9 +157,9 @@ export function AutoEditModal({
               <Wand2 size={18} strokeWidth={1.5} />
             </div>
             <div>
-              <h2 className="splic-modal-title">⚡ Auto Edit — Upload JSON Instructions</h2>
+              <h2 className="splic-modal-title">Auto-Cut</h2>
               <p className="splic-modal-sub">
-                Upload your Sarvam AI EditPlan JSON to watch the agentic pipeline cut and assemble tracks in real-time
+                Send your timeline video to the Sarvam AI pipeline, or load an EditPlan JSON, to get editable cuts, captions, stickers and SFX
               </p>
             </div>
           </div>
@@ -131,6 +176,85 @@ export function AutoEditModal({
 
         {/* Body */}
         <div style={{ padding: "20px 24px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              padding: "14px 16px",
+              borderRadius: "10px",
+              background: "var(--splic-bg-card)",
+              border: "1px solid var(--splic-border-subtle)",
+              marginBottom: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+              <Film size={18} strokeWidth={1.25} style={{ color: "var(--splic-text-muted)", flexShrink: 0 }} />
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: "12.5px",
+                    fontWeight: 700,
+                    color: "var(--splic-text-bright)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {targetClipName || "No video on the timeline"}
+                </div>
+                <div style={{ fontSize: "11px", color: "var(--splic-text-muted)", marginTop: "2px" }}>
+                  {running
+                    ? PHASE_LABELS[phase] || "Working..."
+                    : targetClipName
+                      ? "Analyzes the selected (or first) video clip with Sarvam AI"
+                      : "Import a video onto the timeline to enable Auto-Cut"}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="splic-btn-primary"
+              style={{ width: "auto", height: "34px", minHeight: "34px", padding: "0 14px", fontSize: "12.5px", flexShrink: 0 }}
+              disabled={!targetClipName || running || !onRunAutoCut}
+              onClick={() => void runAutoCut()}
+            >
+              {running
+                ? <Loader2 size={14} strokeWidth={1.5} style={{ animation: "auto-edit-spin 0.9s linear infinite" }} />
+                : <Zap size={14} strokeWidth={1.5} />}
+              <span>{running ? "Running..." : "Run Auto-Cut"}</span>
+            </button>
+          </div>
+
+          {summary && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "8px",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                background: "rgba(34, 197, 94, 0.1)",
+                border: "1px solid rgba(34, 197, 94, 0.28)",
+                color: "#4ade80",
+                fontSize: "12px",
+                marginBottom: "16px",
+              }}
+            >
+              <CheckCircle2 size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+              <div>
+                <div>
+                  Applied {summary.cuts} cuts, {summary.captions} captions, {summary.stickers} stickers and {summary.sfx} SFX
+                  {summary.director ? ` (director: ${summary.director})` : ""}. Every item is editable on the timeline.
+                </div>
+                {summary.warnings?.map((warning) => (
+                  <div key={warning} style={{ color: "#fbbf24", marginTop: "4px" }}>{warning}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {error && (
             <div
               style={{
@@ -159,7 +283,7 @@ export function AutoEditModal({
             }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => { if (!running) fileInputRef.current?.click(); }}
             style={{
               border: dragOver
                 ? "2px dashed var(--splic-red-primary)"
@@ -203,10 +327,10 @@ export function AutoEditModal({
 
             <div>
               <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--splic-text-bright)" }}>
-                {loading ? "Validating Edit Plan..." : "Click to browse or drop EditPlan .json file"}
+                {loading ? "Validating Edit Plan..." : "Or browse / drop an EditPlan .json file"}
               </span>
               <p style={{ margin: "4px 0 0", fontSize: "11px", color: "var(--splic-text-muted)" }}>
-                Reads JSON instructions and plays real-time animations tailored to the edit plan
+                Backend EditPlans are applied to your timeline video; legacy demo plans play the animated demo
               </p>
             </div>
           </div>
@@ -311,26 +435,7 @@ export function AutoEditModal({
             background: "var(--splic-bg-surface)",
           }}
         >
-          <button
-            type="button"
-            className="splic-btn-secondary"
-            style={{
-              width: "auto",
-              height: "34px",
-              minHeight: "34px",
-              maxHeight: "34px",
-              borderRadius: "8px",
-              padding: "0 14px",
-              fontSize: "12.5px",
-              fontWeight: 600,
-            }}
-            onClick={handleLoadSample}
-            title="Load sample Hinglish tech reel edit plan"
-          >
-            <Play size={13} strokeWidth={2} style={{ color: "var(--splic-red-primary)" }} />
-            <span>Load Sample Edit Plan</span>
-          </button>
-
+          <span />
           <button
             type="button"
             className="splic-btn-secondary"
@@ -345,8 +450,9 @@ export function AutoEditModal({
               fontWeight: 600,
             }}
             onClick={handleClose}
+            disabled={running}
           >
-            Cancel
+            {summary ? "Done" : "Cancel"}
           </button>
         </div>
       </div>

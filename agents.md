@@ -10,7 +10,7 @@ We are extending **Timeline Studio** (`MartinDelophy/ai-video-editor`) into a **
 
 **Do NOT rebuild the video editor.** Timeline Studio already handles multi-track rendering, canvas preview, WebCodecs MP4 export, and timeline scrubbing. Your job as a coding agent is to:
 1. Build and maintain the Python FastAPI backend (`backend/`) that orchestrates Sarvam AI + dynamic sticker generation.
-2. Add the **"⚡ Desi Auto-Cut"** trigger and JSON-to-Timeline dispatcher in the React/TypeScript frontend (`src/`).
+2. Add the **"⚡ Auto-Cut"** trigger and JSON-to-Timeline dispatcher in the React/TypeScript frontend (`src/`).
 3. Keep the edit experience 100% human-in-the-loop (all AI edits land as editable tracks on the timeline).
 
 ---
@@ -35,8 +35,7 @@ uvicorn main:app --reload --port 8000
 
 ### Required Environment Variables (`backend/.env`)
 ```env
-SARVAM_API_KEY=your_sarvam_api_subscription_key
-USE_MOCK=true               # Set to false only for integration tests & live demo
+SARVAM_API_KEY=your_sarvam_api_subscription_key   # Required: the auto-edit endpoint returns 503 without it
 FALLBACK_PROVIDER=none      # Optional: "groq" | "gemini" if Sarvam times out
 GROQ_API_KEY=               # Optional fallback
 ```
@@ -48,10 +47,11 @@ GROQ_API_KEY=               # Optional fallback
 ### Rule 1: Surgical Frontend Edits Only
 - **DO NOT** refactor Timeline Studio's core WebCodecs encoder, WebGPU shaders, color wheels, or depth-map pipelines.
 - **DO** inspect the existing timeline store (`src/store` or `src/features/timeline`) and `.agent/skills/edit-timeline-studio` to reuse existing track-mutation actions (splitting clips, adding text/caption tracks, adding overlay/PiP images, adding audio tracks).
-- **DO** keep all new UI additions minimal and cohesive (one **"⚡ Desi Auto-Cut"** button, loading state indicator, and optional language/caption-style toggle: *Romanized Hinglish* vs *Dual Hinglish + English*).
+- **DO** keep all new UI additions minimal and cohesive (one **"⚡ Auto-Cut"** button, loading state indicator, and optional language/caption-style toggle: *Romanized Hinglish* vs *Dual Hinglish + English*).
 
 ### Rule 2: Never Burn Sarvam Credits in Automated Tests
-- Unit tests and frontend integration tests **MUST** run with `USE_MOCK=true`, reading from `backend/sample_edit_plan.json`.
+- Unit tests and frontend integration tests **MUST NOT** hit the live Sarvam API. Stub the network boundary instead: patch `sarvam_client._stt_request` and `sarvam_client._call_sarvam` (see `TestLivePipelineStubbed` in `backend/test_suite.py`) and set a dummy `SARVAM_API_KEY` in the test environment.
+- There is no mock mode or cached sample plan. Live Sarvam calls happen only on manual runs (e.g. clicking **Auto-Cut** in the UI).
 - Never write an automated test loop that calls `https://api.sarvam.ai/speech-to-text` or `/v2/chat/completions` repeatedly.
 
 ### Rule 3: Strict JSON & Timestamp Discipline
@@ -76,7 +76,7 @@ GROQ_API_KEY=               # Optional fallback
 
 ### Rule 6: Graceful Fallbacks on External Failures
 - **Sticker Scraping:** `duckduckgo_search` can fail or return irrelevant images. Wrap `fetch_and_make_sticker()` in a `try/except` with a 4-second timeout. If it fails, fall back to a matching icon in `public/assets/stickers/` or skip that sticker cleanly without crashing the pipeline.
-- **LLM Output:** Always request `response_format={"type": "json_object"}` from `sarvam-105b-conversations` and validate the response with Pydantic before returning it to the frontend.
+- **LLM Output:** Always request `response_format={"type": "json_object"}` from `sarvam-105b` and validate the response with Pydantic before returning it to the frontend.
 
 ---
 
@@ -85,7 +85,7 @@ GROQ_API_KEY=               # Optional fallback
 | File | Responsibility |
 | :--- | :--- |
 | `backend/main.py` | FastAPI app, CORS, `/api/sarvam-auto-edit` endpoint, `/api/health`. Accepts uploaded video/audio, coordinates pipeline, returns validated `EditPlan` JSON. |
-| `backend/sarvam_client.py` | Calls `saaras:v4` (`mode="transliteration"`) for word timestamps and `sarvam-105b-conversations` for the director JSON. Implements `USE_MOCK` and `FALLBACK_PROVIDER`. |
+| `backend/sarvam_client.py` | Calls `saaras:v4` (`mode="translit"`) for phrase-level timestamps and `sarvam-105b` for the director JSON. Implements `FALLBACK_PROVIDER` (Groq / Gemini) with an offline heuristic director as the last resort. |
 | `backend/sticker_engine.py` | Searches web images via `duckduckgo_search`, strips background with `rembg`, saves RGBA PNGs to `public/assets/dynamic_stickers/`, and enforces disk caching. |
 | `backend/silence_detector.py` | Uses `pydub.silence.detect_silence()` to detect dead-air intervals locally at zero API cost and merges them with LLM-identified filler cuts. |
 | `backend/schemas.py` | Pydantic models for `WordTimestamp`, `CutSegment`, `StickerOverlay`, `SfxEvent`, `ZoomKeyframe`, and `EditPlan`. |
@@ -96,7 +96,7 @@ GROQ_API_KEY=               # Optional fallback
 
 Before marking a feature or PR complete, agents must verify:
 1. **Type Check & Build:** `npm run build` succeeds with zero TypeScript errors.
-2. **Backend Schema Check:** `POST /api/sarvam-auto-edit` with `USE_MOCK=true` returns valid JSON matching `EditPlan` schema.
+2. **Backend Schema Check:** `python -m pytest backend/test_suite.py` passes (Sarvam HTTP stubbed); a manual `POST /api/sarvam-auto-edit` with a real key returns valid JSON matching `EditPlan` schema.
 3. **Asset Loading:** Dynamic sticker PNGs load in the browser canvas without `ERR_BLOCKED_BY_RESPONSE.NotSameOriginAfterDefaultedToSameOriginByCoep` console errors.
 4. **Timeline Sync:** Captions, stickers, and SFX appear on separate draggable tracks in Timeline Studio and align with the spoken words in preview playback.
 5. **Export Smoke Test:** Clicking Export produces a playable `.mp4` containing the cuts, burned karaoke captions, stickers, and SFX audio.

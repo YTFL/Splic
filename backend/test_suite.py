@@ -14,7 +14,8 @@ sys.path.insert(0, str(BACKEND_DIR))
 
 import os
 os.environ.setdefault("SPLIC_DATA_DIR", str(BACKEND_DIR / ".splic_test"))
-os.environ.setdefault("USE_MOCK", "true")
+# Tests stub every Sarvam HTTP call; a dummy key only satisfies the config gate.
+os.environ["SARVAM_API_KEY"] = "test-dummy-key"
 # Pipeline tests never scrape the web; stickers resolve from cache / bundled icons.
 os.environ.setdefault("STICKER_FETCH", "false")
 
@@ -167,12 +168,10 @@ class TestTinyDBAndStorage(unittest.TestCase):
 
 
 class TestSarvamAutoEditPipeline(unittest.TestCase):
-    """Tests for the Sarvam Auto-Edit pipeline (always runs in USE_MOCK=true mode)."""
+    """Offline tests for the Sarvam Auto-Edit pipeline building blocks."""
 
     @classmethod
     def setUpClass(cls):
-        import os
-        os.environ["USE_MOCK"] = "true"
         cls.client = TestClient(app)
 
     def test_schemas_edit_plan_validation(self):
@@ -198,35 +197,6 @@ class TestSarvamAutoEditPipeline(unittest.TestCase):
         self.assertEqual(plan.transcript, "Test transcript")
         self.assertEqual(len(plan.captions), 1)
         self.assertEqual(len(plan.cuts), 1)
-
-    def test_auto_edit_endpoint_mock(self):
-        """POST /api/sarvam-auto-edit with mock WAV returns valid EditPlan."""
-        import struct
-        sample_rate = 16000
-        num_samples = sample_rate  # 1 second
-        wav_bytes = io.BytesIO()
-        data_size = num_samples * 2
-        wav_bytes.write(b"RIFF")
-        wav_bytes.write(struct.pack("<I", 36 + data_size))
-        wav_bytes.write(b"WAVE")
-        wav_bytes.write(b"fmt ")
-        wav_bytes.write(struct.pack("<IHHIIHH", 16, 1, 1, sample_rate, sample_rate * 2, 2, 16))
-        wav_bytes.write(b"data")
-        wav_bytes.write(struct.pack("<I", data_size))
-        wav_bytes.write(b"\x00" * data_size)
-        wav_bytes.seek(0)
-
-        resp = self.client.post(
-            "/api/sarvam-auto-edit",
-            files={"file": ("test.wav", wav_bytes, "audio/wav")},
-        )
-        self.assertEqual(resp.status_code, 200)
-        data = resp.json()
-        self.assertIn("transcript", data)
-        self.assertIn("captions", data)
-        self.assertIn("cuts", data)
-        self.assertIn("stickers", data)
-        self.assertTrue(isinstance(data["captions"], list))
 
     def test_silence_detector_synthetic(self):
         """Silence detector finds gaps in a synthetic WAV with known silence."""
@@ -319,31 +289,6 @@ _STUB_DIRECTOR = {
 
 class TestPlanBuilderAndClient(unittest.TestCase):
 
-    def test_sample_plan_internally_consistent(self):
-        from schemas import EditPlan
-        from config import TIMELINE_STUDIO_SFX_DIR
-        plan = EditPlan.model_validate(json.loads((BACKEND_DIR / "sample_edit_plan.json").read_text(encoding="utf-8")))
-        self.assertGreater(len(plan.captions), 0)
-        spoken = [w.word for w in plan.words]
-        self.assertEqual([w.word for c in plan.captions for w in c.words], spoken)
-        for c in plan.captions:
-            self.assertTrue(1 <= len(c.words) <= 4, c.text)
-            for cut in plan.cuts:
-                self.assertFalse(c.start < cut.start < c.end, f"{c.id} straddles a cut")
-        for item in list(plan.stickers) + list(plan.sfx):
-            self.assertFalse(any(cut.start <= item.start < cut.end for cut in plan.cuts))
-        for s in plan.sfx:
-            self.assertTrue((TIMELINE_STUDIO_SFX_DIR / s.asset.rsplit("/", 1)[-1]).exists(), s.asset)
-        self.assertEqual(len(plan.transitions), len(plan.cuts))
-
-    def test_sarvam_client_mock_makes_no_network_calls(self):
-        import sarvam_client
-        with umock.patch.object(sarvam_client.httpx, "Client", side_effect=AssertionError("network used")):
-            stt = sarvam_client.transcribe_audio(b"x", "a.wav", mock=True)
-            plan = sarvam_client.direct_video_edit(stt["transcript"], stt["words"], [], mock=True)
-        self.assertTrue(stt["words"])
-        self.assertEqual(plan["director"], "mock")
-
     def test_normalize_stt_response_shapes(self):
         from sarvam_client import normalize_stt_response
         a = normalize_stt_response({"transcript": "a b", "words": [
@@ -425,14 +370,13 @@ class TestPlanBuilderAndClient(unittest.TestCase):
 
 
 class TestLivePipelineStubbed(unittest.TestCase):
-    """Exercise the USE_MOCK=false code path with Sarvam/Groq/Gemini HTTP stubbed out."""
+    """Exercise the live pipeline with Sarvam/Groq/Gemini HTTP stubbed out."""
 
     @classmethod
     def setUpClass(cls):
         cls.client = TestClient(app)
 
     def _post(self, data_bytes, name="clip.wav", **form):
-        form.setdefault("use_mock", "false")
         return self.client.post("/api/sarvam-auto-edit", data=form,
                                 files={"file": (name, data_bytes, "application/octet-stream")})
 
@@ -533,10 +477,13 @@ class TestLivePipelineStubbed(unittest.TestCase):
 
     def test_plan_saved_to_project(self):
         import db
+        import sarvam_client
         db.create_project(name="Auto edit target", project_id="autoedit_target")
         try:
-            resp = self.client.post("/api/sarvam-auto-edit", data={"project_id": "autoedit_target"},
-                                    files={"file": ("a.wav", _make_wav([(0.2, True)]), "audio/wav")})
+            with umock.patch.object(sarvam_client, "_stt_request", side_effect=_stub_stt_timestamps), \
+                 umock.patch.object(sarvam_client, "_call_sarvam", side_effect=self._director_json):
+                resp = self.client.post("/api/sarvam-auto-edit", data={"project_id": "autoedit_target"},
+                                        files={"file": ("a.wav", _make_wav([(0.2, True)]), "audio/wav")})
             self.assertEqual(resp.status_code, 200, resp.text)
             proj = db.get_project("autoedit_target")
             self.assertEqual(proj["status"], "auto_edited")

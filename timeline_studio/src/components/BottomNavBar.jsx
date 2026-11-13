@@ -48,7 +48,7 @@ export function BottomNavBar({
     {
       id: "smart",
       label: "Auto Edit",
-      sublabel: "Desi Auto-Cut",
+      sublabel: "Auto-Cut",
       icon: Sparkles,
     },
     {

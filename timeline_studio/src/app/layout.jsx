@@ -29,7 +29,7 @@ export default function RootLayout({ children }) {
         <link rel="dns-prefetch" href="https://cdn-lfs.huggingface.co" />
         <link rel="preconnect" href="https://www.modelscope.cn" crossOrigin="anonymous" />
       </head>
-      <body style={{ height: "100%", width: "100%", margin: 0, padding: 0, overflow: "hidden" }}>
+      <body suppressHydrationWarning style={{ height: "100%", width: "100%", margin: 0, padding: 0, overflow: "hidden" }}>
         <div id="root" style={{ height: "100%", width: "100%" }}>{children}</div>
       </body>
     </html>

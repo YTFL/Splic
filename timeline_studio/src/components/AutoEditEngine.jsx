@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Zap } from "lucide-react";
+import { Clapperboard, Zap } from "lucide-react";
 import { normalizeEditPlan } from "../lib/editPlanEngine.js";
 
 // Generates structural geometry points mapping the exact rectangle and interior scanlines of a timeline clip
@@ -160,12 +160,57 @@ function computeClipGeometry(plan, layout) {
   };
 }
 
+// Placeholder layout used while the live backend plan is still pending.
+const PROVISIONAL_LIVE_PLAN = { cuts: [{ start: 3.15, end: 4.95, reason: "dead_air" }] };
+
+// Map a FastAPI EditPlan onto the shape the animation normalizer expects.
+function toAnimationPlan(backendPlan, userAssets = []) {
+  const cuts = backendPlan?.cuts?.length ? backendPlan.cuts : PROVISIONAL_LIVE_PLAN.cuts;
+  const lastCut = cuts[cuts.length - 1];
+  // Both animated "takes" are pieces of the user's own video, not demo B-roll.
+  const source = userAssets.find((asset) => asset?.type === "video") || userAssets[0];
+  const media = source ? {
+    cut1: { asset: source, name: `${source.name} [Part 01]` },
+    cut2: { asset: source, name: `${source.name} [Part 02]` },
+  } : undefined;
+  return {
+    ...backendPlan,
+    ...(media ? { media } : {}),
+    cuts,
+    totalDuration: Number(backendPlan?.duration) || Number(lastCut.end) + 4,
+    stickers: (backendPlan?.stickers || []).map((sticker) => ({ ...sticker, asset: sticker.asset_url || sticker.asset })),
+    sfx: (backendPlan?.sfx || []).map((sfx) => ({ ...sfx, name: sfx.label ? `SFX: ${sfx.label}` : undefined })),
+  };
+}
+
+function formatElapsed(seconds) {
+  const s = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+// Sarvam gives no progress events, so ease toward a stage ceiling over time:
+// transcription + director (~2-4 min) approaches 80%, asset loading 92%.
+function estimateLiveProgress(stage, elapsed) {
+  if (stage === "ready") return 100;
+  if (stage === "assets") return 92;
+  return Math.min(80, Math.round(6 + 74 * (1 - Math.exp(-elapsed / 75))));
+}
+
+function describeLivePlan(plan) {
+  const count = (key) => (Array.isArray(plan?.[key]) ? plan[key].length : 0);
+  return `${count("cuts")} cuts, ${count("captions")} captions, ${count("stickers")} stickers, ${count("sfx")} SFX`;
+}
+
 export function AutoEditEngine({
   running = false,
   sessionId = 0,
   hasExistingTimeline = false,
   userAssets = [],
   editPlanInput = null,
+  // Live backend run: { planPromise } resolves with the FastAPI EditPlan.
+  // While it is pending the engine shows `liveStatus` in the acoustic sweep.
+  liveRun = null,
+  liveStatus = "",
   onSelectTool,
   onResetTimeline,
   onComplete,
@@ -182,10 +227,29 @@ export function AutoEditEngine({
   const onCommitTimelineRef = useRef(onCommitTimeline);
   const onCompleteRef = useRef(onComplete);
   const hasExistingTimelineRef = useRef(hasExistingTimeline);
+  const liveRunRef = useRef(liveRun);
+  // Read assets through a ref: asset updates (e.g. video prepare progress)
+  // during a minutes-long live run must not cancel the animation.
+  const userAssetsRef = useRef(userAssets);
+  userAssetsRef.current = userAssets;
+  const liveStatusRef = useRef(liveStatus);
+  const awaitingLivePlanRef = useRef(false);
 
   useEffect(() => {
     editPlanInputRef.current = editPlanInput;
   }, [editPlanInput]);
+
+  useEffect(() => {
+    liveRunRef.current = liveRun;
+  }, [liveRun]);
+
+  useEffect(() => {
+    liveStatusRef.current = liveStatus;
+    if (awaitingLivePlanRef.current && liveStatus) {
+      setStatusText(liveStatus);
+      if (/loading stickers/i.test(liveStatus)) liveStageRef.current = "assets";
+    }
+  }, [liveStatus]);
 
   useEffect(() => {
     onSelectToolRef.current = onSelectTool;
@@ -213,6 +277,9 @@ export function AutoEditEngine({
   const [currentPlan, setCurrentPlan] = useState(null);
   const [clipGeometry, setClipGeometry] = useState(null);
   const [currentPresence, setCurrentPresence] = useState("none");
+  const [liveProgress, setLiveProgress] = useState({ percent: 0, elapsed: 0 });
+  const liveWaitStartRef = useRef(0);
+  const liveStageRef = useRef("uploading");
   // Describes the asset currently being focused by the agentic workflow (null when idle)
   const [, setAgenticFocus] = useState(null);
 
@@ -227,6 +294,16 @@ export function AutoEditEngine({
     overlayMerged: false,
     audioMerged: false,
   });
+
+  // Tick the live loader (percent + elapsed) while waiting on the backend.
+  useEffect(() => {
+    if (!running || phase !== "live-wait") return undefined;
+    const timer = setInterval(() => {
+      const elapsed = (Date.now() - liveWaitStartRef.current) / 1000;
+      setLiveProgress({ percent: estimateLiveProgress(liveStageRef.current, elapsed), elapsed });
+    }, 500);
+    return () => clearInterval(timer);
+  }, [running, phase]);
 
   // 60FPS Minimal Pixel Canvas Loop (ZERO BLOOM, realistic micro-particles)
   useEffect(() => {
@@ -442,8 +519,10 @@ export function AutoEditEngine({
     let isCancelled = false;
 
     const executeAgenticAutoEdit = async () => {
-      // 0. Clean slate collapse if previous timeline exists
-      if (hasExistingTimelineRef.current) {
+      const live = liveRunRef.current;
+      // 0. Clean slate collapse if previous timeline exists (demo only: a live
+      // run edits the user's real timeline, so it must never be cleared)
+      if (!live && hasExistingTimelineRef.current) {
         setPhase("timeline-collapse");
         setStatusText("Collapsing existing timeline — Clearing slate for fresh edit...");
         document.body.classList.add("is-timeline-collapsing");
@@ -498,9 +577,9 @@ export function AutoEditEngine({
       // 1. Ingest JSON EditPlan (file, string, or object) and normalize instructions
       let plan;
       try {
-        plan = normalizeEditPlan(editPlanInputRef.current, userAssets);
+        plan = normalizeEditPlan(live ? PROVISIONAL_LIVE_PLAN : editPlanInputRef.current, userAssetsRef.current);
       } catch {
-        plan = normalizeEditPlan(null, userAssets);
+        plan = normalizeEditPlan(PROVISIONAL_LIVE_PLAN, userAssetsRef.current);
       }
       setCurrentPlan(plan);
 
@@ -510,13 +589,49 @@ export function AutoEditEngine({
 
       // 2. Compute 1:1 pixel coordinates on timeline tracks
       const layout = getTimelineLayout();
-      const geo = computeClipGeometry(plan, layout);
+      let geo = computeClipGeometry(plan, layout);
       setClipGeometry(geo);
 
       // 3. Acoustic waveform frequency sweep
-      setPhase("wave");
-      setStatusText("Acoustic analysis: Sarvam Saaras v4 frequency sweep...");
-      await sleep(950);
+      if (live) {
+        setPhase("live-wait");
+        liveWaitStartRef.current = Date.now();
+        liveStageRef.current = "uploading";
+        setLiveProgress({ percent: estimateLiveProgress("uploading", 0), elapsed: 0 });
+        // Hold the sweep while FastAPI + Sarvam process the video, mirroring
+        // the real pipeline status, then re-plan the animation on the result.
+        awaitingLivePlanRef.current = true;
+        setStatusText(liveStatusRef.current || "Uploading video to the Sarvam pipeline...");
+        let backendPlan;
+        try {
+          backendPlan = await live.planPromise;
+        } catch {
+          return; // App stops the run and reports the error
+        } finally {
+          awaitingLivePlanRef.current = false;
+        }
+        if (isCancelled) return;
+        liveStageRef.current = "ready";
+        setLiveProgress((current) => ({ ...current, percent: 100 }));
+        setStatusText(`Sarvam plan ready: ${describeLivePlan(backendPlan)}`);
+        await sleep(700); // let the loader land on 100% before the particles start
+        if (isCancelled) return;
+        setPhase("wave");
+        try {
+          plan = normalizeEditPlan(toAnimationPlan(backendPlan, userAssetsRef.current), userAssetsRef.current);
+        } catch {
+          // Keep the provisional layout: the animation is cosmetic.
+        }
+        setCurrentPlan(plan);
+        geo = computeClipGeometry(plan, getTimelineLayout());
+        setClipGeometry(geo);
+        setStatusText(`Sarvam plan ready: ${describeLivePlan(backendPlan)}`);
+        await sleep(900);
+      } else {
+        setPhase("wave");
+        setStatusText("Acoustic analysis: Sarvam Saaras v4 frequency sweep...");
+        await sleep(950);
+      }
       if (isCancelled) return;
 
       // 4. STEP 1: Media Cut 1 -> Media Layer (V1 - Row 0)
@@ -704,7 +819,7 @@ export function AutoEditEngine({
     return () => {
       isCancelled = true;
     };
-  }, [running, sessionId, userAssets, collapseAndStreamToTimeline]);
+  }, [running, sessionId, collapseAndStreamToTimeline]);
 
   const geo = clipGeometry;
 
@@ -723,10 +838,62 @@ export function AutoEditEngine({
         }}
       />
 
-      {running && geo && (
+      {/* Live run: clapperboard -> spinning film reel while Sarvam works */}
+      {running && phase === "live-wait" && (
+        <div className="cinema-morph-overlay">
+          <div className="cinema-morph-card">
+            <div className="cinema-morph-stage">
+              <div className="clapperboard-morph-container">
+                <div className="clapper-stick top-stick" />
+                <div className="clapper-stick bottom-stick" />
+                <div className="clapper-slate-body">
+                  <div className="slate-label">SCENE 01 · TAKE 01</div>
+                  <div className="slate-title">INDIC AUTO-CUT</div>
+                </div>
+              </div>
+              <div className="cinema-reel-container">
+                <div className="cinema-reel-disk">
+                  <div className="reel-hole hole-1" />
+                  <div className="reel-hole hole-2" />
+                  <div className="reel-hole hole-3" />
+                  <div className="reel-hole hole-4" />
+                  <div className="reel-hole hole-5" />
+                  <div className="reel-hole hole-6" />
+                  <div className="reel-center-spindle" />
+                </div>
+                <div className="cinema-film-ribbon" />
+              </div>
+            </div>
+            <div className="cinema-processing-info">
+              <div className="cinema-processing-title-row">
+                <Clapperboard size={15} strokeWidth={1.5} className="cinema-clapper-icon" />
+                <span className="cinema-processing-title">Sarvam AI is editing</span>
+                <span className="cinema-processing-percent">{liveProgress.percent}%</span>
+              </div>
+              <div className="cinema-progress-track">
+                <div className="cinema-progress-fill" style={{ width: `${liveProgress.percent}%` }} />
+              </div>
+              <div className="cinema-processing-subtext">{statusText}</div>
+              <div className="cinema-processing-subtext">Elapsed {formatElapsed(liveProgress.elapsed)}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live run: status pill while particles assemble the real edit */}
+      {running && liveRun && statusText && phase !== "live-wait" && phase !== "idle" && (
+        <div className="assembly-status-pill">
+          <div className="assembly-pulse-icon">
+            <Zap size={13} strokeWidth={1.5} />
+          </div>
+          <span>{statusText}</span>
+        </div>
+      )}
+
+      {running && geo && phase !== "live-wait" && (
         <div className="auto-edit-hud-layer" style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 9999 }}>
-          {/* Wave Sweep Banner */}
-          {phase === "wave" && (
+          {/* Wave Sweep Banner (demo only) */}
+          {phase === "wave" && !liveRun && (
             <div className="acoustic-wave-indicator">
               <span className="wave-pulse-ring" />
               <span className="wave-title">{statusText}</span>
@@ -754,12 +921,14 @@ export function AutoEditEngine({
           {/* =========================================================================
               ROW 0: MEDIA FOOTAGE LAYER (V1)
               ========================================================================= */}
+          {!liveRun && (
           <div
-            className="track-layer-header-pill layer-media"
-            style={{ position: "fixed", left: `${geo.cut1.x}px`, top: `${geo.cut1.y - 12}px` }}
-          >
-            <span>V1 · MEDIA FOOTAGE</span>
-          </div>
+              className="track-layer-header-pill layer-media"
+              style={{ position: "fixed", left: `${geo.cut1.x}px`, top: `${geo.cut1.y - 12}px` }}
+            >
+              <span>V1 · MEDIA FOOTAGE</span>
+            </div>
+          )}
 
           {currentPresence === "cut1" && !timelineTracks.cut1Merged && (
             <div
@@ -862,12 +1031,14 @@ export function AutoEditEngine({
           {/* =========================================================================
               ROW 1: STICKER / OVERLAY LAYER (V2)
               ========================================================================= */}
+          {!liveRun && (
           <div
-            className="track-layer-header-pill layer-overlay"
-            style={{ position: "fixed", left: `${geo.overlay.x}px`, top: `${geo.overlay.y - 12}px` }}
-          >
-            <span>V2 · STICKER / OVERLAY</span>
-          </div>
+              className="track-layer-header-pill layer-overlay"
+              style={{ position: "fixed", left: `${geo.overlay.x}px`, top: `${geo.overlay.y - 12}px` }}
+            >
+              <span>V2 · STICKER / OVERLAY</span>
+            </div>
+          )}
 
           {currentPresence === "sticker" && !timelineTracks.overlayMerged && (
             <div
@@ -905,12 +1076,14 @@ export function AutoEditEngine({
           {/* =========================================================================
               ROW 2: SPECIAL EFFECTS LAYER (FX)
               ========================================================================= */}
+          {!liveRun && (
           <div
-            className="track-layer-header-pill layer-effects"
-            style={{ position: "fixed", left: `${geo.effects.x}px`, top: `${geo.effects.y - 12}px` }}
-          >
-            <span>FX · SPECIAL EFFECTS</span>
-          </div>
+              className="track-layer-header-pill layer-effects"
+              style={{ position: "fixed", left: `${geo.effects.x}px`, top: `${geo.effects.y - 12}px` }}
+            >
+              <span>FX · SPECIAL EFFECTS</span>
+            </div>
+          )}
 
           {currentPresence === "effects" && !timelineTracks.effectsMerged && (
             <div
@@ -954,12 +1127,14 @@ export function AutoEditEngine({
           {/* =========================================================================
               ROW 3: AUDIO & SFX LAYER (A1)
               ========================================================================= */}
+          {!liveRun && (
           <div
-            className="track-layer-header-pill layer-audio"
-            style={{ position: "fixed", left: `${geo.audio.x}px`, top: `${geo.audio.y - 12}px` }}
-          >
-            <span>A1 · AUDIO & SFX</span>
-          </div>
+              className="track-layer-header-pill layer-audio"
+              style={{ position: "fixed", left: `${geo.audio.x}px`, top: `${geo.audio.y - 12}px` }}
+            >
+              <span>A1 · AUDIO & SFX</span>
+            </div>
+          )}
 
           {currentPresence === "audio" && !timelineTracks.audioMerged && (
             <div

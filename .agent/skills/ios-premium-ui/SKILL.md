@@ -53,9 +53,9 @@ Match Timeline Studio's existing dark zinc base. All new surfaces sit *above* it
 --border-subtle:    rgba(255,255,255,.08);
 --border-active:    rgba(255,255,255,.18);
 
-/* Accent — Splic's amber/orange for Desi Auto-Cut actions */
---accent-desi:      #f59e0b;           /* amber-500 */
---accent-desi-glow: rgba(245,158,11,.20);
+/* Accent — Splic's amber/orange for Auto-Cut actions */
+--accent-autocut:      #f59e0b;           /* amber-500 */
+--accent-autocut-glow: rgba(245,158,11,.20);
 
 /* Text */
 --text-primary:     rgba(255,255,255,.92);
@@ -94,7 +94,7 @@ Every new floating panel, popover, or status overlay uses this exact shell struc
 
 ---
 
-## 4. The "Desi Auto-Cut" Button (Primary CTA)
+## 4. The "Auto-Cut" Button (Primary CTA)
 
 This is the most critical UI piece. It must feel as premium as a Dynamic Island interaction. Use `lucide-react`'s `Zap` icon — never the ⚡ emoji:
 
@@ -116,7 +116,7 @@ import { Zap, ChevronRight } from 'lucide-react'
   style={{ transition: 'all 150ms cubic-bezier(0.32,0.72,0,1)' }}
 >
   <Zap size={13} strokeWidth={1.5} className="text-amber-400 fill-amber-400/30" />
-  <span>Desi Auto-Cut</span>
+  <span>Auto-Cut</span>
   {/* Nested trailing icon — Apple Button-in-Button pattern */}
   <span className="
     w-5 h-5 rounded-full

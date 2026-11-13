@@ -110,12 +110,12 @@ Timeline Studio handles clip cuts. When multiple cuts are applied:
 
 ---
 
-## 4. UI Trigger Integration ("⚡ Desi Auto-Cut")
+## 4. UI Trigger Integration ("⚡ Auto-Cut")
 
 - Place the trigger button in the main Timeline Studio header / toolbar alongside existing actions (Export, Import).
 - Visual Style: Primary accent badge, high contrast, matching existing zinc/slate dark theme.
 - States:
-  - **Idle:** `"⚡ Desi Auto-Cut"`
+  - **Idle:** `"⚡ Auto-Cut"`
   - **Analyzing Audio:** Spinner + `"Transcribing Hinglish (Sarvam Saaras)..."`
   - **Directing Video:** Spinner + `"Detecting Entites & Cuts (Sarvam-105B)..."`
   - **Synthesizing Assets:** Spinner + `"Generating Cutout Stickers..."`

@@ -36,12 +36,12 @@ class TestComposioCore(unittest.TestCase):
         """Test configuration origin parsing and key validation."""
         s = Settings(
             COMPOSIO_API_KEY="test_valid_key_12345",
-            FRONTEND_URL="http://localhost:5173, https://app.splic.desi",
+            FRONTEND_URL="http://localhost:5173, https://app.splic.studio",
         )
         self.assertTrue(s.is_composio_configured)
         self.assertEqual(len(s.cors_origins), 2)
         self.assertIn("http://localhost:5173", s.cors_origins)
-        self.assertIn("https://app.splic.desi", s.cors_origins)
+        self.assertIn("https://app.splic.studio", s.cors_origins)
 
         # Unconfigured key
         s_unconf = Settings(COMPOSIO_API_KEY=None)

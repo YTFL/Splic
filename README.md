@@ -13,13 +13,13 @@ Over 40 million Indian content creators publish short-form vertical videos (Inst
 3. Lack awareness of Indian cultural entities, brands, foods, and references (*Zomato, UPI, Biryani, Auto-rickshaw, Chai*).
 4. Miss Indian conversational filler words (*"matlab"*, *"arre"*, *"toh basically"*) and meme timing.
 
-**Splic** solves this with a **1-click "⚡ Desi Auto-Cut"** workflow that orchestrates **Sarvam Saaras v4** (speech-to-text with Romanized transliteration), **Sarvam-105B Conversations** (AI video director), local silence detection, dynamic sticker synthesis (`rembg`), and sound effects directly into an interactive browser timeline.
+**Splic** solves this with a **1-click "⚡ Auto-Cut"** workflow that orchestrates **Sarvam Saaras v4** (speech-to-text with Romanized transliteration), **Sarvam-105B** (AI video director), local silence detection, dynamic sticker synthesis (`rembg`), and sound effects directly into an interactive browser timeline.
 
 ---
 
 ## Key Features
 
-- **⚡ 1-Click Desi Auto-Cut:** Upload a 9:16 vertical video and generate a full multi-track edit plan in seconds.
+- **⚡ 1-Click Auto-Cut:** Upload a 9:16 vertical video and generate a full multi-track edit plan in seconds.
 - **🗣️ Romanized Indic Karaoke Captions:** Word-level synchronized captions in phonetic Latin script (Hinglish/Tanglish/Kanglish) with active word highlights.
 - **✂️ Smart Ripple Cuts:** Removes dead-air pauses (> 0.8s) and vernacular filler hesitations without awkward clip jumps.
 - **🎨 Dynamic Indian Stickers:** Automatically discovers cultural entities, searches relevant images, removes backgrounds via `rembg`, and places transparent stickers onto timeline overlay tracks.
@@ -34,7 +34,7 @@ Over 40 million Indian content creators publish short-form vertical videos (Inst
 ┌──────────────────────────────────────────────────────────────────────┐
 │                    FRONTEND (React + TypeScript + Vite)              │
 │  Forked Timeline Studio (WebCodecs + Multi-Track Canvas Timeline)    │
-│  • "⚡ Desi Auto-Cut" Toolbar Button                                 │
+│  • "⚡ Auto-Cut" Toolbar Button                                 │
 │  • Dispatches JSON Edit Plan into Timeline Tracks                    │
 │  • Interactive Drag/Drop, Caption Editing & Client-Side MP4 Export   │
 └───────────────────────────────┬──────────────────────────────────────┘
@@ -43,10 +43,10 @@ Over 40 million Indian content creators publish short-form vertical videos (Inst
 ┌──────────────────────────────────────────────────────────────────────┐
 │                    BACKEND (Python + FastAPI)                        │
 │  1. Local Silence Pre-Check: pydub.silence.detect_silence() (0 cost) │
-│  2. Speech-to-Text: Sarvam Saaras v4 (mode="transliteration")        │
-│  3. Video Director LLM: Sarvam-105B Conversations (JSON Mode)        │
+│  2. Speech-to-Text: Sarvam Saaras v4 (mode="translit")        │
+│  3. Video Director LLM: Sarvam-105B (JSON Mode)        │
 │  4. Dynamic Sticker Pipeline: duckduckgo_search + rembg + Disk Cache │
-│  5. Dev/Demo Safety: USE_MOCK cache & Groq/Gemini LLM fallback       │
+│  5. Resilience: Groq/Gemini LLM fallback + offline heuristic director│
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -77,7 +77,7 @@ The runner automatically:
 1. Validates Node.js and Python (3.10+) installations.
 2. Creates and configures the Python virtual environment (`backend/.venv`) if missing.
 3. Installs backend and frontend dependencies if needed.
-4. Generates initial `.env` files with mock mode enabled (`USE_MOCK=true`).
+4. Generates initial `.env` files from the templates (add your `SARVAM_API_KEY` to `backend/.env`).
 5. Launches FastAPI on [http://localhost:8000](http://localhost:8000) (Docs at [/docs](http://localhost:8000/docs)).
 6. Launches Next.js on [http://localhost:3000](http://localhost:3000).
 7. Gracefully stops all services when you press `Ctrl+C`.
@@ -109,8 +109,7 @@ uvicorn main:app --reload --port 8000
 
 ### Environment Configuration (`backend/.env`)
 ```env
-SARVAM_API_KEY=your_sarvam_api_subscription_key
-USE_MOCK=true               # Set to false for live Sarvam API integration
+SARVAM_API_KEY=your_sarvam_api_subscription_key   # Required; restart the backend after changing it
 FALLBACK_PROVIDER=none      # Optional: "groq" | "gemini"
 ```
 

@@ -2,18 +2,17 @@
 sarvam_client.py — Sarvam AI API client for Splic Indic Auto-Editor.
 
 Provides:
-  - transcribe_audio()   : Sarvam Saaras v4 speech-to-text (Romanized Indic, word timestamps)
-  - direct_video_edit()  : Sarvam-105B Conversations video director LLM (JSON mode),
+  - transcribe_audio()   : Sarvam Saaras v4 speech-to-text (mode="translit", Romanized Indic)
+  - direct_video_edit()  : Sarvam-105B video director LLM (JSON mode),
                            with Groq / Gemini fallback when Sarvam fails or times out
 
-Environment variables (loaded by config.py via python-dotenv):
-  USE_MOCK           : "true" to use sample_edit_plan.json instead of live APIs (default true)
-  SARVAM_API_KEY     : Sarvam subscription key
+Environment variables (loaded from backend/.env by config.py via python-dotenv):
+  SARVAM_API_KEY     : Sarvam subscription key (required)
   FALLBACK_PROVIDER  : "none" | "groq" | "gemini"
   GROQ_API_KEY       : Required when FALLBACK_PROVIDER=groq
   GEMINI_API_KEY     : Required when FALLBACK_PROVIDER=gemini
   SARVAM_STT_MODEL   : override (default "saaras:v4")
-  SARVAM_LLM_MODEL   : override (default "sarvam-105b-conversations")
+  SARVAM_LLM_MODEL   : override (default "sarvam-105b")
 """
 
 from __future__ import annotations
@@ -33,38 +32,58 @@ logger = logging.getLogger("sarvam_client")
 # Config accessors (python-dotenv already called in config.py)
 # ---------------------------------------------------------------------------
 
-def _is_mock() -> bool:
-    return os.getenv("USE_MOCK", "true").strip().lower() in ("1", "true", "yes", "on")
-
-
-def is_mock_enabled() -> bool:
-    return _is_mock()
-
-
-def _resolve_mock(mock: Optional[bool]) -> bool:
-    return _is_mock() if mock is None else bool(mock)
+_PLACEHOLDER_KEYS = ("", "your_sarvam_api_subscription_key")
 
 
 def _get_sarvam_api_key() -> str:
-    return os.getenv("SARVAM_API_KEY", "").strip()
+    key = os.getenv("SARVAM_API_KEY", "").strip()
+    return "" if key in _PLACEHOLDER_KEYS else key
+
+
+def is_sarvam_configured() -> bool:
+    return bool(_get_sarvam_api_key())
 
 
 def _get_fallback_provider() -> str:
     return os.getenv("FALLBACK_PROVIDER", "none").strip().lower()
 
 
+# ---------------------------------------------------------------------------
+# Sarvam model registry
+# Verified against https://docs.sarvam.ai/api/getting-started/models and
+# GET https://api.sarvam.ai/v2/models (model ids are case-sensitive).
+# ---------------------------------------------------------------------------
+SAARAS_STT_MODEL = "saaras:v4"              # latest/recommended ASR; "saaras:v3" still active
+SAARAS_STT_MODES = ("transcribe", "translate", "verbatim", "translit", "codemix")
+SAARAS_STT_MODE = "translit"                # Romanized Hinglish for karaoke captions
+SARVAM_DIRECTOR_MODEL = "sarvam-105b"       # 128K context; "sarvam-105b-conversations" = 32K, /v1 only
+SARVAM_REASONING_EFFORTS = ("low", "medium", "high")
+
+
 def _stt_model() -> str:
-    return os.getenv("SARVAM_STT_MODEL", "saaras:v4")
+    return os.getenv("SARVAM_STT_MODEL", SAARAS_STT_MODEL)
+
+
+def _stt_mode() -> str:
+    mode = os.getenv("SARVAM_STT_MODE", SAARAS_STT_MODE).strip().lower()
+    return mode if mode in SAARAS_STT_MODES else SAARAS_STT_MODE
 
 
 def _llm_model() -> str:
-    return os.getenv("SARVAM_LLM_MODEL", "sarvam-105b-conversations")
+    return os.getenv("SARVAM_LLM_MODEL", SARVAM_DIRECTOR_MODEL)
 
-
-_SAMPLE_PLAN_PATH: Path = Path(__file__).resolve().parent / "sample_edit_plan.json"
 
 _STT_TIMEOUT: float = 60.0
-_LLM_TIMEOUT: float = 90.0
+# sarvam-105b is a reasoning model: the director prompt measured ~125 s and
+# ~12k reasoning tokens even at reasoning_effort="low", so 90 s always timed out.
+_LLM_TIMEOUT: float = float(os.getenv("SARVAM_LLM_TIMEOUT", "240"))
+
+
+def _reasoning_effort() -> str:
+    """"low" | "medium" | "high", or "" to omit the parameter."""
+    return os.getenv("SARVAM_REASONING_EFFORT", "low").strip().lower()
+
+
 _STT_CHUNK_SECONDS: float = 25.0   # Sarvam's synchronous STT accepts ~30 s per request
 
 _SARVAM_STT_URL = "https://api.sarvam.ai/speech-to-text"
@@ -89,21 +108,6 @@ Tasks:
 
 All times are float seconds on the ORIGINAL clock. Output ONLY one JSON object, no markdown, no explanation:
 {"cuts":[...],"transitions":[...],"captions":[...],"stickers":[...],"sfx":[...],"zooms":[...]}"""
-
-
-# ---------------------------------------------------------------------------
-# Mock helpers
-# ---------------------------------------------------------------------------
-
-def load_sample_plan() -> dict:
-    """Load the cached sample edit plan from disk. Raises if missing."""
-    if not _SAMPLE_PLAN_PATH.exists():
-        raise FileNotFoundError(f"Mock mode is enabled but sample plan not found at: {_SAMPLE_PLAN_PATH}")
-    with _SAMPLE_PLAN_PATH.open("r", encoding="utf-8") as fh:
-        return json.load(fh)
-
-
-_load_sample_plan = load_sample_plan  # backwards-compatible alias
 
 
 # ---------------------------------------------------------------------------
@@ -166,10 +170,10 @@ def normalize_stt_response(resp: Dict[str, Any], offset: float = 0.0) -> Dict[st
 def _stt_request(wav_bytes: bytes, filename: str, language_code: str) -> Dict[str, Any]:
     key = _get_sarvam_api_key()
     if not key:
-        raise RuntimeError("SARVAM_API_KEY is not set. Add it to backend/.env or set USE_MOCK=true.")
+        raise RuntimeError("SARVAM_API_KEY is not set. Add it to backend/.env and restart the backend.")
     data = {
         "model": _stt_model(),
-        "mode": "transliteration",
+        "mode": _stt_mode(),
         "with_timestamps": "true",
     }
     if language_code:
@@ -190,23 +194,14 @@ def transcribe_audio(
     audio_bytes: bytes,
     filename: str = "audio.wav",
     language_code: str = "hi-IN",
-    mock: Optional[bool] = None,
 ) -> dict:
-    """Transcribe audio using Sarvam Saaras v4 in transliteration mode.
+    """Transcribe audio using Sarvam Saaras v4 with mode="translit" (Romanized Indic).
 
     ``audio_bytes`` should be the canonical 16 kHz mono WAV from audio_utils.
     Audio longer than ~25 s is split and the word timestamps are re-offset.
 
     Returns ``{"transcript": str, "words": [...], "language_code": str|None}``.
     """
-    if _resolve_mock(mock):
-        plan = load_sample_plan()
-        return {
-            "transcript": plan.get("transcript", ""),
-            "words": plan.get("words", []),
-            "language_code": plan.get("language_code"),
-        }
-
     pieces: List[Tuple[float, bytes]] = [(0.0, audio_bytes)]
     if audio_bytes[:4] == b"RIFF":
         from audio_utils import split_wav
@@ -254,7 +249,6 @@ def direct_video_edit(
     silence_cuts: list[dict],
     language_code: str = "hi-IN",
     duration: Optional[float] = None,
-    mock: Optional[bool] = None,
 ) -> dict:
     """Ask the director LLM for creative edit decisions.
 
@@ -264,11 +258,6 @@ def direct_video_edit(
 
     Raises RuntimeError only if Sarvam AND the configured fallback both fail.
     """
-    if _resolve_mock(mock):
-        plan = load_sample_plan()
-        plan["director"] = "mock"
-        return plan
-
     messages = [
         {"role": "system", "content": DIRECTOR_SYSTEM_PROMPT},
         {"role": "user", "content": _build_user_message(transcript, words, silence_cuts, language_code, duration)},
@@ -311,13 +300,15 @@ def _post_chat(url: str, headers: dict, payload: dict, provider: str) -> dict:
 def _call_sarvam(messages: list[dict]) -> dict:
     key = _get_sarvam_api_key()
     if not key:
-        raise RuntimeError("SARVAM_API_KEY is not set. Add it to backend/.env or set USE_MOCK=true.")
+        raise RuntimeError("SARVAM_API_KEY is not set. Add it to backend/.env and restart the backend.")
     payload = {
         "model": _llm_model(),
         "response_format": {"type": "json_object"},
         "temperature": 0.2,
         "messages": messages,
     }
+    if _reasoning_effort():
+        payload["reasoning_effort"] = _reasoning_effort()
     headers = {
         "api-subscription-key": key,
         "Authorization": f"Bearer {key}",

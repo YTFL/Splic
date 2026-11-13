@@ -99,7 +99,7 @@ echo -e "${BLUE}[*] Verifying environment files...${NC}"
 # Backend .env
 if [ ! -f "$BACKEND_DIR/.env" ]; then
   if [ -f "$BACKEND_DIR/.env.example" ]; then
-    echo -e "${YELLOW}[!] backend/.env missing. Creating from .env.example (mock mode enabled)...${NC}"
+    echo -e "${YELLOW}[!] backend/.env missing. Creating from .env.example (add your SARVAM_API_KEY)...${NC}"
     cp "$BACKEND_DIR/.env.example" "$BACKEND_DIR/.env"
   fi
 fi

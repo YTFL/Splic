@@ -19,6 +19,12 @@ const isolationHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+  experimental: {
+    // The /api rewrite proxies to FastAPI. A real Auto-Cut run (Sarvam STT
+    // + director LLM + sticker synthesis) routinely exceeds the 30 s default,
+    // which made the proxy reset the socket and return a bare 500.
+    proxyTimeout: 300_000,
+  },
   async headers() {
     return [
       {

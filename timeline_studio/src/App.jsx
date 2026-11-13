@@ -65,6 +65,11 @@ import { useVoiceProfiles } from "./hooks/useVoiceProfiles.js";
 import { useAutoCaptions } from "./hooks/useAutoCaptions.js";
 import { useAutoEdit } from "./hooks/useAutoEdit.js";
 import { useSilenceRemoval } from "./hooks/useSilenceRemoval.js";
+import { buildSilenceRemovalReview, canRemovePauses } from "./lib/silenceRemoval.js";
+import {
+  AUTO_CUT_LIVE_STATUS, buildAutoCutCaptionSegments, buildAutoCutSfxSegments, extractEditPlan, buildAutoCutStickerSegments, findAutoCutTargetClip,
+  isBackendEditPlan, planClipMapping, preloadAutoCutSfx, requestAutoCutEditPlan,
+} from "./lib/autoCut.js";
 import { useWebMcpEditor } from "./hooks/useWebMcpEditor.js";
 import { sampleEditorMedia } from "./lib/webMcpMediaSample.js";
 import { browserProjectFingerprint, restoreBrowserProjectMedia } from "./lib/browserEditPlan.js";
@@ -280,7 +285,7 @@ export function App({ hostSession = null }) {
   });
   const [currentProject, setCurrentProject] = useState({
     id: "proj-01",
-    name: "Trending Desi Auto-Cut Reel",
+    name: "Trending Auto-Cut Reel",
     ratioId: "9:16",
     fps: 30,
     updatedAt: Date.now(),
@@ -340,6 +345,7 @@ export function App({ hostSession = null }) {
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showAutoEditModal, setShowAutoEditModal] = useState(false);
+  const [autoEditAutoStart, setAutoEditAutoStart] = useState(false);
   const [isAutoEditRunning, setIsAutoEditRunning] = useState(false);
   const [autoEditPlan, setAutoEditPlan] = useState(null);
   const [autoEditSessionId, setAutoEditSessionId] = useState(0);
@@ -1795,6 +1801,125 @@ export function App({ hostSession = null }) {
     getSnapshot: getProjectSnapshot, getRuntime: getBrowserRuntimeProject,
     applyReview: applyBrowserReview, rippleEditing, setRippleEditing, seekTo, t,
   });
+  // Auto-Cut: the pipeline awaits network + decoding, so every timeline
+  // mutation reads the editor through this ref to avoid stale closures.
+  const autoCutLiveRef = useRef(null);
+  const autoCutAnimationDoneRef = useRef(null);
+  const [autoCutLiveRun, setAutoCutLiveRun] = useState(null);
+  const [autoCutLiveStatus, setAutoCutLiveStatus] = useState("");
+  autoCutLiveRef.current = {
+    visualSegments, selectedVisualSegment, audioSegments, trackLocks, trackVisibility, rippleEditing,
+    getProjectSnapshot, getBrowserRuntimeProject, applyBrowserReview, checkpointHistory,
+  };
+  const autoCutTarget = findAutoCutTargetClip(visualSegments, selectedVisualSegment);
+  const runAutoCut = async ({ plan: providedPlan = null, languageCode = "hi-IN", onPhase } = {}) => {
+    const initial = autoCutLiveRef.current;
+    const initialTarget = findAutoCutTargetClip(initial.visualSegments, initial.selectedVisualSegment);
+    if (!initialTarget) throw new Error("Import a video onto the timeline first, then run Auto-Cut.");
+    if (initial.trackLocks.image) throw new Error("Unlock the video track to run Auto-Cut.");
+    if (autoCutAnimationDoneRef.current) throw new Error("Auto-Cut is already running.");
+
+    const report = (phase) => {
+      onPhase?.(phase);
+      setAutoCutLiveStatus(AUTO_CUT_LIVE_STATUS[phase] || "");
+    };
+    // Backend work and the agentic animation run in parallel: the engine holds
+    // its acoustic sweep until the plan resolves, animates it, then signals
+    // its commit step, which is where the real edits are applied.
+    const fetched = (async () => {
+      report("uploading");
+      const plan = providedPlan || await requestAutoCutEditPlan(initialTarget.clip, { languageCode });
+      if (!isBackendEditPlan(plan)) throw new Error("The backend response is not a valid EditPlan.");
+      report("assets");
+      return { plan, ...(await preloadAutoCutSfx(plan)) };
+    })();
+    const planPromise = fetched.then((result) => result.plan);
+    planPromise.catch(() => {}); // the engine observes it; avoid an unhandled rejection
+    const animationDone = new Promise((resolve) => { autoCutAnimationDoneRef.current = resolve; });
+    const stopLiveRun = () => {
+      autoCutAnimationDoneRef.current = null;
+      setAutoCutLiveRun(null);
+      setAutoCutLiveStatus("");
+      setIsAutoEditRunning(false);
+    };
+    setAutoCutLiveRun({ planPromise });
+    setAutoEditPlan(null);
+    setShowAutoEditModal(false);
+    setWorkspacePage("editor");
+    setAutoEditSessionId((prev) => prev + 1);
+    setIsAutoEditRunning(true);
+
+    let fetchedResult;
+    try {
+      fetchedResult = await fetched;
+    } catch (error) {
+      stopLiveRun();
+      setShowAutoEditModal(true); // surface the error in the modal
+      throw error;
+    }
+    // Safety net: never let a cancelled animation block the edit.
+    await Promise.race([animationDone, new Promise((resolve) => setTimeout(resolve, 25000))]);
+    try {
+      return applyAutoCutPlan(fetchedResult, initialTarget, report);
+    } finally {
+      stopLiveRun();
+    }
+  };
+  const applyAutoCutPlan = ({ plan, decodedByAsset, failed: failedSfx }, initialTarget, report) => {
+    report("assembling");
+    const live = autoCutLiveRef.current;
+    const liveClip = live.visualSegments.find((clip) => clip.id === initialTarget.clip.id);
+    const target = liveClip ? findAutoCutTargetClip(live.visualSegments, liveClip) : null;
+    if (!target) throw new Error("The timeline video changed during Auto-Cut. Please run it again.");
+    const warnings = [...(plan.warnings || [])];
+    if (failedSfx.length) warnings.push(`SFX unavailable: ${failedSfx.join(", ")}`);
+
+    let mapping = planClipMapping(plan, target);
+    let cutsApplied = 0;
+    if (mapping.candidates.length) {
+      try {
+        if (!canRemovePauses(target.clip, live.visualSegments[target.index - 1])) {
+          throw Object.assign(new Error(), { code: "clip has speed changes or a transition" });
+        }
+        const review = buildSilenceRemovalReview(
+          live.getProjectSnapshot(), live.getBrowserRuntimeProject(), target.clip.id, mapping.candidates, live.rippleEditing,
+        );
+        live.applyBrowserReview(review, "Auto-Cut applied");
+        cutsApplied = mapping.candidates.length;
+      } catch (error) {
+        warnings.push(`Ripple cuts skipped (${error.code || error.message || "unsupported clip"})`);
+        mapping = planClipMapping({ ...plan, cuts: [] }, target);
+      }
+    }
+    // applyBrowserReview records the undo checkpoint; otherwise record one here
+    // so the whole auto-cut is a single undo step.
+    if (!cutsApplied) live.checkpointHistory();
+
+    const captions = live.trackLocks.caption ? [] : buildAutoCutCaptionSegments(plan, mapping);
+    if (live.trackLocks.caption && plan.captions?.length) warnings.push("Caption track is locked; captions skipped");
+    if (captions.length) {
+      setCaptionSegments(captions);
+      setScript(captions.map((caption) => caption.text).join("\n"));
+      setCaptionsEnabled(true);
+    }
+    const stickers = live.trackLocks.sticker ? [] : buildAutoCutStickerSegments(plan, mapping);
+    if (stickers.length) {
+      setStickerSegments((current) => [...current.filter((item) => item.category !== "auto-cut"), ...stickers]);
+    }
+    const sfx = live.trackLocks.audio ? [] : buildAutoCutSfxSegments(plan, mapping, decodedByAsset, {
+      existingSegments: live.audioSegments, trackLocks: live.trackLocks, trackVisibility: live.trackVisibility,
+    });
+    if (sfx.length) setAudioSegments((current) => [...current, ...sfx]);
+    setTrackVisibility((current) => ({
+      ...current, ...(captions.length ? { caption: true } : {}), ...(stickers.length ? { sticker: true } : {}),
+    }));
+
+    setWorkspacePage("editor");
+    seekTo(target.start, { immediate: true });
+    const summary = { cuts: cutsApplied, captions: captions.length, stickers: stickers.length, sfx: sfx.length, warnings, director: plan.director };
+    notify(`Auto-Cut: ${summary.cuts} cuts, ${summary.captions} captions, ${summary.stickers} stickers, ${summary.sfx} SFX`);
+    return summary;
+  };
   const isEditorBusy = () => Boolean(projectImportProgress || exporting || timelineClipDragRef.current || pointerAssetDragRef.current ||
     isDragging || draggedAssetId || ["generating", "captioning"].includes(status) || visualSegments.some((clip) => clip.preparing) ||
     visualOverlaySegments.some((clip) => clip.preparing) || visionJob.running || avatarJob.running || autoEdit.job.running || cinematicDepth.job.running || photoParallaxDepth.job.running);
@@ -2115,11 +2240,26 @@ export function App({ hostSession = null }) {
     notify("Project removed");
   }, [notify]);
 
+  const runAutoCutRef = useRef(runAutoCut);
+  runAutoCutRef.current = runAutoCut;
   const triggerAutoEdit = useCallback((planOrFile = null) => {
-    if (planOrFile) {
+    // Only Blobs, JSON strings and plain plan objects are edit plans. Anything
+    // else (e.g. a React click event from onClick={triggerAutoEdit}) means
+    // "start Auto-Cut": open the modal and run the backend pipeline right away.
+    const isPlanInput = typeof planOrFile === "string"
+      || (typeof Blob !== "undefined" && planOrFile instanceof Blob)
+      || (planOrFile && typeof planOrFile === "object" && Object.getPrototypeOf(planOrFile) === Object.prototype
+        && !("nativeEvent" in planOrFile));
+    if (isPlanInput) {
       const applyPlan = (parsedPlan) => {
         try {
-          const normalized = normalizeEditPlan(parsedPlan, userAssets);
+          const raw = typeof parsedPlan === "string" ? JSON.parse(parsedPlan.trim()) : parsedPlan;
+          const parsed = extractEditPlan(raw) || raw;
+          if (isBackendEditPlan(parsed)) {
+            runAutoCutRef.current({ plan: parsed }).catch((err) => notify(`Error: ${err.message}`));
+            return;
+          }
+          const normalized = normalizeEditPlan(parsed, userAssets);
           setAutoEditPlan(normalized);
           setShowAutoEditModal(false);
           setWorkspacePage("editor");
@@ -2143,6 +2283,7 @@ export function App({ hostSession = null }) {
         applyPlan(planOrFile);
       }
     } else {
+      setAutoEditAutoStart(true);
       setShowAutoEditModal(true);
     }
   }, [userAssets, notify]);
@@ -3238,6 +3379,10 @@ export function App({ hostSession = null }) {
           setAutoEditSessionId((prev) => prev + 1);
           setIsAutoEditRunning(true);
         }}
+        onRunAutoCut={runAutoCut}
+        autoStart={autoEditAutoStart}
+        onAutoStartConsumed={() => setAutoEditAutoStart(false)}
+        targetClipName={autoCutTarget ? autoCutTarget.clip.name || "Timeline video" : ""}
         userAssets={userAssets}
       />
       <AutoEditEngine
@@ -3246,14 +3391,22 @@ export function App({ hostSession = null }) {
         hasExistingTimeline={visualSegments.length > 0}
         userAssets={userAssets}
         editPlanInput={autoEditPlan}
+        liveRun={autoCutLiveRun}
+        liveStatus={autoCutLiveStatus}
         onCommitTimeline={(plan) => {
+          if (autoCutAnimationDoneRef.current) {
+            // Live run: the animation finished; runAutoCut applies the real plan.
+            autoCutAnimationDoneRef.current();
+            return;
+          }
           handleAutoEditCommit(plan);
           setIsAutoEditRunning(false);
           setAutoEditPlan(null);
           setWorkspacePage("editor");
-          notify("⚡ Auto-Cut: Imported JSON instructions into timeline");
+          notify("Auto-Cut: Imported JSON instructions into timeline");
         }}
         onComplete={() => {
+          if (autoCutAnimationDoneRef.current) return; // live run stops itself after applying
           setIsAutoEditRunning(false);
           setAutoEditPlan(null);
         }}

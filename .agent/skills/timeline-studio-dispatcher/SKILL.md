@@ -6,7 +6,7 @@ description: Wire the Sarvam EditPlan JSON into the forked MartinDelophy/ai-vide
 # Timeline Studio Dispatcher & Karaoke Captions
 
 ## Purpose
-Connects the `"⚡ Desi Auto-Cut"` UI button in Timeline Studio to the FastAPI `/api/sarvam-auto-edit` endpoint and translates the returned `EditPlan` JSON into editable tracks on the browser timeline.
+Connects the `"⚡ Auto-Cut"` UI button in Timeline Studio to the FastAPI `/api/sarvam-auto-edit` endpoint and translates the returned `EditPlan` JSON into editable tracks on the browser timeline.
 
 ## Surgical Integration Rules
 - **Do NOT rewrite** the core WebCodecs exporter, WebGPU shaders, or color-grading panels.

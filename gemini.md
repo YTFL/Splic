@@ -12,8 +12,8 @@ Over 40 million Indian creators produce short-form vertical videos (Instagram Re
 4. Miss Indian conversational filler words (*"matlab"*, *"arre"*, *"toh basically"*) and meme timing.
 
 ### Solution
-A 1-click **"⚡ Desi Auto-Cut"** workflow inside a browser-native multi-track video timeline:
-1. **Extract & Transcribe:** Extracts audio from uploaded 9:16 smartphone clips (15–60s) and calls **Sarvam Saaras v4** (`mode="transliteration"`) to obtain Romanized Indic text with millisecond-level word timestamps.
+A 1-click **"⚡ Auto-Cut"** workflow inside a browser-native multi-track video timeline:
+1. **Extract & Transcribe:** Extracts audio from uploaded 9:16 smartphone clips (15–60s) and calls **Sarvam Saaras v4** (`mode="translit"`) to obtain Romanized Indic text with millisecond-level word timestamps.
 2. **AI Video Director:** Sends the timestamped transcript to **Sarvam-105B Conversations** (`/v2/chat/completions`), which outputs a strict JSON edit plan containing:
    - **Ripple Cuts:** Dead-air silences (> 0.8s) and Indic filler phrases.
    - **Karaoke Captions:** Word-by-word Romanized Hinglish (and optional English translation) blocks.
@@ -30,7 +30,7 @@ A 1-click **"⚡ Desi Auto-Cut"** workflow inside a browser-native multi-track v
 ┌──────────────────────────────────────────────────────────────────────┐
 │                    FRONTEND (React + TypeScript + Next.js)          │
 │  Forked Timeline Studio (WebCodecs + Multi-Track Canvas Timeline)    │
-│  • "⚡ Desi Auto-Cut" Toolbar Button                                 │
+│  • "⚡ Auto-Cut" Toolbar Button                                 │
 │  • Dispatches JSON Edit Plan into Timeline Tracks                    │
 │  • Interactive Drag/Drop, Caption Editing & Client-Side MP4 Export   │
 └───────────────────────────────┬──────────────────────────────────────┘
@@ -39,10 +39,10 @@ A 1-click **"⚡ Desi Auto-Cut"** workflow inside a browser-native multi-track v
 ┌──────────────────────────────────────────────────────────────────────┐
 │                    BACKEND (Python + FastAPI)                        │
 │  1. Local Silence Pre-Check: pydub.silence.detect_silence() (0 cost) │
-│  2. Speech-to-Text: Sarvam Saaras v4 (mode="transliteration")        │
-│  3. Video Director LLM: Sarvam-105B Conversations (JSON Mode)        │
+│  2. Speech-to-Text: Sarvam Saaras v4 (mode="translit")        │
+│  3. Video Director LLM: Sarvam-105B (JSON Mode)        │
 │  4. Dynamic Sticker Pipeline: duckduckgo_search + rembg + Disk Cache │
-│  5. Dev/Demo Safety: USE_MOCK cache & Groq/Gemini LLM fallback       │
+│  5. Resilience: Groq/Gemini LLM fallback + offline heuristic director│
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -55,13 +55,13 @@ A 1-click **"⚡ Desi Auto-Cut"** workflow inside a browser-native multi-track v
 - **Auth Header:** `api-subscription-key: <SARVAM_API_KEY>`
 - **Form Fields:**
   - `model`: `"saaras:v4"`
-  - `mode`: `"transliteration"` *(Critical: outputs Romanized Indic script rather than Devanagari/Tamil script; use `"translate"` if generating secondary English subtitle tracks)*
+  - `mode`: `"translit"` *(Critical: outputs Romanized Indic script rather than Devanagari/Tamil script; use `"translate"` if generating secondary English subtitle tracks)*
   - `language_code`: `"hi-IN"` (or `"unknown"` / auto-detect across 22+ Indic languages)
 - **Expected Output:** `transcript` string + word-level timestamps (`start_time`, `end_time`, `word`).
 
-### 3.2 AI Video Director: Sarvam-105B Conversations
+### 3.2 AI Video Director: Sarvam-105B
 - **Endpoint:** `https://api.sarvam.ai/v2/chat/completions` (OpenAI-compatible)
-- **Model ID:** `"sarvam-105b-conversations"` (or `"sarvam-105b"` for deeper reasoning; budget/speed fallback on Token Factory: `"glm-5.3-flash"` or `"deepseek-v4.1-flash-1017"`)
+- **Model ID:** `"sarvam-105b"` (128K context, reasoning efforts `low` | `medium` | `high`; open-weight alternatives on `/v2`: `"glm5.3"` or `"deepseekv4.1-flash-1017"`)
 - **Required Output Schema (`response_format={"type": "json_object"}`):**
 ```json
 {
@@ -112,8 +112,8 @@ A 1-click **"⚡ Desi Auto-Cut"** workflow inside a browser-native multi-track v
 
 4. **Credit Conservation (500 Credits = ₹500 INR):**
    - `saaras:v4` costs ~₹0.49/min (~₹0.25 per 30s reel).
-   - `sarvam-105b-conversations` costs ₹15/1M input & ₹60/1M output (~₹0.02 per reel).
-   - **Rule:** Never burn live Sarvam API credits during UI/CSS/timeline debugging. Use `USE_MOCK=true` with a cached `sample_edit_plan.json` for frontend iteration. Use `pydub` locally for raw silence detection.
+   - `sarvam-105b` costs ₹15/1M input & ₹60/1M output (~₹0.02 per reel).
+   - **Rule:** Never burn live Sarvam API credits during UI/CSS/timeline debugging. Iterate on UI against plans already applied to the timeline (undo/redo), and stub `sarvam_client` in automated tests. Use `pydub` locally for raw silence detection.
 
 ---
 
@@ -123,7 +123,7 @@ A 1-click **"⚡ Desi Auto-Cut"** workflow inside a browser-native multi-track v
 .
 ├── src/                          # Forked Timeline Studio React/TS frontend
 │   ├── features/timeline/        # Timeline state store & track dispatchers
-│   ├── components/               # Add "⚡ Desi Auto-Cut" toolbar button here
+│   ├── components/               # Add "⚡ Auto-Cut" toolbar button here
 │   └── ...
 ├── public/
 │   └── assets/
@@ -132,10 +132,9 @@ A 1-click **"⚡ Desi Auto-Cut"** workflow inside a browser-native multi-track v
 │       └── sfx/                  # Meme sound effects (vine_boom.mp3, cash.mp3, ding.mp3)
 ├── backend/                      # Python FastAPI orchestrator
 │   ├── main.py                   # /api/sarvam-auto-edit & static asset serving
-│   ├── sarvam_client.py          # Saaras v4 STT + Sarvam-105B Director + Mock/Groq fallback
+│   ├── sarvam_client.py          # Saaras v4 STT + Sarvam-105B Director + Groq/Gemini fallback
 │   ├── sticker_engine.py         # DuckDuckGo search + rembg + disk cache
 │   ├── silence_detector.py       # Local pydub silence detection
-│   ├── sample_edit_plan.json     # Cached Sarvam response for zero-credit dev mode
 │   └── requirements.txt
 ├── GEMINI.md                     # This file
 └── AGENTS.md                     # Agentic development rules & task workflow

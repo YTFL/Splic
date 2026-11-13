@@ -14,23 +14,23 @@ export function SmartAiWorkspace({
   autoEdit,
   silenceRemoval,
   aiMusic,
-  onRunDesiAutoCut,
-  isProcessingDesiCut = false,
-  desiCutProgress = 0,
-  desiCutPhase = "",
+  onRunAutoCut,
+  isProcessingAutoCut = false,
+  autoCutProgress = 0,
+  autoCutPhase = "",
   t = (k, fallback) => fallback || k,
   activeLanguage = "en",
   onApplyCaptions,
   onApplySilenceCuts,
   hasVisual = false,
 }) {
-  const [activeAiTab, setActiveAiTab] = useState("desi-auto-cut");
+  const [activeAiTab, setActiveAiTab] = useState("auto-cut");
   const [silenceThreshold, setSilenceThreshold] = useState(0.8);
   const [captionMode, setCaptionMode] = useState("romanized"); // "romanized" | "dual"
-  const [desiCutStatus, setDesiCutStatus] = useState("idle"); // "idle" | "running" | "success"
+  const [autoCutStatus, setAutoCutStatus] = useState("idle"); // "idle" | "running" | "success"
 
   const aiTabs = [
-    { id: "desi-auto-cut", label: "Desi Auto-Cut", icon: Zap, highlight: true },
+    { id: "auto-cut", label: "Auto-Cut", icon: Zap, highlight: true },
     { id: "silence", label: "Silence & Cuts", icon: Scissors },
     { id: "captions", label: "Romanized Captions", icon: Subtitles },
     { id: "stickers", label: "Dynamic Stickers", icon: Smile },
@@ -38,18 +38,18 @@ export function SmartAiWorkspace({
     { id: "music", label: "AI Music & Audio", icon: Music },
   ];
 
-  const handleTriggerDesiCut = async () => {
-    setDesiCutStatus("running");
-    if (onRunDesiAutoCut) {
+  const handleTriggerAutoCut = async () => {
+    setAutoCutStatus("running");
+    if (onRunAutoCut) {
       try {
-        await onRunDesiAutoCut({ captionMode, silenceThreshold });
-        setDesiCutStatus("success");
+        await onRunAutoCut({ captionMode, silenceThreshold });
+        setAutoCutStatus("success");
       } catch (err) {
-        setDesiCutStatus("idle");
+        setAutoCutStatus("idle");
       }
     } else {
       setTimeout(() => {
-        setDesiCutStatus("success");
+        setAutoCutStatus("success");
       }, 2000);
     }
   };
@@ -76,8 +76,8 @@ export function SmartAiWorkspace({
         })}
       </div>
 
-      {/* Tab 1: Desi Auto-Cut Pipeline */}
-      {activeAiTab === "desi-auto-cut" && (
+      {/* Tab 1: Auto-Cut Pipeline */}
+      {activeAiTab === "auto-cut" && (
         <div className="smart-ai-content">
           <div className="smart-hero-banner">
             <div className="smart-hero-icon">
@@ -85,7 +85,7 @@ export function SmartAiWorkspace({
             </div>
             <div className="smart-hero-text">
               <div className="hero-title-row">
-                <h3>Desi Auto-Cut</h3>
+                <h3>Auto-Cut</h3>
                 <span className="sarvam-badge">Powered by Sarvam AI</span>
               </div>
               <p>
@@ -150,27 +150,27 @@ export function SmartAiWorkspace({
             </div>
 
             <div className="smart-cta-row">
-              {desiCutStatus === "success" ? (
+              {autoCutStatus === "success" ? (
                 <div className="smart-success-card">
                   <CheckCircle2 size={16} strokeWidth={1.5} />
-                  <span>Desi Auto-Cut successfully applied to timeline tracks!</span>
+                  <span>Auto-Cut successfully applied to timeline tracks!</span>
                 </div>
               ) : (
                 <button
                   type="button"
                   className="smart-trigger-btn"
-                  disabled={desiCutStatus === "running" || isProcessingDesiCut}
-                  onClick={handleTriggerDesiCut}
+                  disabled={autoCutStatus === "running" || isProcessingAutoCut}
+                  onClick={handleTriggerAutoCut}
                 >
-                  {desiCutStatus === "running" || isProcessingDesiCut ? (
+                  {autoCutStatus === "running" || isProcessingAutoCut ? (
                     <>
                       <RefreshCw size={15} className="spin-icon" strokeWidth={1.5} />
-                      <span>{desiCutPhase || "Running Sarvam AI Director..."}</span>
+                      <span>{autoCutPhase || "Running Sarvam AI Director..."}</span>
                     </>
                   ) : (
                     <>
                       <Zap size={15} strokeWidth={1.5} />
-                      <span>Execute 1-Click Desi Auto-Cut</span>
+                      <span>Execute 1-Click Auto-Cut</span>
                     </>
                   )}
                 </button>

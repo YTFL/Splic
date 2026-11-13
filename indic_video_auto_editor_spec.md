@@ -27,7 +27,7 @@ This project delivers an **Autonomous, Human-in-the-Loop Video Auto-Editor for V
 ### 2.2 Why Existing Tools Fail
 | Dimension | Global Editors (CapCut, OpusClip, Descript) | Our Indic Auto-Editor Engine |
 | :--- | :--- | :--- |
-| **Code-Mixing ASR** | Hallucinates or drops Hindi words mid-sentence | [Sarvam Saaras v4](https://docs.sarvam.ai/api/api-guides-tutorials/models/saaras) (`mode="codemix"` / `"transliteration"`) |
+| **Code-Mixing ASR** | Hallucinates or drops Hindi words mid-sentence | [Sarvam Saaras v4](https://docs.sarvam.ai/api/api-guides-tutorials/models/saaras) (`mode="codemix"` / `"translit"`) |
 | **Subtitle Script** | Enforces rigid Devanagari or English only | Native Romanized phonetic Hinglish karaoke captions |
 | **Cultural Entities** | Western stickers (hot dogs, dollars, US memes) | Dynamic web discovery of Indian brands, food, and culture |
 | **Output Flexibility** | Opaque black-box MP4 render (unfixable errors) | Interactive, multi-track web timeline (human-in-the-loop) |
@@ -43,7 +43,7 @@ This project delivers an **Autonomous, Human-in-the-Loop Video Auto-Editor for V
           │
           ▼
 [Sarvam Saaras v4 STT Endpoint]
-   ├── mode="transliteration" ──► Romanized Indic transcript
+   ├── mode="translit" ──► Romanized Indic transcript
    └── word_timestamps        ──► Exact float timestamps per word
           │
           ▼
@@ -81,7 +81,7 @@ This project delivers an **Autonomous, Human-in-the-Loop Video Auto-Editor for V
 * **Endpoint:** `POST https://api.sarvam.ai/speech-to-text`
 * **Configuration:**
   * `model`: `saaras:v4`
-  * `mode`: `transliteration`
+  * `mode`: `translit`
   * `language_code`: `hi-IN` (or auto-detected across 22 Indic languages)
 * **Payload Output:**
   ```json
@@ -107,7 +107,7 @@ This project delivers an **Autonomous, Human-in-the-Loop Video Auto-Editor for V
 ---
 
 ### 4.2 The AI Video Director (Reasoning & Editing Decisions)
-* **Model:** [Sarvam-105B](https://docs.sarvam.ai/api/token-factory/models/sarvam-105b) (or `sarvam-105b-conversations`)
+* **Model:** [Sarvam-105B](https://docs.sarvam.ai/api/token-factory/models/sarvam-105b) (`sarvam-105b`, 128K context)
 * **Endpoint:** `POST https://api.sarvam.ai/v2/chat/completions`
 * **System Prompt:**
   ```
@@ -188,7 +188,7 @@ On Sarvam AI, ₹1 INR equals 1 API credit. Costs for short-form video auto-edit
 
 ### 5.2 Zero-Credit Development & Hybrid Fallback
 To safeguard API credits and avoid waiting on network calls during frontend/CSS development:
-1. **Mock-First Development:** Run a single 25-second test video through Sarvam once, save the returned transcript and director plan into `sample_edit_plan.json`, and toggle `USE_MOCK=True` in the backend while styling the timeline and tuning video layouts.
+1. **Stubbed Tests, Live Runs Only on Demand:** Automated tests stub the Sarvam HTTP layer; real Sarvam calls happen only when a user runs Auto-Cut. Iterate on timeline styling using the already-applied tracks (with undo) instead of re-running the pipeline.
 2. **Local Silence Detection:** Run acoustic silence cuts using `pydub.silence.detect_silence()` locally in Python (0 API cost, executed in 40ms on CPU).
 3. **LLM Fallback:** Implement a runtime fallback toggle to Groq (Llama-3.3-70B) or Google Gemini API if network timeouts occur during the live judging round.
 
@@ -200,7 +200,7 @@ To safeguard API credits and avoid waiting on network calls during frontend/CSS 
 Hours 00:00 - 04:00 │ Phase 1: Environment Setup & Core Glue Script
                     │ • Clone & verify MartinDelophy/ai-video-editor build (`npm run dev`)
                     │ • Write standalone Python FastAPI server (`app.py`)
-                    │ • Hook up Sarvam Saaras v4 (`mode="transliteration"`)
+                    │ • Hook up Sarvam Saaras v4 (`mode="translit"`)
                     │ • Test JSON output structure on a 20-second sample video
 
 Hours 04:00 - 08:00 │ Phase 2: Video Director & Asset Pipeline
@@ -209,7 +209,7 @@ Hours 04:00 - 08:00 │ Phase 2: Video Director & Asset Pipeline
                     │ • Build static fallback library of 20 top Indian stickers & 5 sound effects
 
 Hours 08:00 - 14:00 │ Phase 3: Timeline Studio Integration
-                    │ • Add "⚡ Desi Auto-Cut" button to Timeline Studio toolbar
+                    │ • Add "⚡ Auto-Cut" button to Timeline Studio toolbar
                     │ • Wire FastAPI response to Timeline Studio's track insertion dispatchers
                     │ • Verify ripple-cuts, caption track creation, and overlay tracks in browser
 
@@ -239,7 +239,7 @@ Hours 21:00 - 24:00 │ Phase 6: Slide Deck & Presentation Polish
 ### The Live Stage Action (60 Seconds)
 1. **The Raw Footage:** Play a raw 20-second smartphone video of a teammate speaking colloquial Hinglish with long pauses:
    > *"Maine kal Zomato se Biryani mangwayi... (awkward silence)... par delivery wale ne paise extra maang liye."*
-2. **The 1-Click Execution:** Click **"⚡ Desi Auto-Cut"**.
+2. **The 1-Click Execution:** Click **"⚡ Auto-Cut"**.
 3. **The Reveal (3 Seconds Later):**
    * The awkward silence is cleanly jump-cut.
    * Dynamic, bouncing Romanized karaoke captions appear: *"Maine kal Zomato se Biryani mangwayi..."*

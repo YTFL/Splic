@@ -192,7 +192,7 @@ class EditPlan(BaseModel):
     # or offsets downstream items by the total cut duration preceding them.
     director: Optional[str] = Field(
         default=None,
-        description="Which engine produced the creative decisions: mock | sarvam | groq | gemini | heuristic",
+        description="Which engine produced the creative decisions: sarvam | groq | gemini | heuristic",
     )
     warnings: List[str] = Field(
         default_factory=list, description="Non-fatal pipeline warnings (fallbacks taken, items dropped)"

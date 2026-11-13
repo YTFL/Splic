@@ -286,7 +286,7 @@ export function MediaPanel({
             <button
               type="button"
               className="auto-edit-quick-btn"
-              onClick={onTriggerAutoEdit}
+              onClick={() => onTriggerAutoEdit()}
               title="Auto Edit (Smart Assembly)"
             >
               <Sparkles size={14} strokeWidth={1.5} />
@@ -344,7 +344,7 @@ export function MediaPanel({
             <button
               type="button"
               className="auto-edit-quick-btn"
-              onClick={onTriggerAutoEdit}
+              onClick={() => onTriggerAutoEdit()}
               title="Auto Edit (Smart Assembly)"
             >
               <Sparkles size={14} strokeWidth={1.5} />

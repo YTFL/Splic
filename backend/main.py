@@ -29,7 +29,7 @@ from config import (
 from schemas import EditPlan
 from audio_utils import AudioDecodeError, prepare_audio, has_ffmpeg
 from silence_detector import detect_silences, _PYDUB_AVAILABLE
-from sarvam_client import transcribe_audio, direct_video_edit, is_mock_enabled
+from sarvam_client import transcribe_audio, direct_video_edit, is_sarvam_configured
 from plan_builder import build_edit_plan, heuristic_director, normalize_words
 
 from db import (
@@ -69,7 +69,7 @@ app = FastAPI(
     title="Splic Backend API",
     version="1.5.0",
     description=(
-        "Splic backend: Sarvam AI Desi Auto-Cut pipeline, TinyDB projects, and sticker synthesis "
+        "Splic backend: Sarvam AI Auto-Cut pipeline, TinyDB projects, and sticker synthesis "
         "(/api/...), plus Composio OAuth for Instagram/YouTube behind Firebase Auth (/api/v1/...)."
     ),
     lifespan=lifespan,
@@ -183,9 +183,7 @@ async def health_check():
             "rembg": HAS_REMBG,
             "ffmpeg": has_ffmpeg(),
             "pydub": _PYDUB_AVAILABLE,
-            "use_mock": is_mock_enabled(),
-            "sarvam_key_configured": os.getenv("SARVAM_API_KEY", "").strip()
-            not in ("", "your_sarvam_api_subscription_key"),
+            "sarvam_key_configured": is_sarvam_configured(),
             "fallback_provider": os.getenv("FALLBACK_PROVIDER", "none"),
         },
         "composio": composio_integration.status_summary(),
@@ -440,7 +438,6 @@ def sarvam_auto_edit(
     file: UploadFile = File(..., description="Audio (WAV/MP3/M4A...) or video (MP4/MOV/WEBM...) file"),
     project_id: Optional[str] = Form(None),
     language_code: str = Form("hi-IN"),
-    use_mock: Optional[bool] = Form(None, description="Override USE_MOCK for this request"),
     fetch_stickers: bool = Form(True, description="Allow web sticker scraping (DuckDuckGo + rembg)"),
 ):
     """
@@ -456,7 +453,11 @@ def sarvam_auto_edit(
     Sync handler: FastAPI runs it in a worker thread, so blocking HTTP / ffmpeg
     calls never stall the event loop.
     """
-    mock = is_mock_enabled() if use_mock is None else bool(use_mock)
+    if not is_sarvam_configured():
+        raise HTTPException(
+            status_code=503,
+            detail="SARVAM_API_KEY is not configured. Add it to backend/.env and restart the backend.",
+        )
     data = file.file.read()
     if not data:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
@@ -464,43 +465,35 @@ def sarvam_auto_edit(
     warnings: List[str] = []
 
     try:
-        if mock:
-            stt = transcribe_audio(b"", filename, language_code, mock=True)
-            raw_plan = direct_video_edit(stt["transcript"], stt["words"], [], language_code, mock=True)
-            silence_cuts: List[Dict[str, Any]] = []
-            duration = raw_plan.get("duration")
-            director = "mock"
-        else:
-            try:
-                prepared = prepare_audio(data, filename)
-            except AudioDecodeError as exc:
-                raise HTTPException(status_code=415, detail=str(exc))
-            duration = prepared.duration
+        try:
+            prepared = prepare_audio(data, filename)
+        except AudioDecodeError as exc:
+            raise HTTPException(status_code=415, detail=str(exc))
+        duration = prepared.duration
 
-            try:
-                silence_cuts = detect_silences(prepared.wav_bytes)
-            except Exception as exc:
-                silence_cuts = []
-                warnings.append(f"Silence detection failed: {exc}")
+        try:
+            silence_cuts = detect_silences(prepared.wav_bytes)
+        except Exception as exc:
+            silence_cuts = []
+            warnings.append(f"Silence detection failed: {exc}")
 
-            try:
-                stt = transcribe_audio(prepared.wav_bytes, filename, language_code, mock=False)
-            except (RuntimeError, httpx.HTTPError) as exc:
-                raise HTTPException(status_code=502, detail=f"Speech-to-text failed: {exc}")
-            if not stt.get("words"):
-                warnings.append("Speech-to-text returned no words; only dead-air cuts were generated")
+        try:
+            stt = transcribe_audio(prepared.wav_bytes, filename, language_code)
+        except (RuntimeError, httpx.HTTPError) as exc:
+            raise HTTPException(status_code=502, detail=f"Speech-to-text failed: {exc}")
+        if not stt.get("words"):
+            warnings.append("Speech-to-text returned no words; only dead-air cuts were generated")
 
-            try:
-                raw_plan = direct_video_edit(
-                    stt["transcript"], stt["words"], silence_cuts, language_code,
-                    duration=duration, mock=False,
-                )
-                director = raw_plan.get("director")
-            except RuntimeError as exc:
-                logger.warning("Director unavailable, using heuristic director: %s", exc)
-                raw_plan = heuristic_director(normalize_words(stt["words"]))
-                director = "heuristic"
-                warnings.append("Director LLM unavailable; used offline heuristics for stickers/SFX/zooms")
+        try:
+            raw_plan = direct_video_edit(
+                stt["transcript"], stt["words"], silence_cuts, language_code, duration=duration,
+            )
+            director = raw_plan.get("director")
+        except RuntimeError as exc:
+            logger.warning("Director unavailable, using heuristic director: %s", exc)
+            raw_plan = heuristic_director(normalize_words(stt["words"]))
+            director = "heuristic"
+            warnings.append("Director LLM unavailable; used offline heuristics for stickers/SFX/zooms")
 
         detected_lang = stt.get("language_code")
         plan_dict = build_edit_plan(

@@ -1,5 +1,6 @@
 import React from "react";
 import "../styles.css";
+import "../splic-theme.css";
 
 export const metadata = {
   title: "Timeline Studio — Free Browser AI Video Editor & Voiceover Generator",

@@ -116,12 +116,12 @@
   align-items: center;
   gap: 4px;
   padding: 6px;
-  color: #8cf1e8;
+  color: #ff6b6b;
   font-size: 11px;
   cursor: pointer;
 }
 .template-upload > input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
-.template-upload:focus-within { outline: 2px solid #41d4cd; border-radius: 5px; }
+.template-upload:focus-within { outline: 2px solid #e53935; border-radius: 5px; }
 .template-tempo { display: grid; grid-template-columns: auto 72px 1fr; align-items: center; gap: 8px; }
 .template-tempo > output { color: #b4c0cc; text-align: end; }
 .template-apply {

@@ -329,7 +329,7 @@
   gap: 8px;
   padding: 0 0 16px;
   border-bottom: 1px solid #ffffff18;
-  color: #43e7df;
+  color: #e53935;
   font-size: 12px;
 }
 .is-special-effect-inspector .face-attachment-status > span:first-of-type {
@@ -756,7 +756,7 @@
 }
 .is-special-effect-inspector .click-ripple-controls.is-bare input[type="range"] {
   width: 100%;
-  accent-color: #6be7df;
+  accent-color: #e53935;
 }
 .is-special-effect-inspector .click-ripple-controls.is-bare select {
   margin-left: auto;

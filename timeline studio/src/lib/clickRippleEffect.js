@@ -8,7 +8,7 @@ export const DEFAULT_CLICK_RIPPLE_EFFECT = Object.freeze({
   radius: 5,
   colorAmount: 1,
   glow: 0.78,
-  color: "#54f3e1",
+  color: "#e53935",
 });
 
 const METER_PATTERNS = Object.freeze({

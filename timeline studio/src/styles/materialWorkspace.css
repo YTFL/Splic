@@ -6,7 +6,7 @@
 .material-workspace h3 { font-size: 15px; margin-top: 18px; }
 .material-workspace button { min-height: 32px; font-size: 12px; cursor: pointer; padding: 6px 10px; color: inherit; background: #64748b25; border: 1px solid #64748b70; border-radius: 7px; }
 .material-workspace button:disabled { cursor: not-allowed; opacity: .5; }
-.material-workspace button[aria-pressed="true"] { border-color: #54d4ed; color: #54d4ed; background: #54d4ed18; }
+.material-workspace button[aria-pressed="true"] { border-color: #e53935; color: #e53935; background: #e5393518; }
 .material-workspace section:not([hidden]) { display: grid; gap: 10px; padding-block: 15px; }
 .material-workspace label { display: grid; gap: 5px; font-size: 12px; min-width: 0; }
 .material-workspace input, .material-workspace select, .material-workspace textarea { width: 100%; min-width: 0; box-sizing: border-box; padding: 8px; font: inherit; color: inherit; background: #080d1580; border: 1px solid #64748b70; border-radius: 7px; }

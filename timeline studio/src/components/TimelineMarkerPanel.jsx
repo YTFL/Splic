@@ -23,7 +23,7 @@ const TYPES = [
   { value: "note", key: "markersTypeNote", icon: NotePencil },
 ];
 const COLORS = [
-  { value: "cyan", key: "markersColorCyan", hex: "#59eadf" },
+  { value: "cyan", key: "markersColorCyan", hex: "#e53935" },
   { value: "amber", key: "markersColorAmber", hex: "#f0ba62" },
   { value: "violet", key: "markersColorViolet", hex: "#b29bf3" },
   { value: "rose", key: "markersColorRose", hex: "#ef91ad" },

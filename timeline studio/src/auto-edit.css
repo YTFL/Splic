@@ -227,15 +227,211 @@
 }
 
 .clip-overlay {
-  background: #2d281a;
-  border: 1px solid #736437;
-  color: #ebe0bd;
+  background: #2a1215;
+  border: 1px solid #8b262d;
+  color: #f7bec4;
+}
+
+.clip-effects {
+  background: #2e230f;
+  border: 1px solid #c9a334;
+  color: #ffe680;
 }
 
 .clip-audio {
-  background: #1c271e;
-  border: 1px solid #3c5740;
-  color: #bcd4bf;
+  background: #142418;
+  border: 1px solid #325939;
+  color: #bfe8c5;
+}
+
+/* Track Layer Identifiers (clearly portraying V1 Media, V2 Sticker, FX Effects, A1 Audio) */
+.track-layer-header-pill {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 10002;
+}
+
+.track-layer-header-pill.layer-media {
+  background: #3b281f;
+  border: 1px solid #8f5f41;
+  color: #f0d5c2;
+}
+
+.track-layer-header-pill.layer-sticker {
+  background: #36171a;
+  border: 1px solid #992931;
+  color: #f7bec4;
+}
+
+.track-layer-header-pill.layer-effects {
+  background: #352812;
+  border: 1px solid #997828;
+  color: #fae69e;
+}
+
+.track-layer-header-pill.layer-audio {
+  background: #172c1c;
+  border: 1px solid #3c6e45;
+  color: #c9eed0;
+}
+
+/* Agentic Selection Ring on Effect / Asset Cards */
+.is-agentic-selected-card {
+  outline: 2px solid #f5c542 !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
+  transform: scale(1.03) !important;
+  transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
+  z-index: 20 !important;
+}
+
+/* Transition Badge at the Cut Seam */
+.transition-seam-badge {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: #2e2410;
+  border: 1px solid #d4a72c;
+  color: #ffe680;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  z-index: 10003;
+  pointer-events: none;
+  animation: transition-badge-appear 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes transition-badge-appear {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Audio Clip Waveform Simulation */
+.clip-audio-waveform {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 12px;
+  margin-top: 2px;
+}
+
+.clip-audio-waveform span {
+  flex: 1;
+  background: rgba(191, 232, 197, 0.45);
+  border-radius: 1px;
+}
+
+/* Agentic Action Card (Displays AI working its way through the UI) */
+.agentic-action-card {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(22, 25, 32, 0.92);
+  border: 1px solid rgba(200, 90, 58, 0.6);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  z-index: 10005;
+  pointer-events: none;
+  animation: agentic-card-pop 0.25s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+@keyframes agentic-card-pop {
+  0% {
+    transform: translate(0, -6px) scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+.agentic-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.agentic-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.agentic-card-type {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #c85a3a;
+  text-transform: uppercase;
+}
+
+.agentic-card-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #dfcfbf;
+}
+
+.agentic-card-sub {
+  font-size: 9px;
+  color: rgba(223, 207, 191, 0.65);
+}
+
+/* Sarvam AI Director JSON Plan HUD Banner */
+.sarvam-director-plan-hud {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  background: rgba(20, 23, 30, 0.92);
+  border: 1px solid rgba(200, 90, 58, 0.45);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  z-index: 10004;
+  pointer-events: none;
+}
+
+.sarvam-hud-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #c85a3a;
+  letter-spacing: 0.04em;
+}
+
+.sarvam-hud-spec {
+  font-size: 10px;
+  color: #dfcfbf;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /* Silence Dead-Air Gap directly on the track */

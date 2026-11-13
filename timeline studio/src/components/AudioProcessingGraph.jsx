@@ -70,7 +70,7 @@ export function AudioProcessingGraph({
         ctx.lineWidth = width;
         ctx.stroke();
       };
-      const cyan = disabled ? "#61777b" : "#4ee4d5";
+      const accentRed = disabled ? "#555255" : "#e53935";
       if (tab === "denoise") {
         const waveform = (values, color) => {
           if (!values?.length) return;
@@ -90,13 +90,13 @@ export function AudioProcessingGraph({
             [L, 74],
             [R, 74],
           ],
-          "#23343c",
+          "#2e2225",
         );
-        waveform(peaks, "#667f88");
-        waveform(processedPeaks, cyan);
+        waveform(peaks, "#7a6e72");
+        waveform(processedPeaks, accentRed);
         ctx.fillText(copy.original, L, 14);
         if (processedPeaks) {
-          ctx.fillStyle = cyan;
+          ctx.fillStyle = accentRed;
           ctx.textAlign = "right";
           ctx.fillText(copy.processed, R, 14);
           ctx.textAlign = "left";
@@ -106,7 +106,7 @@ export function AudioProcessingGraph({
             [L, B],
             [R, B],
           ],
-          "#30474e",
+          "#3a282c",
           4,
         );
         line(
@@ -114,10 +114,10 @@ export function AudioProcessingGraph({
             [L, B],
             [L + settings.strength * (R - L), B],
           ],
-          cyan,
+          accentRed,
           4,
         );
-        ctx.fillStyle = "#80959e";
+        ctx.fillStyle = "#8e8085";
         ctx.fillText("0%", L, 180);
         ctx.textAlign = "right";
         ctx.fillText("100%", R, 180);
@@ -129,7 +129,7 @@ export function AudioProcessingGraph({
               [L, yGain(gain)],
               [R, yGain(gain)],
             ],
-            gain === 0 ? "#3a5159" : "#22343b",
+            gain === 0 ? "#4a3338" : "#2e2225",
           );
           ctx.fillText(`${gain > 0 ? "+" : ""}${gain}`, 6, yGain(gain) + 3);
         }
@@ -139,7 +139,7 @@ export function AudioProcessingGraph({
               [xHz(hz), T],
               [xHz(hz), B],
             ],
-            "#203139",
+            "#2e2225",
           );
           ctx.textAlign = "center";
           ctx.fillText(hz >= 1000 ? `${hz / 1000}k` : String(hz), xHz(hz), 180);
@@ -150,7 +150,7 @@ export function AudioProcessingGraph({
             const hz = 20 * 1000 ** (i / 180);
             return [xHz(hz), yGain(clamp(audioEqResponse(settings.eq, hz), -18, 18))];
           }),
-          cyan,
+          accentRed,
           2.5,
         );
       } else {
@@ -160,14 +160,14 @@ export function AudioProcessingGraph({
               [xDb(db), T],
               [xDb(db), B],
             ],
-            "#203139",
+            "#2e2225",
           );
           line(
             [
               [L, yDb(db)],
               [R, yDb(db)],
             ],
-            "#203139",
+            "#2e2225",
           );
           ctx.textAlign = "right";
           ctx.fillText(String(db), L - 7, yDb(db) + 3);
@@ -185,7 +185,7 @@ export function AudioProcessingGraph({
             [L, B],
             [R, T],
           ],
-          "#62737a",
+          "#7a6e72",
         );
         ctx.setLineDash([]);
         line(
@@ -200,21 +200,21 @@ export function AudioProcessingGraph({
             if (tab === "limiter") output = Math.min(input, settings.limiter.ceiling);
             return [xDb(input), yDb(clamp(output, -60, 0))];
           }),
-          cyan,
+          accentRed,
           2.5,
         );
       }
       for (const point of controls(tab, settings)) {
         ctx.beginPath();
         ctx.arc(point.x, clamp(point.y, T, B), 7, 0, 2 * Math.PI);
-        ctx.fillStyle = "#10282d";
+        ctx.fillStyle = "#1e1315";
         ctx.fill();
-        ctx.strokeStyle = cyan;
+        ctx.strokeStyle = accentRed;
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.beginPath();
         ctx.arc(point.x, clamp(point.y, T, B), 2.5, 0, 2 * Math.PI);
-        ctx.fillStyle = cyan;
+        ctx.fillStyle = accentRed;
         ctx.fill();
       }
     };

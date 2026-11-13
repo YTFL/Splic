@@ -1,6 +1,7 @@
 import { DesktopMenus } from "./DesktopMenus.jsx";
 import { cancelVideoProxy, clearVideoProxyCache, getVideoProxyMode, getVideoProxyRecord, getVideoProxyRevision, subscribeVideoProxy, setVideoProxyMode } from "../lib/videoProxy.js";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { SplicLogo } from "./SplicLogo.jsx";
 import {
   ArrowClockwise,
   BookOpen,
@@ -68,6 +69,10 @@ export function Topbar({
   desktopActions = {},
   hostService = null,
   completeProject = null,
+  onOpenProjects = null,
+  onOpenSettingsModal = null,
+  onOpenNewProjectModal = null,
+  projectName = "",
   t,
   compactRail,
   setCompactRail,
@@ -260,9 +265,54 @@ export function Topbar({
         <IconButton label={t("collapseSidebar")} active={compactRail} onClick={() => setCompactRail((v) => !v)}>
           <SlidersHorizontal size={19} />
         </IconButton>
+        {onOpenProjects && (
+          <button
+            type="button"
+            onClick={onOpenProjects}
+            style={{
+              background: "none",
+              border: "none",
+              padding: "2px 6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+            title="Return to Projects Dashboard"
+          >
+            <SplicLogo size={20} showText={false} />
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--splic-text-muted)", letterSpacing: "0.05em" }}>
+              PROJECTS /
+            </span>
+          </button>
+        )}
         <div>
           <div className="project-title-row">
-            <div className="project-title" title={completeProject?.name || t("projectTitle")}>{completeProject?.name || t("projectTitle")}</div>
+            <div className="project-title" title={projectName || completeProject?.name || t("projectTitle")}>
+              {projectName || completeProject?.name || t("projectTitle")}
+            </div>
+            {onOpenNewProjectModal && (
+              <button
+                type="button"
+                onClick={onOpenNewProjectModal}
+                style={{
+                  background: "var(--splic-red-muted)",
+                  border: "1px solid var(--splic-red-border)",
+                  color: "var(--splic-red-primary)",
+                  borderRadius: "4px",
+                  padding: "2px 6px",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+                title="Create New Project"
+              >
+                + NEW
+              </button>
+            )}
             <nav className="editor-main-menu" role="menubar" aria-label={t("desktopMenuBar")} onKeyDown={event => {
               if (event.defaultPrevented) return;
               if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -294,9 +344,9 @@ export function Topbar({
                   }}>
                     <div className="file-menu-heading">
                       <span>{t("projectMenuHeading")}</span>
-                      <small>Timeline Studio</small>
+                      <small>Splic Studio</small>
                     </div>
-                    <button role="menuitem" className="file-menu-action file-menu-new" type="button" onClick={() => { setShowFileMenu(false); handleNewProject(); }}>
+                    <button role="menuitem" className="file-menu-action file-menu-new" type="button" onClick={() => { setShowFileMenu(false); if (onOpenNewProjectModal) onOpenNewProjectModal(); else handleNewProject(); }}>
                       <span className="file-menu-icon"><FilePlus size={17} /></span>
                       <span className="file-menu-copy"><strong>{t("newProject")}</strong><small>{t("newProjectHint")}</small></span>
                     </button>
@@ -478,7 +528,7 @@ export function Topbar({
           ) : null}
         </div>
         <div className="menu-anchor" ref={settingsAnchorRef}>
-          <IconButton label={t("settings")} active={showSettings} onClick={() => setShowSettings((open) => !open)}>
+          <IconButton label={t("settings")} active={showSettings} onClick={() => { if (onOpenSettingsModal) onOpenSettingsModal(); else setShowSettings((open) => !open); }}>
             <GearSix size={19} />
           </IconButton>
           {showSettings ? (

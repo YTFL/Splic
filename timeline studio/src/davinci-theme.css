@@ -10,12 +10,12 @@
   --davinci-border-subtle: #242934;
   --davinci-border-strong: #333a4a;
   
-  /* DaVinci Signature Warm Burnt Orange / Amber Accents */
-  --davinci-accent: #e05638;
-  --davinci-accent-hover: #f06748;
-  --davinci-accent-active: #c94529;
-  --davinci-accent-glow: rgba(224, 86, 56, 0.22);
-  --davinci-accent-bg: rgba(224, 86, 56, 0.12);
+  /* Splic Signature Dark Charcoal & Crimson Red Accents */
+  --davinci-accent: #e53935;
+  --davinci-accent-hover: #ef5350;
+  --davinci-accent-active: #c62828;
+  --davinci-accent-glow: rgba(229, 57, 53, 0.25);
+  --davinci-accent-bg: rgba(229, 57, 53, 0.14);
 
   --davinci-text-primary: #eceef2;
   --davinci-text-secondary: #8c93a3;

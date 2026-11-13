@@ -8,7 +8,9 @@ import {
   Volume2,
   Clock,
   Layers,
+  FolderKanban,
 } from "lucide-react";
+import { SplicLogo } from "./SplicLogo.jsx";
 
 export function BottomNavBar({
   activePage = "editor",
@@ -32,6 +34,12 @@ export function BottomNavBar({
 
   const pages = [
     {
+      id: "projects",
+      label: "Projects",
+      sublabel: "Dashboard",
+      icon: FolderKanban,
+    },
+    {
       id: "editor",
       label: "Editor",
       sublabel: "Timeline & Preview",
@@ -40,7 +48,7 @@ export function BottomNavBar({
     {
       id: "smart",
       label: "Auto Edit",
-      sublabel: "Smart Assembly",
+      sublabel: "Desi Auto-Cut",
       icon: Sparkles,
     },
     {
@@ -53,12 +61,17 @@ export function BottomNavBar({
 
   return (
     <footer className="davinci-bottom-bar" role="navigation" aria-label="Workspace Pages">
-      {/* Left status & project format */}
-      <div className="davinci-bottom-left">
-        <div className="davinci-logo-badge">
-          <span className="davinci-dot" />
-          <span className="davinci-app-name">SPLIC STUDIO</span>
-        </div>
+      {/* Left status & Splic logo */}
+      <div className="davinci-bottom-left" style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+        <button
+          type="button"
+          onClick={() => onSelectPage?.("projects")}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}
+          title="Return to Projects Dashboard"
+        >
+          <SplicLogo size={20} showText={true} />
+        </button>
+
         <div className="davinci-format-tag">
           <Layers size={13} strokeWidth={1.25} />
           <span>{ratioId}</span>
@@ -98,29 +111,29 @@ export function BottomNavBar({
             type="button"
             className="davinci-mini-transport"
             onClick={onTogglePlay}
-            aria-label={isPlaying ? "Pause" : "Play"}
+            aria-label={isPlaying ? "Pause timeline" : "Play timeline"}
+            title="Spacebar to toggle playback"
           >
             {isPlaying ? (
-              <Pause size={13} strokeWidth={1.25} />
+              <Pause size={13} strokeWidth={1.75} />
             ) : (
-              <Play size={13} strokeWidth={1.25} />
+              <Play size={13} strokeWidth={1.75} style={{ marginLeft: "1px" }} />
             )}
           </button>
         ) : null}
 
-        <div className="davinci-timecode-box" title="Playhead Timecode (HH:MM:SS:FF)">
-          <Clock size={12} strokeWidth={1.25} />
-          <span className="davinci-tc-val">{formatTimecode(currentTime)}</span>
-          <span className="davinci-tc-sep">/</span>
-          <span className="davinci-tc-total">{formatTimecode(duration)}</span>
+        <div className="davinci-timecode-display" title="Playhead Position / Composition Duration">
+          <Clock size={12} strokeWidth={1.25} className="davinci-timecode-icon" />
+          <span className="timecode-current">{formatTimecode(currentTime)}</span>
+          <span className="timecode-sep">/</span>
+          <span className="timecode-total">{formatTimecode(duration)}</span>
         </div>
 
-        <div className="davinci-audio-meter-peek" title="Stereo Audio Monitor">
+        <div className="davinci-audio-meter-compact" title="Master Audio Bus (dBFS)">
           <Volume2 size={12} strokeWidth={1.25} />
-          <div className="davinci-vu-bars">
-            <span className={`vu-bar ${isPlaying ? "vu-active-1" : ""}`} />
-            <span className={`vu-bar ${isPlaying ? "vu-active-2" : ""}`} />
-            <span className={`vu-bar ${isPlaying ? "vu-active-3" : ""}`} />
+          <div className="audio-meter-bar">
+            <span className="meter-channel left" style={{ height: isPlaying ? "65%" : "4%" }} />
+            <span className="meter-channel right" style={{ height: isPlaying ? "72%" : "4%" }} />
           </div>
         </div>
       </div>

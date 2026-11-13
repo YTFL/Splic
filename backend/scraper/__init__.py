@@ -1,5 +1,5 @@
 """
-scraper package — Image scraping, background removal, and asset downloads.
+scraper package — Image scraping, background removal, and asset downloads into ~/.splic/stickers/.
 """
 
 from .sticker_engine import (
@@ -7,7 +7,7 @@ from .sticker_engine import (
     list_downloaded_stickers,
     clean_background,
     get_sticker_path,
-    DOWNLOADS_DIR,
+    STICKERS_DIR,
     HAS_REMBG,
 )
 
@@ -16,6 +16,6 @@ __all__ = [
     "list_downloaded_stickers",
     "clean_background",
     "get_sticker_path",
-    "DOWNLOADS_DIR",
+    "STICKERS_DIR",
     "HAS_REMBG",
 ]

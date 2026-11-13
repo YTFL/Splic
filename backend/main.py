@@ -1,11 +1,10 @@
 """
 main.py — FastAPI Backend for Splic (Indic Video Auto-Editor)
-Modular orchestrator importing from dedicated submodules (e.g. scraper).
+Integrated with TinyDB in user local storage (~/.splic/db.json) and transparent stickers (~/.splic/stickers/).
 """
 
-import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query, Response
@@ -13,32 +12,45 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from dotenv import load_dotenv
+
+from config import (
+    PORT,
+    DB_PATH,
+    SPLIC_DIR,
+    STICKERS_DIR,
+    TIMELINE_STUDIO_STICKERS_DIR,
+)
+
+from db import (
+    create_project,
+    get_project,
+    list_projects,
+    update_project,
+    delete_project,
+    record_sticker,
+    get_project_stickers,
+    get_all_stickers,
+)
 
 from scraper import (
     fetch_and_make_sticker,
-    list_downloaded_stickers,
     get_sticker_path,
-    DOWNLOADS_DIR,
     HAS_REMBG,
 )
 
-load_dotenv()
-PORT = int(os.getenv("PORT", 8000))
-
-BACKEND_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = BACKEND_DIR.parent
-TIMELINE_STUDIO_STICKERS_DIR = PROJECT_ROOT / "timeline studio" / "public" / "assets" / "stickers"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    # Ensure user storage directories are ready on startup
+    SPLIC_DIR.mkdir(parents=True, exist_ok=True)
+    STICKERS_DIR.mkdir(parents=True, exist_ok=True)
     yield
+
 
 app = FastAPI(
     title="Splic Backend API",
-    version="1.2.0",
-    description="FastAPI service for video auto-cut pipeline and dynamic asset discovery.",
+    version="1.3.0",
+    description="Video auto-cut backend with TinyDB local document storage and sticker synthesis.",
     lifespan=lifespan,
 )
 
@@ -61,7 +73,7 @@ async def add_corp_headers(request, call_next):
     return response
 
 
-# Read-only mount of existing default stickers from Timeline Studio
+# Read-only mount of existing default stickers from Timeline Studio (read-only reference)
 if TIMELINE_STUDIO_STICKERS_DIR.exists():
     app.mount(
         "/assets/stickers",
@@ -70,14 +82,32 @@ if TIMELINE_STUDIO_STICKERS_DIR.exists():
     )
 
 
-# Schemas
+# ============================================================================
+# Pydantic Schemas
+# ============================================================================
+
+class ProjectCreateRequest(BaseModel):
+    name: str
+    project_id: Optional[str] = None
+    settings: Optional[Dict[str, Any]] = None
+
+
+class ProjectUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    status: Optional[str] = None
+    settings: Optional[Dict[str, Any]] = None
+    edit_plan: Optional[Dict[str, Any]] = None
+
+
 class StickerScrapeRequest(BaseModel):
     keyword: str
+    project_id: Optional[str] = None
     timeout: Optional[float] = 4.0
 
 
 class BatchStickerScrapeRequest(BaseModel):
     keywords: List[str]
+    project_id: Optional[str] = None
     timeout: Optional[float] = 4.0
 
 
@@ -86,10 +116,11 @@ class StickerResponse(BaseModel):
     slug: str
     filename: str
     asset_url: str
-    local_path: Optional[str] = None
+    save_path: Optional[str] = None
     size_bytes: int = 0
     cached: bool
     fallback: bool
+    project_id: Optional[str] = "global"
 
 
 class BatchStickerResponse(BaseModel):
@@ -97,20 +128,10 @@ class BatchStickerResponse(BaseModel):
     failed: List[str]
 
 
-class StickerItem(BaseModel):
-    filename: str
-    slug: str
-    size_bytes: int
-    asset_url: str
-    modified_at: str
+# ============================================================================
+# Health & Storage Info
+# ============================================================================
 
-
-class StickerListResponse(BaseModel):
-    total: int
-    stickers: List[StickerItem]
-
-
-# Endpoints
 @app.get("/")
 @app.get("/api/health")
 async def health_check():
@@ -118,38 +139,129 @@ async def health_check():
         "status": "ok",
         "service": "splic-backend",
         "port": PORT,
+        "storage": {
+            "splic_dir": str(SPLIC_DIR),
+            "db_path": str(DB_PATH),
+            "stickers_dir": str(STICKERS_DIR),
+        },
         "features": {
-            "scraper_module": True,
+            "tinydb_nosql": True,
+            "user_local_storage": True,
             "rembg": HAS_REMBG,
-            "mock_mode": os.getenv("USE_MOCK", "true").lower() == "true",
         },
     }
 
 
+# ============================================================================
+# Projects Endpoints (TinyDB)
+# ============================================================================
+
+@app.post("/api/projects", status_code=201)
+async def create_new_project(req: ProjectCreateRequest):
+    """Create a new video editing project document in TinyDB."""
+    doc = create_project(
+        name=req.name,
+        project_id=req.project_id,
+        settings=req.settings,
+    )
+    return doc
+
+
+@app.get("/api/projects")
+async def get_all_projects():
+    """List all projects stored in TinyDB."""
+    return {"projects": list_projects()}
+
+
+@app.get("/api/projects/{project_id}")
+async def get_single_project(project_id: str):
+    """Get project details and metadata by ID."""
+    doc = get_project(project_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
+    return doc
+
+
+@app.patch("/api/projects/{project_id}")
+async def update_single_project(project_id: str, req: ProjectUpdateRequest):
+    """Update project status, settings, or edit plan in TinyDB."""
+    updates = req.model_dump(exclude_unset=True)
+    updated = update_project(project_id, updates)
+    if not updated:
+        raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
+    return updated
+
+
+@app.delete("/api/projects/{project_id}")
+async def delete_single_project(project_id: str):
+    """Delete a project and its associated sticker references from TinyDB."""
+    deleted = delete_project(project_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
+    return {"status": "deleted", "project_id": project_id}
+
+
+# ============================================================================
+# Sticker Scraper & Asset Endpoints (TinyDB + ~/.splic/stickers/)
+# ============================================================================
+
 @app.get("/api/stickers/scrape", response_model=StickerResponse)
 async def scrape_sticker_get(
     keyword: str = Query(..., description="Entity keyword, e.g. 'Zomato', 'Biryani'"),
+    project_id: Optional[str] = Query(None, description="Optional project ID to associate with"),
     timeout: float = Query(4.0, description="Fetch timeout in seconds"),
 ):
-    """GET endpoint to search, process, and download a transparent sticker."""
+    """Search, background-strip, save into ~/.splic/stickers/, and record in TinyDB."""
     res = fetch_and_make_sticker(keyword, timeout=timeout)
     if not res:
         raise HTTPException(status_code=404, detail=f"No sticker could be found or generated for '{keyword}'")
+
+    # Record in TinyDB
+    if not res.get("fallback") and res.get("save_path"):
+        record_sticker(
+            keyword=res["keyword"],
+            slug=res["slug"],
+            filename=res["filename"],
+            save_path=res["save_path"],
+            asset_url=res["asset_url"],
+            size_bytes=res.get("size_bytes", 0),
+            project_id=project_id,
+        )
+
+    res["project_id"] = project_id or "global"
     return res
 
 
 @app.post("/api/stickers/scrape", response_model=StickerResponse)
-async def scrape_sticker_post(req: StickerScrapeRequest):
-    """POST endpoint to search, process, and download a transparent sticker."""
+@app.post("/api/projects/{project_id}/stickers/scrape", response_model=StickerResponse)
+async def scrape_sticker_post(
+    req: StickerScrapeRequest,
+    project_id: Optional[str] = None,
+):
+    """POST endpoint to scrape, save sticker into user storage, and index in TinyDB."""
+    target_project = project_id or req.project_id
     res = fetch_and_make_sticker(req.keyword, timeout=req.timeout or 4.0)
     if not res:
         raise HTTPException(status_code=404, detail=f"No sticker could be found or generated for '{req.keyword}'")
+
+    if not res.get("fallback") and res.get("save_path"):
+        record_sticker(
+            keyword=res["keyword"],
+            slug=res["slug"],
+            filename=res["filename"],
+            save_path=res["save_path"],
+            asset_url=res["asset_url"],
+            size_bytes=res.get("size_bytes", 0),
+            project_id=target_project,
+        )
+
+    res["project_id"] = target_project or "global"
     return res
 
 
 @app.post("/api/stickers/batch", response_model=BatchStickerResponse)
 async def scrape_stickers_batch(req: BatchStickerScrapeRequest):
-    """Batch-scrape or retrieve cached stickers for a list of entity keywords."""
+    """Batch-scrape stickers and index all successful results in TinyDB."""
     stickers = []
     failed = []
 
@@ -159,6 +271,17 @@ async def scrape_stickers_batch(req: BatchStickerScrapeRequest):
             continue
         res = fetch_and_make_sticker(kw, timeout=req.timeout or 4.0)
         if res:
+            if not res.get("fallback") and res.get("save_path"):
+                record_sticker(
+                    keyword=res["keyword"],
+                    slug=res["slug"],
+                    filename=res["filename"],
+                    save_path=res["save_path"],
+                    asset_url=res["asset_url"],
+                    size_bytes=res.get("size_bytes", 0),
+                    project_id=req.project_id,
+                )
+            res["project_id"] = req.project_id or "global"
             stickers.append(res)
         else:
             failed.append(kw)
@@ -166,22 +289,25 @@ async def scrape_stickers_batch(req: BatchStickerScrapeRequest):
     return {"stickers": stickers, "failed": failed}
 
 
-@app.get("/api/stickers", response_model=StickerListResponse)
-async def list_stickers():
-    """List all downloaded stickers in the scraper module."""
-    items = list_downloaded_stickers()
-    return {
-        "total": len(items),
-        "stickers": items,
-    }
+@app.get("/api/stickers")
+async def list_all_cataloged_stickers():
+    """List all stickers recorded in TinyDB."""
+    return {"total": len(get_all_stickers()), "stickers": get_all_stickers()}
+
+
+@app.get("/api/projects/{project_id}/stickers")
+async def list_stickers_for_project(project_id: str):
+    """List all stickers associated with a project in TinyDB."""
+    stickers = get_project_stickers(project_id)
+    return {"project_id": project_id, "total": len(stickers), "stickers": stickers}
 
 
 @app.api_route("/api/stickers/{filename}", methods=["GET", "HEAD"])
 async def serve_sticker(filename: str):
-    """Serve a transparent sticker PNG directly with CORP headers."""
+    """Serve a transparent sticker PNG directly from ~/.splic/stickers/ with CORP headers."""
     file_path = get_sticker_path(filename)
     if not file_path:
-        raise HTTPException(status_code=404, detail="Sticker not found")
+        raise HTTPException(status_code=404, detail=f"Sticker '{filename}' not found in user storage")
 
     return FileResponse(
         path=str(file_path),

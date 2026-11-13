@@ -1,5 +1,5 @@
 """
-scraper/sticker_engine.py — Scrapes images, removes backgrounds, and caches stickers.
+scraper/sticker_engine.py — Scrapes images, removes backgrounds, and caches stickers in ~/.splic/stickers/.
 """
 
 import io
@@ -28,22 +28,12 @@ try:
 except ImportError:
     HAS_REMBG = False
 
+from config import STICKERS_DIR, TIMELINE_STUDIO_STICKERS_DIR, TIMELINE_STUDIO_MANIFEST
+
 logger = logging.getLogger("scraper.sticker_engine")
-logging.basicConfig(level=logging.INFO)
+logger.setLevel(logging.INFO)
 
-# Base directories
-SCRAPER_DIR = Path(__file__).resolve().parent
-BACKEND_DIR = SCRAPER_DIR.parent
-PROJECT_ROOT = BACKEND_DIR.parent
-
-# Storage directory for downloaded stickers inside the scraper module
-DOWNLOADS_DIR = SCRAPER_DIR / "downloads"
-DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
-
-# Static default stickers location (read-only reference from timeline studio)
-TIMELINE_STUDIO_STICKERS_DIR = PROJECT_ROOT / "timeline studio" / "public" / "assets" / "stickers"
-TIMELINE_STUDIO_MANIFEST = TIMELINE_STUDIO_STICKERS_DIR / "stickers-manifest.json"
-
+# Static default stickers fallback map
 STATIC_FALLBACK_MAP = {
     "money": "/assets/stickers/shop-coins.png",
     "paise": "/assets/stickers/shop-coins.png",
@@ -82,9 +72,9 @@ def normalize_keyword(keyword: str) -> str:
 
 
 def get_sticker_path(filename_or_slug: str) -> Optional[Path]:
-    """Retrieve Path if sticker exists in downloads."""
+    """Retrieve Path if sticker exists in user's ~/.splic/stickers/ folder."""
     filename = filename_or_slug if filename_or_slug.endswith(".png") else f"{filename_or_slug}.png"
-    target = DOWNLOADS_DIR / filename
+    target = STICKERS_DIR / filename
     if target.exists() and target.is_file():
         return target
     return None
@@ -177,21 +167,21 @@ def clean_background(img: Image.Image) -> Image.Image:
 
 def fetch_and_make_sticker(keyword: str, timeout: float = 4.0) -> Optional[Dict[str, Any]]:
     """
-    Search, strip background, and save transparent sticker PNG into scraper/downloads/<slug>.png.
+    Search, strip background, and save transparent sticker PNG into ~/.splic/stickers/<slug>.png.
     """
     slug = normalize_keyword(keyword)
     filename = f"{slug}.png"
-    target_path = DOWNLOADS_DIR / filename
+    target_path = STICKERS_DIR / filename
 
-    # 1. Check local downloads cache
+    # 1. Check local user storage cache (~/.splic/stickers/)
     if target_path.exists() and target_path.stat().st_size > 0:
-        logger.info(f"Cache hit for '{keyword}' -> {target_path}")
+        logger.info(f"User storage cache hit for '{keyword}' -> {target_path}")
         return {
             "keyword": keyword,
             "slug": slug,
             "filename": filename,
             "asset_url": f"/api/stickers/{filename}",
-            "local_path": str(target_path),
+            "save_path": str(target_path),
             "size_bytes": target_path.stat().st_size,
             "cached": True,
             "fallback": False,
@@ -237,20 +227,20 @@ def fetch_and_make_sticker(keyword: str, timeout: float = 4.0) -> Optional[Dict[
                     break
                 continue
 
-    # 3. Process and save to downloads folder
+    # 3. Process and save to user's ~/.splic/stickers/ folder
     if image_bytes:
         try:
             raw_img = Image.open(io.BytesIO(image_bytes))
             processed_img = clean_background(raw_img)
             processed_img.save(target_path, "PNG", optimize=True)
 
-            logger.info(f"Saved sticker for '{keyword}' -> {target_path}")
+            logger.info(f"Saved sticker for '{keyword}' in user storage -> {target_path}")
             return {
                 "keyword": keyword,
                 "slug": slug,
                 "filename": filename,
                 "asset_url": f"/api/stickers/{filename}",
-                "local_path": str(target_path),
+                "save_path": str(target_path),
                 "size_bytes": target_path.stat().st_size,
                 "cached": False,
                 "fallback": False,
@@ -267,7 +257,7 @@ def fetch_and_make_sticker(keyword: str, timeout: float = 4.0) -> Optional[Dict[
             "slug": slug,
             "filename": Path(fallback).name,
             "asset_url": fallback,
-            "local_path": None,
+            "save_path": None,
             "size_bytes": 0,
             "cached": False,
             "fallback": True,
@@ -278,17 +268,18 @@ def fetch_and_make_sticker(keyword: str, timeout: float = 4.0) -> Optional[Dict[
 
 
 def list_downloaded_stickers() -> List[Dict[str, Any]]:
-    """List all stickers currently in the scraper downloads folder."""
-    if not DOWNLOADS_DIR.exists():
+    """List all stickers currently in the user storage ~/.splic/stickers/ folder."""
+    if not STICKERS_DIR.exists():
         return []
 
     stickers = []
-    for file_path in DOWNLOADS_DIR.glob("*.png"):
+    for file_path in STICKERS_DIR.glob("*.png"):
         stickers.append({
             "filename": file_path.name,
             "slug": file_path.stem,
             "size_bytes": file_path.stat().st_size,
             "asset_url": f"/api/stickers/{file_path.name}",
+            "save_path": str(file_path),
             "modified_at": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
         })
     return stickers

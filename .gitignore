@@ -13,9 +13,15 @@ timeline studio/public/models/
 
 # local QA captures and generated media
 .artifacts/
+projects/
+backend/projects/
 backend/.venv/
-backend/__pycache__/
+backend/**/__pycache__/
+backend/**/downloads/
+backend/**/cache/
 *.pyc
+*.db
+*.sqlite
 public/assets/dynamic_stickers/
 timeline studio/public/assets/dynamic_stickers/
 

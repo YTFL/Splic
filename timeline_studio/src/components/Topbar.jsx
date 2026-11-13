@@ -1,52 +1,35 @@
-import { DesktopMenus } from "./DesktopMenus.jsx";
 import { cancelVideoProxy, clearVideoProxyCache, getVideoProxyMode, getVideoProxyRecord, getVideoProxyRevision, subscribeVideoProxy, setVideoProxyMode } from "../lib/videoProxy.js";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { SplicLogo } from "./SplicLogo.jsx";
 import {
-  ArrowClockwise,
-  BookOpen,
-  Bug,
-  CheckCircle,
-  Copy,
-  CornersOut,
-  FrameCorners,
-  Cursor,
-  Gauge,
-  Info,
-  Keyboard,
-  Link,
-  LinkBreak,
-  MagnifyingGlassMinus,
-  MagnifyingGlassPlus,
-  Scissors,
-  SelectionAll,
-  SpeakerHigh,
-  StopCircle,
-  Trash,
-  ArrowsHorizontal,
-  ArrowsInLineHorizontal,
-  ArrowCounterClockwise,
-  CaretDown,
-  CircleNotch,
-  Database,
-  DiscordLogo,
-  FileArrowUp,
-  FilePlus,
-  FilmSlate,
-  FloppyDisk,
-  FolderOpen,
-  Images,
-  MusicNotes,
-  Package,
-  GearSix,
-  GithubLogo,
-  Pause,
+  Menu,
+  Undo2,
+  Redo2,
+  ChevronDown,
   Play,
-  ShieldCheck,
-  SlidersHorizontal,
-  X,
-  XLogo,
-} from "@phosphor-icons/react";
+  Pause,
+  Settings as SettingsIcon,
+  Film,
+  Plus,
+  FolderOpen,
+  Save,
+  Upload,
+  Download,
+  Scissors,
+  Copy,
+  Trash2,
+  Maximize2,
+  HelpCircle,
+  HardDrive,
+  Sliders,
+  Database,
+  Loader2,
+  Link as LinkIcon,
+  Unlink,
+  ZoomIn,
+  ZoomOut,
+  Maximize,
+} from "lucide-react";
 
 import { RATIO_OPTIONS } from "../config/editor.js";
 import { LocalProjectNameDialog } from "./LocalProjectNameDialog.jsx";
@@ -56,12 +39,6 @@ import { getPrimaryShortcutModifier, releasePointerActivatedFocus } from "../lib
 import { formatStorageBytes, inspectModelCache } from "../lib/modelCacheInspection.js";
 import { ExportSettingsPanel } from "./ExportSettingsPanel.jsx";
 import { IconButton, Popover } from "./ui.jsx";
-
-const COMMUNITY_LINKS = Object.freeze({
-  discord: "https://discord.gg/uq2uvUTBr",
-  github: "https://github.com/MartinDelophy/ai-video-editor",
-  x: "https://x.com/delophy37406",
-});
 
 export function Topbar({
   proxySource = "",
@@ -74,8 +51,8 @@ export function Topbar({
   onOpenNewProjectModal = null,
   projectName = "",
   t,
-  compactRail,
-  setCompactRail,
+  compactRail: _compactRail,
+  setCompactRail: _setCompactRail,
   lastSaved,
   undo,
   redo,
@@ -104,7 +81,7 @@ export function Topbar({
   trackVisibility,
   toggleTrackVisibility,
   showFileMenu,
-  setShowFileMenu,
+  setShowFileMenu: _setShowFileMenu,
   handleNewProject,
   handleExportProject,
   handleImportProject,
@@ -117,7 +94,6 @@ export function Topbar({
   const [showProxyCache, setShowProxyCache] = useState(false);
   const [clearingProxyCache, setClearingProxyCache] = useState(false);
   const proxyCacheAnchor = useRef(null);
-  const [activeMenu, setActiveMenu] = useState("");
   const [shortcutRequest, setShortcutRequest] = useState(0);
   const fileAnchorRef = useRef(null);
   const fileKeyboardOpen = useRef(false);
@@ -186,65 +162,267 @@ export function Topbar({
     setShowProxyCache(false);
     if (containedFocus) proxyCacheAnchor.current?.parentElement?.querySelector(".is-compact-view [data-editor-menu-trigger]")?.focus();
   };
-  const closeDesktopMenu = () => setActiveMenu("");
-  const openMenu = (id) => {
-    setActiveMenu(id === "file" ? "" : id);
-    setShowFileMenu(id === "file");
-    setShowSettings(false); setShowRatioMenu(false); setShowExportMenu(false); setShowProxyCache(false);
-  };
-  const timelineCommand = command => window.dispatchEvent(new CustomEvent("editor-timeline-command", { detail: command }));
+  const [showUnifiedMenu, setShowUnifiedMenu] = useState(false);
+  const [menuTab, setMenuTab] = useState("file");
+  const menuAnchorRef = useRef(null);
+
+  const timelineCommand = (command) => window.dispatchEvent(new CustomEvent("editor-timeline-command", { detail: command }));
+
   const menuIcons = {
-    undo: ArrowCounterClockwise, redo: ArrowClockwise, desktopDuplicate: Copy, desktopDelete: Trash,
-    desktopSelectAll: SelectionAll, desktopSplit: Scissors, desktopTrim: ArrowsInLineHorizontal,
-    desktopSlip: ArrowsHorizontal, desktopSlide: Cursor, desktopSpeed: Gauge, desktopSeparate: SpeakerHigh,
-    desktopLink: Link, desktopUnlink: LinkBreak, desktopZoomIn: MagnifyingGlassPlus, desktopZoomOut: MagnifyingGlassMinus,
-    desktopFit: FrameCorners, desktopFullscreen: CornersOut, proxyAuto: Gauge, proxyOriginal: FilmSlate,
-    proxyCacheManage: Database, proxyCancel: StopCircle, desktopGuide: BookOpen, desktopShortcuts: Keyboard,
-    desktopFeedback: Bug, desktopAbout: Info,
+    undo: Undo2,
+    redo: Redo2,
+    desktopDuplicate: Copy,
+    desktopDelete: Trash2,
+    desktopSelectAll: Copy,
+    desktopSplit: Scissors,
+    desktopTrim: Scissors,
+    desktopSlip: Sliders,
+    desktopSlide: Sliders,
+    desktopSpeed: Sliders,
+    desktopSeparate: Film,
+    desktopLink: LinkIcon,
+    desktopUnlink: Unlink,
+    desktopZoomIn: ZoomIn,
+    desktopZoomOut: ZoomOut,
+    desktopFit: Maximize2,
+    desktopFullscreen: Maximize,
+    proxyAuto: HardDrive,
+    proxyOriginal: Film,
+    proxyCacheManage: HardDrive,
+    proxyCancel: Trash2,
+    desktopGuide: HelpCircle,
+    desktopShortcuts: Keyboard,
+    desktopFeedback: HelpCircle,
+    desktopAbout: HelpCircle,
   };
+
   const item = (key, run, disabled = false, shortcut = "") => ({ key, run, disabled, shortcut, icon: menuIcons[key] });
   const proxySourceLabel = proxySource
     ? t("proxyUsing").replace("{source}", t(proxyPlaybackSrc && proxyPlaybackSrc !== proxySource ? "proxyVideo" : "proxyOriginal"))
     : t("proxyNoVideo");
+
   const menus = [
-    { id: "edit", label: t("desktopEdit"), items: [
-      item("undo", undo, false, `${shortcutModifier}+Z`), item("redo", redo, false, `${shortcutModifier}+Shift+Z`), null,
-      item("desktopDuplicate", desktopActions.duplicate, !desktopActions.hasSelection || desktopActions.selectionLocked, `${shortcutModifier}+D`),
-      item("desktopDelete", desktopActions.delete, !desktopActions.hasSelection || desktopActions.selectionLocked, "Delete"),
-      item("desktopSelectAll", () => timelineCommand("select-all"), !desktopActions.hasClips),
-    ] },
-    { id: "clip", label: t("desktopClip"), items: [
-      item("desktopSplit", desktopActions.split, !desktopActions.canSplit, `${shortcutModifier}+B`),
-      item("desktopTrim", () => timelineCommand("trim"), !desktopActions.canMainEdit),
-      item("desktopSlip", () => timelineCommand("slip"), !desktopActions.canMainEdit),
-      item("desktopSlide", () => timelineCommand("slide"), !desktopActions.canMainEdit),
-      item("desktopSpeed", desktopActions.speed, !desktopActions.canSpeedEdit), null,
-      item("desktopSeparate", () => timelineCommand("separate-audio"), !desktopActions.canVideoEdit), null,
-      item("desktopLink", () => timelineCommand("link-captions"), !desktopActions.canLink),
-      item("desktopUnlink", () => timelineCommand("unlink-captions"), !desktopActions.canUnlink),
-    ] },
-    { id: "view", label: t("desktopView"), items: [
-      { key: "desktopTimelineGroup", kind: "heading" },
-      item("desktopZoomIn", () => timelineCommand("zoom-in"), false, "+"),
-      item("desktopZoomOut", () => timelineCommand("zoom-out"), false, "−"),
-      item("desktopFit", () => timelineCommand("zoom-fit"), false, "Shift+Z"), null,
-      { key: "proxyMode", kind: "heading" },
-      { ...item("proxyAuto", () => setVideoProxyMode("auto")), checked: proxyMode === "auto" },
-      { ...item("proxyOriginal", () => setVideoProxyMode("original")), checked: proxyMode === "original" },
-      { key: "proxyStatus", kind: "status", spinning: proxyPending, icon: proxyPending ? CircleNotch : CheckCircle, text: proxySourceLabel,
-        detail: proxyPending ? `${t("proxyPreparing")} ${Math.round((proxyRecord.progress || 0) * 100)}%` : proxySource && proxyRecord?.state === "ready" ? t("proxyReady") : "" },
-      ...(proxyPending ? [item("proxyCancel", () => cancelVideoProxy(proxySource))] : []), null,
-      item("proxyCacheManage", () => setShowProxyCache(true)),
-      item("desktopFullscreen", () => window.dispatchEvent(new CustomEvent("editor-preview-command", { detail: "fullscreen" })), !imageSrc),
-      { key: "proxyExportHint", kind: "note" },
-    ] },
-    { id: "help", label: t("desktopHelp"), items: [
-      { key: "desktopGuide", icon: BookOpen, href: "/how-it-works/", external: true },
-      item("desktopShortcuts", () => { setShowSettings(true); setShortcutRequest(value => value + 1); }),
-      { key: "desktopFeedback", icon: Bug, href: "https://github.com/MartinDelophy/ai-video-editor/issues", external: true }, null,
-      { key: "desktopAbout", icon: Info, href: "/features/", external: true },
-    ] },
+    {
+      id: "edit",
+      label: t("desktopEdit", "Edit"),
+      items: [
+        item("undo", undo, false, `${shortcutModifier}+Z`),
+        item("redo", redo, false, `${shortcutModifier}+Shift+Z`),
+        null,
+        item("desktopDuplicate", desktopActions.duplicate, !desktopActions.hasSelection || desktopActions.selectionLocked, `${shortcutModifier}+D`),
+        item("desktopDelete", desktopActions.delete, !desktopActions.hasSelection || desktopActions.selectionLocked, "Delete"),
+        item("desktopSelectAll", () => timelineCommand("select-all"), !desktopActions.hasClips),
+      ],
+    },
+    {
+      id: "clip",
+      label: t("desktopClip", "Clip"),
+      items: [
+        item("desktopSplit", desktopActions.split, !desktopActions.canSplit, `${shortcutModifier}+B`),
+        item("desktopTrim", () => timelineCommand("trim"), !desktopActions.canMainEdit),
+        item("desktopSlip", () => timelineCommand("slip"), !desktopActions.canMainEdit),
+        item("desktopSlide", () => timelineCommand("slide"), !desktopActions.canMainEdit),
+        item("desktopSpeed", desktopActions.speed, !desktopActions.canSpeedEdit),
+        null,
+        item("desktopSeparate", () => timelineCommand("separate-audio"), !desktopActions.canVideoEdit),
+        null,
+        item("desktopLink", () => timelineCommand("link-captions"), !desktopActions.canLink),
+        item("desktopUnlink", () => timelineCommand("unlink-captions"), !desktopActions.canUnlink),
+      ],
+    },
+    {
+      id: "view",
+      label: t("desktopView", "View"),
+      items: [
+        { key: "desktopTimelineGroup", kind: "heading" },
+        item("desktopZoomIn", () => timelineCommand("zoom-in"), false, "+"),
+        item("desktopZoomOut", () => timelineCommand("zoom-out"), false, "−"),
+        item("desktopFit", () => timelineCommand("zoom-fit"), false, "Shift+Z"),
+        null,
+        { key: "proxyMode", kind: "heading" },
+        { ...item("proxyAuto", () => setVideoProxyMode("auto")), checked: proxyMode === "auto" },
+        { ...item("proxyOriginal", () => setVideoProxyMode("original")), checked: proxyMode === "original" },
+        {
+          key: "proxyStatus",
+          kind: "status",
+          text: proxySourceLabel,
+          detail: proxyPending ? `${t("proxyPreparing")} ${Math.round((proxyRecord.progress || 0) * 100)}%` : proxySource && proxyRecord?.state === "ready" ? t("proxyReady") : "",
+        },
+        ...(proxyPending ? [item("proxyCancel", () => cancelVideoProxy(proxySource))] : []),
+        null,
+        item("proxyCacheManage", () => setShowProxyCache(true)),
+        item("desktopFullscreen", () => window.dispatchEvent(new CustomEvent("editor-preview-command", { detail: "fullscreen" })), !imageSrc),
+      ],
+    },
+    {
+      id: "help",
+      label: t("desktopHelp", "Help"),
+      items: [
+        { key: "desktopGuide", icon: HelpCircle, href: "/how-it-works/", external: true },
+        item("desktopShortcuts", () => {
+          setShowSettings(true);
+          setShortcutRequest((value) => value + 1);
+        }),
+        { key: "desktopFeedback", icon: HelpCircle, href: "https://github.com/MartinDelophy/ai-video-editor/issues", external: true },
+        null,
+        { key: "desktopAbout", icon: HelpCircle, href: "/features/", external: true },
+      ],
+    },
   ];
+
+  const renderMenuContent = (tab) => {
+    if (tab === "file") {
+      return (
+        <>
+          <button
+            type="button"
+            className="splic-unified-action-item"
+            onClick={() => {
+              setShowUnifiedMenu(false);
+              if (onOpenNewProjectModal) onOpenNewProjectModal();
+              else handleNewProject();
+            }}
+          >
+            <span className="splic-action-left">
+              <Plus size={14} strokeWidth={1.5} />
+              <span>{t("newProject", "New Project")}</span>
+            </span>
+          </button>
+          {completeProject ? (
+            <>
+              <button
+                type="button"
+                className="splic-unified-action-item"
+                disabled={completeProject.status === "preparing" || completeProject.status === "saving"}
+                onClick={() => {
+                  setShowUnifiedMenu(false);
+                  void completeProject.open();
+                }}
+              >
+                <span className="splic-action-left">
+                  <FolderOpen size={14} strokeWidth={1.5} />
+                  <span>{ht("open", "Open Project")}</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="splic-unified-action-item"
+                disabled={completeProject.status === "preparing" || completeProject.status === "saving"}
+                onClick={() => {
+                  setShowUnifiedMenu(false);
+                  if (completeProject.projectId) void completeProject.save();
+                  else setNamingProject(true);
+                }}
+              >
+                <span className="splic-action-left">
+                  <Save size={14} strokeWidth={1.5} />
+                  <span>{completeProject.projectId && completeProject.status === "error" ? ht("retry") : ht("save", "Save Project")}</span>
+                </span>
+                <span className="splic-action-shortcut">{shortcutModifier}+S</span>
+              </button>
+            </>
+          ) : null}
+          <div className="splic-action-divider" />
+          <button
+            type="button"
+            className="splic-unified-action-item"
+            onClick={() => {
+              setShowUnifiedMenu(false);
+              desktopActions.importMedia?.();
+            }}
+          >
+            <span className="splic-action-left">
+              <Upload size={14} strokeWidth={1.5} />
+              <span>{t("desktopImportMedia", "Import Media Files")}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="splic-unified-action-item"
+            onClick={() => {
+              setShowUnifiedMenu(false);
+              handleImportProject();
+            }}
+          >
+            <span className="splic-action-left">
+              <FolderOpen size={14} strokeWidth={1.5} />
+              <span>{t("importProject", "Import .timeline Project")}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="splic-unified-action-item"
+            onClick={() => {
+              setShowUnifiedMenu(false);
+              handleExportProject();
+            }}
+          >
+            <span className="splic-action-left">
+              <Download size={14} strokeWidth={1.5} />
+              <span>{t("exportProject", "Export .timeline Project")}</span>
+            </span>
+          </button>
+        </>
+      );
+    }
+
+    const currentMenu = menus.find((m) => m.id === tab);
+    if (!currentMenu) return null;
+
+    return (
+      <>
+        {currentMenu.items.map((it, idx) => {
+          if (it === null) return <div key={`sep-${idx}`} className="splic-action-divider" />;
+          if (it.kind === "heading") return <div key={it.key} className="splic-action-heading">{t(it.key)}</div>;
+          if (it.kind === "note") return <div key={it.key} className="splic-action-note">{t(it.key)}</div>;
+          if (it.kind === "status") {
+            return (
+              <div key={it.key} className="splic-action-status">
+                <span>{it.text}</span>
+              </div>
+            );
+          }
+          if (it.href) {
+            return (
+              <a
+                key={it.key}
+                href={it.href}
+                target={it.external ? "_blank" : undefined}
+                rel="noreferrer"
+                className="splic-unified-action-item"
+                onClick={() => setShowUnifiedMenu(false)}
+              >
+                <span className="splic-action-left">
+                  {it.icon ? <it.icon size={14} strokeWidth={1.5} /> : null}
+                  <span>{t(it.key)}</span>
+                </span>
+              </a>
+            );
+          }
+
+          const IconComponent = it.icon;
+          return (
+            <button
+              key={it.key}
+              type="button"
+              className="splic-unified-action-item"
+              disabled={it.disabled}
+              onClick={() => {
+                setShowUnifiedMenu(false);
+                it.run?.();
+              }}
+            >
+              <span className="splic-action-left">
+                {IconComponent ? <IconComponent size={14} strokeWidth={1.5} /> : null}
+                <span>{t(it.key)}</span>
+              </span>
+              {it.shortcut ? <span className="splic-action-shortcut">{it.shortcut}</span> : null}
+            </button>
+          );
+        })}
+      </>
+    );
+  };
   useEffect(() => {
     if (!showSettings || !shortcutRequest) return;
     const frame = requestAnimationFrame(() => { shortcutGuideRef.current?.scrollIntoView({ block: "nearest" }); shortcutGuideRef.current?.focus(); setShortcutRequest(0); });
@@ -252,19 +430,25 @@ export function Topbar({
   }, [showSettings, shortcutRequest]);
   useEffect(() => {
     const query = window.matchMedia("(min-width: 1280px)");
-    const resized = () => { if (!query.matches) setActiveMenu(""); };
+    const resized = () => { if (!query.matches) setShowUnifiedMenu(false); };
     query.addEventListener("change", resized);
     return () => query.removeEventListener("change", resized);
   }, []);
 
   return (
     <header className="topbar">
-      {namingProject && completeProject ? <LocalProjectNameDialog language={activeLanguage}
-        onClose={() => setNamingProject(false)} onSave={name => { setNamingProject(false); void completeProject.save(name); }} /> : null}
+      {namingProject && completeProject ? (
+        <LocalProjectNameDialog
+          language={activeLanguage}
+          onClose={() => setNamingProject(false)}
+          onSave={(name) => {
+            setNamingProject(false);
+            void completeProject.save(name);
+          }}
+        />
+      ) : null}
+
       <div className="project-cluster">
-        <IconButton label={t("collapseSidebar")} active={compactRail} onClick={() => setCompactRail((v) => !v)}>
-          <SlidersHorizontal size={19} />
-        </IconButton>
         {onOpenProjects && (
           <button
             type="button"
@@ -286,149 +470,128 @@ export function Topbar({
             </span>
           </button>
         )}
-        <div>
-          <div className="project-title-row">
-            <div className="project-title" title={projectName || completeProject?.name || t("projectTitle")}>
-              {projectName || completeProject?.name || t("projectTitle")}
-            </div>
-            {onOpenNewProjectModal && (
-              <button
-                type="button"
-                onClick={onOpenNewProjectModal}
-                style={{
-                  background: "var(--splic-red-muted)",
-                  border: "1px solid var(--splic-red-border)",
-                  color: "var(--splic-red-primary)",
-                  borderRadius: "4px",
-                  padding: "2px 6px",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-                title="Create New Project"
-              >
-                + NEW
-              </button>
-            )}
-            <nav className="editor-main-menu" role="menubar" aria-label={t("desktopMenuBar")} onKeyDown={event => {
-              if (event.defaultPrevented) return;
-              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-              const triggers = [...event.currentTarget.querySelectorAll("[data-editor-menu-trigger]")].filter(node => node.getClientRects().length);
-              const focusedTrigger = document.activeElement?.closest?.(".menu-anchor")?.querySelector("[data-editor-menu-trigger]") || document.activeElement;
-              const index = triggers.indexOf(focusedTrigger);
-              if (index < 0) return;
-              event.preventDefault();
-              const next = triggers[event.key === "Home" ? 0 : event.key === "End" ? triggers.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + triggers.length) % triggers.length];
-              next?.focus();
-              if ((activeMenu || showFileMenu) && next !== focusedTrigger) { if (next === fileAnchorRef.current?.querySelector("[data-editor-menu-trigger]")) openMenu("file"); else next?.click(); }
-            }}>
-            <div className="menu-anchor" ref={fileAnchorRef}>
-              <button className="project-file-button" type="button" role="menuitem" data-editor-menu-trigger aria-haspopup="menu" aria-expanded={showFileMenu}
-                onKeyDown={event => { if (event.key === "ArrowDown") { event.preventDefault(); if (showFileMenu) fileAnchorRef.current?.querySelector(".file-menu-action:not(:disabled)")?.focus(); else { fileKeyboardOpen.current = true; openMenu("file"); } } }}
-                onClick={() => { fileKeyboardOpen.current = false; if (showFileMenu) setShowFileMenu(false); else openMenu("file"); }}>
-                <span>{t("fileMenu")}</span><CaretDown size={12} weight="bold" aria-hidden="true" />
-              </button>
-              {showFileMenu ? (
-                <Popover anchorRef={fileAnchorRef} className="project-file-popover" closeLabel={t("close")} onClose={() => setShowFileMenu(false)}>
-                  <div className="file-menu-card" role="menu" aria-label={t("fileMenu")} onKeyDown={event => {
-                    const items = [...event.currentTarget.querySelectorAll('button:not(:disabled), a[href]')];
-                    const index = items.indexOf(document.activeElement);
-                    if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
-                      event.preventDefault();
-                      items[event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : (index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
-                    } else if (event.key === "Escape") { setShowFileMenu(false); fileAnchorRef.current?.querySelector("[data-editor-menu-trigger]")?.focus(); }
-                    else if (event.key === "Tab") setShowFileMenu(false);
-                  }}>
-                    <div className="file-menu-heading">
-                      <span>{t("projectMenuHeading")}</span>
-                      <small>Splic Studio</small>
-                    </div>
-                    <button role="menuitem" className="file-menu-action file-menu-new" type="button" onClick={() => { setShowFileMenu(false); if (onOpenNewProjectModal) onOpenNewProjectModal(); else handleNewProject(); }}>
-                      <span className="file-menu-icon"><FilePlus size={17} /></span>
-                      <span className="file-menu-copy"><strong>{t("newProject")}</strong><small>{t("newProjectHint")}</small></span>
+
+        <div className="splic-topbar-title-block">
+          <div className="project-title" title={projectName || completeProject?.name || t("projectTitle")}>
+            {projectName || completeProject?.name || t("projectTitle")}
+          </div>
+
+          <div
+            className="splic-autosave-status"
+            title={completeProject?.error || undefined}
+            role={completeProject ? "status" : undefined}
+          >
+            <span className="splic-autosave-dot" />
+            <span>
+              {completeProject?.status === "saving" ? "Saving..." : completeProject?.lastSaved ? "Saved" : lastSaved ? "Saved" : "Autosaved"}
+            </span>
+          </div>
+        </div>
+
+        {/* Unified Clean Menu Dropdown (Consolidates File, Edit, Clip, View, Help) */}
+        <div className="menu-anchor" ref={menuAnchorRef}>
+          <button
+            className="splic-unified-menu-btn"
+            type="button"
+            aria-expanded={showUnifiedMenu}
+            onClick={() => setShowUnifiedMenu((open) => !open)}
+            title="Editor Menu (File, Edit, Clip, View, Help)"
+          >
+            <Menu size={14} strokeWidth={1.5} />
+            <span>Menu</span>
+            <ChevronDown size={11} strokeWidth={1.75} />
+          </button>
+          {showUnifiedMenu ? (
+            <Popover anchorRef={menuAnchorRef} closeLabel={t("close")} onClose={() => setShowUnifiedMenu(false)}>
+              <div className="splic-unified-menu-card">
+                <div className="splic-unified-tabs">
+                  {[
+                    { id: "file", label: t("fileMenu", "File") },
+                    { id: "edit", label: t("desktopEdit", "Edit") },
+                    { id: "clip", label: t("desktopClip", "Clip") },
+                    { id: "view", label: t("desktopView", "View") },
+                    { id: "help", label: t("desktopHelp", "Help") },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={`splic-unified-tab ${menuTab === tab.id ? "is-active" : ""}`}
+                      onClick={() => setMenuTab(tab.id)}
+                      onMouseEnter={() => setMenuTab(tab.id)}
+                    >
+                      {tab.label}
                     </button>
-                    <div className="file-menu-divider" />
-                    {completeProject ? <button role="menuitem" className="file-menu-action" type="button"
-                      disabled={completeProject.status === "preparing" || completeProject.status === "saving"}
-                      onClick={() => { setShowFileMenu(false); void completeProject.open(); }}>
-                      <span className="file-menu-icon"><FileArrowUp size={17} /></span>
-                      <span className="file-menu-copy"><strong>{ht("open")}</strong></span>
-                    </button> : null}
-                    {completeProject ? <button role="menuitem" className="file-menu-action" type="button"
-                      disabled={completeProject.status === "preparing" || completeProject.status === "saving"}
-                      onClick={() => { setShowFileMenu(false); if (completeProject.projectId) void completeProject.save(); else setNamingProject(true); }}>
-                      <span className="file-menu-icon"><FloppyDisk size={17} /></span>
-                      <span className="file-menu-copy"><strong>{completeProject.projectId && completeProject.status === "error" ? ht("retry") : ht("save")}</strong></span>
-                    </button> : null}
-                    {completeProject?.name ? <button role="menuitem" className="file-menu-action" type="button"
-                      disabled={!completeProject.canClose()}
-                      onClick={() => { setShowFileMenu(false); void completeProject.closeProject(); }}>
-                      <span className="file-menu-icon"><X size={17} /></span>
-                      <span className="file-menu-copy"><strong>{ht("close")}</strong></span>
-                    </button> : null}
-                    <button role="menuitem" className="file-menu-action" type="button" onClick={() => handleImportProject()}>
-                      <span className="file-menu-icon"><FolderOpen size={17} /></span>
-                      <span className="file-menu-copy"><strong>{t("importProject")}</strong><small>{t("importProjectHint")}</small></span>
-                      <span className="file-menu-format">.timeline</span>
-                    </button>
-                    <button role="menuitem" className="file-menu-action is-primary" type="button" onClick={handleExportProject}>
-                      <span className="file-menu-icon"><Package size={17} /></span>
-                      <span className="file-menu-copy"><strong>{t("exportProject")}</strong><small>{t("exportProjectHint")}</small></span>
-                      <span className="file-menu-format">.timeline</span>
-                    </button>
-                    <div className="desktop-file-actions">
-                      <div className="file-menu-divider" />
-                      <button role="menuitem" className="file-menu-action" type="button" onClick={() => { setShowFileMenu(false); desktopActions.importMedia?.(); }}><span className="file-menu-icon"><Images size={17} /></span><span className="file-menu-copy"><strong>{t("desktopImportMedia")}</strong></span></button>
-                      <button role="menuitem" className="file-menu-action" type="button" disabled={!imageSrc || exporting} onClick={() => { setShowFileMenu(false); setShowExportMenu(true); }}><span className="file-menu-icon"><FilmSlate size={17} /></span><span className="file-menu-copy"><strong>{t("exportVideo")}</strong></span></button>
-                    </div>
-                    <div className="file-menu-divider" />
-                    <nav className="file-menu-resources" aria-label={t("resourceLinks")}>
-                      <a href="/features/">{t("resourceFeatures")}</a>
-                      <a href="/how-it-works/">{t("resourceGuide")}</a>
-                      <a href="/faq/">{t("resourceFaq")}</a>
-                      <a href="/privacy/">{t("resourcePrivacy")}</a>
-                    </nav>
-                  </div>
-                </Popover>
-              ) : null}
-              <input ref={projectFileInputRef} className="project-file-input" type="file" accept="application/zip,.timeline" onChange={(event) => event.target.files?.[0] && handleImportProject(event.target.files[0])} />
-            </div>
-            <DesktopMenus menus={menus} activeMenu={activeMenu} onOpen={openMenu} onClose={closeDesktopMenu} t={t} />
-              <div className="menu-anchor" ref={proxyCacheAnchor}>
-                {showProxyCache ? <Popover portal anchorRef={proxyCacheAnchor} className="proxy-cache-popover" closeLabel={t("close")} onClose={closeProxyCache}>
-                  <section className="proxy-cache-panel" aria-label={t("proxyCacheManage")}>
-                    <h3><Database size={18} />{t("proxyCacheManage")}</h3>
-                    <p>{t("proxyCacheDescription")}</p>
-                    <button type="button" className="panel-secondary" disabled={clearingProxyCache} onClick={async () => {
-                      setClearingProxyCache(true);
-                      try { await clearVideoProxyCache(); closeProxyCache(); }
-                      finally { setClearingProxyCache(false); }
-                    }}>{clearingProxyCache ? <CircleNotch size={16} className="is-spinning" /> : <Trash size={16} />}{t("proxyClear")}</button>
-                  </section>
-                </Popover> : null}
+                  ))}
+                </div>
+                <div className="splic-unified-content">
+                  {renderMenuContent(menuTab)}
+                </div>
               </div>
-            </nav>
-          </div>
-          <div className="autosave" title={completeProject?.error || undefined} role={completeProject ? "status" : undefined}>
-            <ShieldCheck size={13} weight="fill" />
-            {completeProject ? completeProject.error || (completeProject.status === "opened" ? ht("opened") : completeProject.status === "dirty" ? ht("dirty") : completeProject.status === "preparing" ? ht("preparing") : completeProject.status === "saving"
-              ? ht("saving") : completeProject.lastSaved ? `${completeProject.name} · ${ht("saved")} ${new Date(completeProject.lastSaved).toLocaleTimeString()}` : ht("unsaved"))
-              : <>{t("autosave")} · {lastSaved}</>}
-          </div>
+            </Popover>
+          ) : null}
+          <input
+            ref={projectFileInputRef}
+            className="project-file-input"
+            type="file"
+            accept="application/zip,.timeline"
+            onChange={(event) => event.target.files?.[0] && handleImportProject(event.target.files[0])}
+          />
+        </div>
+
+        {/* Proxy Cache Dialog Anchor */}
+        <div className="menu-anchor" ref={proxyCacheAnchor}>
+          {showProxyCache ? (
+            <Popover portal anchorRef={proxyCacheAnchor} className="proxy-cache-popover" closeLabel={t("close")} onClose={closeProxyCache}>
+              <section className="proxy-cache-panel" aria-label={t("proxyCacheManage")}>
+                <h3><HardDrive size={18} strokeWidth={1.25} />{t("proxyCacheManage")}</h3>
+                <p>{t("proxyCacheDescription")}</p>
+                <button
+                  type="button"
+                  className="panel-secondary"
+                  disabled={clearingProxyCache}
+                  onClick={async () => {
+                    setClearingProxyCache(true);
+                    try {
+                      await clearVideoProxyCache();
+                      closeProxyCache();
+                    } finally {
+                      setClearingProxyCache(false);
+                    }
+                  }}
+                >
+                  <Trash2 size={15} strokeWidth={1.25} />
+                  {t("proxyClear")}
+                </button>
+              </section>
+            </Popover>
+          ) : null}
         </div>
       </div>
 
       <div className="topbar-center">
-        <button className="ghost-action" type="button" title={`${t("undo")} · ${shortcutModifier}+Z`} onClick={(event) => { undo(); releasePointerActivatedFocus(event); }}>
-          <ArrowCounterClockwise size={16} />
-          {t("undo")}
+        <button
+          className="splic-topbar-tool-btn"
+          type="button"
+          title={`${t("undo")} (${shortcutModifier}+Z)`}
+          onClick={(event) => {
+            undo();
+            releasePointerActivatedFocus(event);
+          }}
+        >
+          <Undo2 size={15} strokeWidth={1.5} />
+          <span>{t("undo")}</span>
         </button>
-        <button className="ghost-action" type="button" title={`${t("redo")} · ${shortcutModifier}+Shift+Z`} onClick={(event) => { redo(); releasePointerActivatedFocus(event); }}>
-          <ArrowClockwise size={16} />
-          {t("redo")}
+        <button
+          className="splic-topbar-tool-btn"
+          type="button"
+          title={`${t("redo")} (${shortcutModifier}+Shift+Z)`}
+          onClick={(event) => {
+            redo();
+            releasePointerActivatedFocus(event);
+          }}
+        >
+          <Redo2 size={15} strokeWidth={1.5} />
+          <span>{t("redo")}</span>
         </button>
         <span className="divider" />
         <div className="menu-anchor" ref={ratioAnchorRef}>
@@ -437,7 +600,7 @@ export function Topbar({
             type="button"
             onClick={() => setShowRatioMenu((open) => !open)}
           >
-            {ratio.label} <CaretDown size={14} />
+            {ratio.label} <ChevronDown size={13} strokeWidth={1.5} />
           </button>
           {showRatioMenu ? (
             <Popover anchorRef={ratioAnchorRef} closeLabel={t("close")} showClose={false} onClose={() => setShowRatioMenu(false)}>
@@ -450,7 +613,7 @@ export function Topbar({
                     onClick={() => {
                       setRatioId(option.id);
                       setShowRatioMenu(false);
-                      notify(`画布比例已切换为 ${option.label}`);
+                      notify(`Canvas aspect ratio switched to ${option.label}`);
                     }}
                   >
                     {option.label}
@@ -467,37 +630,17 @@ export function Topbar({
 
       <div className="topbar-actions">
         {hostService}
-        <nav className="topbar-community-links" aria-label={t("communityLinks", "社区链接")}>
-          <a
-            href={COMMUNITY_LINKS.discord}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={t("discordCommunity", "Discord 社区")}
-            title={t("discordCommunity", "Discord 社区")}
-          >
-            <DiscordLogo size={19} weight="fill" aria-hidden="true" />
-          </a>
-          <a
-            href={COMMUNITY_LINKS.github}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={t("githubRepository", "GitHub 仓库")}
-            title={t("githubRepository", "GitHub 仓库")}
-          >
-            <GithubLogo size={19} weight="fill" aria-hidden="true" />
-          </a>
-          <a
-            href={COMMUNITY_LINKS.x}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={t("xProfile", "X 个人主页")}
-            title={t("xProfile", "X 个人主页")}
-          >
-            <XLogo size={19} weight="fill" aria-hidden="true" />
-          </a>
-        </nav>
-        <button className="preview-button" type="button" title={`${t("shortcutPlayPause")} · Space`} onClick={(event) => { handlePlayToggle(); releasePointerActivatedFocus(event); }}>
-          {isPlaying ? <Pause size={16} weight="fill" /> : <Play size={16} weight="fill" />}
+        {/* SOCIAL LINKS REMOVED AS REQUESTED */}
+        <button
+          className="preview-button"
+          type="button"
+          title={`${t("shortcutPlayPause")} · Space`}
+          onClick={(event) => {
+            handlePlayToggle();
+            releasePointerActivatedFocus(event);
+          }}
+        >
+          {isPlaying ? <Pause size={15} strokeWidth={1.5} /> : <Play size={15} strokeWidth={1.5} />}
           <span>{t("preview")}</span>
         </button>
         <div className="menu-anchor" ref={exportAnchorRef}>
@@ -508,9 +651,11 @@ export function Topbar({
             disabled={exporting}
             onClick={() => setShowExportMenu((open) => !open)}
           >
-            {exportSettings.mediaType === "audio" ? <MusicNotes size={17} weight="bold" /> : <FilmSlate size={17} weight="bold" />}
-            <span className="export-button-label">{exporting ? t("exporting") : t(exportSettings.mediaType === "audio" ? "audioExportTitle" : "exportVideo")}</span>
-            {!exporting ? <CaretDown size={13} weight="bold" /> : null}
+            <Film size={15} strokeWidth={1.5} />
+            <span className="export-button-label">
+              {exporting ? t("exporting") : t(exportSettings.mediaType === "audio" ? "audioExportTitle" : "exportVideo")}
+            </span>
+            {!exporting ? <ChevronDown size={12} strokeWidth={1.75} /> : null}
           </button>
           {showExportMenu ? (
             <Popover anchorRef={exportAnchorRef} className="export-settings-popover" closeLabel={t("close")} onClose={() => setShowExportMenu(false)}>
@@ -528,8 +673,15 @@ export function Topbar({
           ) : null}
         </div>
         <div className="menu-anchor" ref={settingsAnchorRef}>
-          <IconButton label={t("settings")} active={showSettings} onClick={() => { if (onOpenSettingsModal) onOpenSettingsModal(); else setShowSettings((open) => !open); }}>
-            <GearSix size={19} />
+          <IconButton
+            label={t("settings")}
+            active={showSettings}
+            onClick={() => {
+              if (onOpenSettingsModal) onOpenSettingsModal();
+              else setShowSettings((open) => !open);
+            }}
+          >
+            <SettingsIcon size={17} strokeWidth={1.25} />
           </IconButton>
           {showSettings ? (
             <Popover anchorRef={settingsAnchorRef} closeLabel={t("close")} onClose={() => setShowSettings(false)}>
@@ -587,7 +739,7 @@ export function Topbar({
                 <section ref={shortcutGuideRef} tabIndex={-1} className="shortcut-guide" aria-labelledby="shortcut-guide-title">
                   <div className="shortcut-guide-heading">
                     <strong id="shortcut-guide-title">{t("keyboardShortcuts")}</strong>
-                    <span>Timeline Studio</span>
+                    <span>Splic Studio</span>
                   </div>
                   <p>{t("keyboardShortcutsHint")}</p>
                   <dl>
@@ -612,7 +764,7 @@ export function Topbar({
                   ) : null}
                   <button type="button" disabled={modelCacheInspection.state === "checking"} onClick={checkModelCache}>
                     <span>{modelCacheInspection.state === "checking" ? t("modelCacheChecking") : t("checkModelCache")}</span>
-                    {modelCacheInspection.state === "checking" ? <CircleNotch className="is-spinning" size={15} /> : <Database size={15} />}
+                    {modelCacheInspection.state === "checking" ? <Loader2 className="is-spinning" size={15} strokeWidth={1.5} /> : <Database size={15} strokeWidth={1.5} />}
                   </button>
                 </div>
               </div>

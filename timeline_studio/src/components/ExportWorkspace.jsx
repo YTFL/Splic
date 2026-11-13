@@ -118,7 +118,6 @@ export function ExportWorkspace({
         <div className="deliver-header-left">
           <Film size={18} strokeWidth={1.25} style={{ color: "var(--splic-red-primary)" }} />
           <h2 className="deliver-header-title">Deliver & Social Publish</h2>
-          <span className="deliver-header-badge">WebCodecs Hardware Accelerated</span>
         </div>
 
         <div className="deliver-header-stats">

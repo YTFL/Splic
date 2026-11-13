@@ -3,18 +3,18 @@ import "../styles.css";
 import "../splic-theme.css";
 
 export const metadata = {
-  title: "Timeline Studio — Free Browser AI Video Editor & Voiceover Generator",
+  title: "Splic Studio — Autonomous AI Video Editor for Indic Short-Form",
   description:
-    "Create AI voiceovers, automatic captions, talking avatars, and timeline-based videos directly in your browser with Timeline Studio. Local-first editing with MP4 and WebM export.",
-  applicationName: "Timeline Studio",
+    "Autonomous, human-in-the-loop short-form video editor powered by Sarvam AI for Indic creators. 1-click Auto-Cut, Romanized Hinglish subtitles, dynamic stickers, and browser-native WebCodecs export.",
+  applicationName: "Splic Studio",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icons/timeline-studio-icon.svg",
-    apple: "/icons/timeline-studio-apple-touch.png",
+    icon: "/icons/splic-icon.svg",
+    apple: "/icons/splic-icon.svg",
   },
   other: {
     google: "notranslate",
-    "theme-color": "#101720",
+    "theme-color": "#0d0f12",
     "color-scheme": "dark",
     "apple-mobile-web-app-capable": "yes",
     "mobile-web-app-capable": "yes",

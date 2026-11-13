@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Splic Studio</title>
+  <desc id="desc">Splic Studio Autonomous AI Video Editor for Indic Short-Form Creators</desc>
+  <defs>
+    <linearGradient id="splicBg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#14171d" />
+      <stop offset="100%" stop-color="#090a0d" />
+    </linearGradient>
+    <linearGradient id="splicRedGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f87171" />
+      <stop offset="100%" stop-color="#e53935" />
+    </linearGradient>
+    <linearGradient id="splicRedGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#c62828" />
+    </linearGradient>
+    <linearGradient id="splicRedGrad3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#dc2626" />
+      <stop offset="100%" stop-color="#b71c1c" />
+    </linearGradient>
+    <linearGradient id="splicRedGrad4" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b91c1c" />
+      <stop offset="100%" stop-color="#80100d" />
+    </linearGradient>
+    <filter id="subtleGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#e53935" flood-opacity="0.32" />
+    </filter>
+  </defs>
+
+  <!-- App icon squircle base -->
+  <rect width="512" height="512" rx="112" fill="url(#splicBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="4" />
+
+  <!-- Splic Multitrack Film Splice Emblem -->
+  <g transform="translate(106, 126) scale(1.88)" filter="url(#subtleGlow)">
+    <!-- Timeline ruler ticks -->
+    <g stroke="#ff8a80" stroke-width="2.5" stroke-linecap="round" opacity="0.85">
+      <line x1="8" y1="12" x2="8" y2="20" stroke-width="3" />
+      <line x1="20" y1="15" x2="20" y2="20" />
+      <line x1="32" y1="15" x2="32" y2="20" />
+      <line x1="44" y1="12" x2="44" y2="20" stroke-width="3" />
+      <line x1="56" y1="15" x2="56" y2="20" />
+      <line x1="68" y1="15" x2="68" y2="20" />
+      <line x1="80" y1="12" x2="80" y2="20" stroke-width="3" />
+      <line x1="92" y1="15" x2="92" y2="20" />
+      <line x1="104" y1="15" x2="104" y2="20" />
+      <line x1="116" y1="12" x2="116" y2="20" stroke-width="3" />
+      <line x1="128" y1="15" x2="128" y2="20" />
+      <line x1="140" y1="15" x2="140" y2="20" />
+      <line x1="152" y1="12" x2="152" y2="20" stroke-width="3" />
+    </g>
+
+    <!-- Track 1 (top): Left cut + Right cut -->
+    <rect x="8" y="27" width="46" height="15" rx="3.5" fill="url(#splicRedGrad1)" />
+    <rect x="62" y="27" width="90" height="15" rx="3.5" fill="url(#splicRedGrad1)" />
+
+    <!-- Track 2: Left cut + Right cut (staggered) -->
+    <rect x="8" y="49" width="76" height="15" rx="3.5" fill="url(#splicRedGrad2)" />
+    <rect x="92" y="49" width="60" height="15" rx="3.5" fill="url(#splicRedGrad2)" />
+
+    <!-- Track 3: Staggered cuts -->
+    <rect x="8" y="71" width="34" height="15" rx="3.5" fill="url(#splicRedGrad3)" />
+    <rect x="50" y="71" width="102" height="15" rx="3.5" fill="url(#splicRedGrad3)" />
+
+    <!-- Track 4 (bottom): Audio track -->
+    <rect x="8" y="93" width="98" height="15" rx="3.5" fill="url(#splicRedGrad4)" />
+    <rect x="114" y="93" width="38" height="15" rx="3.5" fill="url(#splicRedGrad4)" />
+
+    <!-- Playhead needle (white glowing vertical cut) -->
+    <line x1="78" y1="8" x2="78" y2="114" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+    <polygon points="73,8 83,8 78,16" fill="#ffffff" />
+  </g>
+</svg>
+

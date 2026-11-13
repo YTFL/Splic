@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Wand2,
   Upload,
@@ -49,17 +49,26 @@ export function AutoEditModal({
     if (targetClipName) runRef.current?.();
   }, [isOpen, autoStart, targetClipName, onAutoStartConsumed]);
 
-  if (!isOpen) return null;
-
-  const running = Boolean(phase);
-
-  const handleClose = () => {
-    if (running) return;
+  const handleClose = useCallback(() => {
     setError(null);
     setLoading(false);
     setSummary(null);
+    setPhase("");
     onClose?.();
-  };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleClose]);
+
+  if (!isOpen) return null;
+
+  const running = Boolean(phase);
 
   const runAutoCut = async (plan = null) => {
     if (running || !onRunAutoCut) return;

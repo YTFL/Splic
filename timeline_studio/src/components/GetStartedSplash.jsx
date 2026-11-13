@@ -1,5 +1,6 @@
 import React from "react";
 import { Settings, User, ArrowRight } from "lucide-react";
+import { SplicInlaidEmblem } from "./SplicLogo.jsx";
 
 export function GetStartedSplash({ onGetStarted, onSignIn }) {
   const handleProceed = onSignIn || onGetStarted;
@@ -15,7 +16,7 @@ export function GetStartedSplash({ onGetStarted, onSignIn }) {
           <span className="splic-dot is-green" />
         </div>
 
-        {/* Center: Window Title + Sign In Pill Button (Exact to screenshot) */}
+        {/* Center: Window Title + Sign In Flat Button */}
         <div className="splic-minimal-topbar-center">
           <span className="splic-minimal-app-title">Splic Studio</span>
           <button
@@ -48,7 +49,7 @@ export function GetStartedSplash({ onGetStarted, onSignIn }) {
         </div>
       </header>
 
-      {/* Main Center Stage: Minimal, spacious, featuring the provided logo */}
+      {/* Main Center Stage: Minimal, spacious, featuring the inlayed animated logo */}
       <main
         className="splic-minimal-stage"
         onClick={handleProceed}
@@ -56,11 +57,7 @@ export function GetStartedSplash({ onGetStarted, onSignIn }) {
         tabIndex={0}
       >
         <div className="splic-minimal-watermark-wrap">
-          <img
-            src="/assets/branding/splic-logo.jpg"
-            alt="Splic Studio"
-            className="splic-minimal-watermark-logo"
-          />
+          <SplicInlaidEmblem size={290} showText={true} />
         </div>
 
         <div className="splic-minimal-cta-wrap">
@@ -73,7 +70,7 @@ export function GetStartedSplash({ onGetStarted, onSignIn }) {
             }}
           >
             <span>Get Started</span>
-            <ArrowRight size={14} strokeWidth={2} />
+            <ArrowRight size={14} strokeWidth={1.75} />
           </button>
           <span className="splic-minimal-hint">
             Click anywhere or Sign In to open your workspace

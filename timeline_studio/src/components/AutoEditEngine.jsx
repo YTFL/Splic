@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Clapperboard, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import { normalizeEditPlan } from "../lib/editPlanEngine.js";
 
 // Generates structural geometry points mapping the exact rectangle and interior scanlines of a timeline clip
@@ -838,45 +838,40 @@ export function AutoEditEngine({
         }}
       />
 
-      {/* Live run: clapperboard -> spinning film reel while Sarvam works */}
+      {/* Live run: clapperboard morphing into film reel with italic quote description */}
       {running && phase === "live-wait" && (
         <div className="cinema-morph-overlay">
-          <div className="cinema-morph-card">
-            <div className="cinema-morph-stage">
-              <div className="clapperboard-morph-container">
-                <div className="clapper-stick top-stick" />
-                <div className="clapper-stick bottom-stick" />
-                <div className="clapper-slate-body">
-                  <div className="slate-label">SCENE 01 · TAKE 01</div>
-                  <div className="slate-title">INDIC AUTO-CUT</div>
-                </div>
-              </div>
-              <div className="cinema-reel-container">
-                <div className="cinema-reel-disk">
-                  <div className="reel-hole hole-1" />
-                  <div className="reel-hole hole-2" />
-                  <div className="reel-hole hole-3" />
-                  <div className="reel-hole hole-4" />
-                  <div className="reel-hole hole-5" />
-                  <div className="reel-hole hole-6" />
-                  <div className="reel-center-spindle" />
-                </div>
-                <div className="cinema-film-ribbon" />
+          <div className="cinema-morph-stage">
+            <div className="clapperboard-morph-container">
+              <div className="clapper-stick top-stick" />
+              <div className="clapper-stick bottom-stick" />
+              <div className="clapper-slate-body">
+                <div className="slate-label">SCENE 01 · TAKE 01</div>
+                <div className="slate-title">SPLIC EDIT</div>
               </div>
             </div>
-            <div className="cinema-processing-info">
-              <div className="cinema-processing-title-row">
-                <Clapperboard size={15} strokeWidth={1.5} className="cinema-clapper-icon" />
-                <span className="cinema-processing-title">Sarvam AI is editing</span>
-                <span className="cinema-processing-percent">{liveProgress.percent}%</span>
+            <div className="cinema-reel-container">
+              <div className="cinema-reel-disk">
+                <div className="reel-hole hole-1" />
+                <div className="reel-hole hole-2" />
+                <div className="reel-hole hole-3" />
+                <div className="reel-hole hole-4" />
+                <div className="reel-hole hole-5" />
+                <div className="reel-hole hole-6" />
+                <div className="reel-center-spindle" />
               </div>
-              <div className="cinema-progress-track">
-                <div className="cinema-progress-fill" style={{ width: `${liveProgress.percent}%` }} />
-              </div>
-              <div className="cinema-processing-subtext">{statusText}</div>
-              <div className="cinema-processing-subtext">Elapsed {formatElapsed(liveProgress.elapsed)}</div>
+              <div className="cinema-film-ribbon" />
             </div>
           </div>
+
+          <p className="cinema-quote-description">
+            “{statusText || "Assembling timeline tracks and audio pacing..."}”
+          </p>
+
+          <span className="cinema-quiet-elapsed">
+            {liveProgress.percent > 0 ? `${liveProgress.percent}% · ` : ""}
+            {formatElapsed(liveProgress.elapsed)}
+          </span>
         </div>
       )}
 

@@ -25,6 +25,7 @@ import { AssetDragPreview, ExportProgressOverlay } from "./components/EditorOver
 import { EditorSidebar } from "./components/EditorSidebar.jsx";
 import { BottomNavBar } from "./components/BottomNavBar.jsx";
 import { ExportWorkspace } from "./components/ExportWorkspace.jsx";
+import { AgenticSmartStudio } from "./components/AgenticSmartStudio.jsx";
 import { VisualReplacementDialog } from "./components/VisualReplacementDialog.jsx";
 import { TemplateInspector } from "./components/TemplateLibrary.jsx";
 import { FirstVisualGuide } from "./components/FirstVisualGuide.jsx";
@@ -1921,7 +1922,7 @@ export function App({ hostSession = null }) {
   })() : null;
 
   return (
-    <main className={`app-shell ${workspacePage === "export" ? "is-export-mode" : ""} ${isCompactViewport ? "is-compact-workspace" : ""} ${mobilePanel ? `mobile-panel-${mobilePanel}` : ""} ${isCompactViewport && mobileInspectorSection ? `mobile-section-${mobileInspectorSection}` : ""} ${isCompactViewport && mobileInspectorSection === "mask" && (selectedVisualOverlay || selectedVisualSegment)?.mask?.type && (selectedVisualOverlay || selectedVisualSegment).mask.type !== "none" ? "mobile-mask-active" : ""} ${mobilePanelClosing ? "is-mobile-panel-closing" : ""}`} lang={activeLanguage} onDragOver={(event) => {
+    <main className={`app-shell ${workspacePage === "export" || workspacePage === "smart" ? "is-export-mode" : ""} ${isCompactViewport ? "is-compact-workspace" : ""} ${mobilePanel ? `mobile-panel-${mobilePanel}` : ""} ${isCompactViewport && mobileInspectorSection ? `mobile-section-${mobileInspectorSection}` : ""} ${isCompactViewport && mobileInspectorSection === "mask" && (selectedVisualOverlay || selectedVisualSegment)?.mask?.type && (selectedVisualOverlay || selectedVisualSegment).mask.type !== "none" ? "mobile-mask-active" : ""} ${mobilePanelClosing ? "is-mobile-panel-closing" : ""}`} lang={activeLanguage} onDragOver={(event) => {
       if (event.dataTransfer?.types?.includes("Files")) event.preventDefault();
     }} onDrop={async (event) => {
       const files = Array.from(event.dataTransfer?.files ?? []);
@@ -2062,6 +2063,14 @@ export function App({ hostSession = null }) {
           ratioId={ratioId}
           previewCanvasRef={previewCanvasRef}
           previewVideoRef={previewVideoRef}
+          t={t}
+        />
+      ) : workspacePage === "smart" ? (
+        <AgenticSmartStudio
+          onApplyToProject={() => {
+            notify(t("autoEditApplied", "Agentic edits dispatched to timeline!"));
+            setWorkspacePage("editor");
+          }}
           t={t}
         />
       ) : (

@@ -1,0 +1,649 @@
+/* Agentic Smart Studio — Emil Kowalski Physics & DaVinci Resolve Palette */
+
+.agentic-studio-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: #0b0d11;
+  color: var(--davinci-text-primary, #eceef2);
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Overlay Particle Canvas across the entire stage */
+.agentic-particle-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* Agentic Top Control Bar */
+.agentic-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: #11141a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  z-index: 30;
+}
+
+.agentic-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.agentic-pulse-dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e05638;
+}
+
+.agentic-pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid #e05638;
+  animation: pulse-ring 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.agentic-title-group h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.agentic-title-group span {
+  font-size: 11px;
+  color: #8c93a3;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.agentic-agent-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(224, 86, 56, 0.12);
+  border: 1px solid rgba(224, 86, 56, 0.3);
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff9179;
+}
+
+.agentic-agent-pill svg {
+  color: #e05638;
+}
+
+.agentic-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agentic-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: #e05638;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(224, 86, 56, 0.35);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.agentic-btn-primary:hover:not(:disabled) {
+  background: #f06748;
+  transform: translateY(-1px);
+}
+
+.agentic-btn-primary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.agentic-btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.agentic-btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: #1b1e26;
+  color: #dce0e8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.agentic-btn-secondary:hover {
+  background: #252a35;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Two-column Layout: Left stage + Right Agent Log */
+.agentic-main-stage {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 8px;
+  padding: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.agentic-canvas-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Ingestion Tray: Raw Media & Elements Waiting to be Processed */
+.agentic-ingestion-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #13161d;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.ingestion-tray-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tray-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8c93a3;
+}
+
+.tray-title svg {
+  color: #e05638;
+}
+
+.tray-count-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #a2abbd;
+}
+
+.ingestion-elements-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px;
+  scrollbar-width: none;
+}
+
+.ingestion-elements-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* Raw Element Cards */
+.raw-element-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #1c202a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.raw-element-card.is-video { border-color: rgba(99, 130, 255, 0.3); }
+.raw-element-card.is-caption { border-color: rgba(255, 214, 0, 0.3); }
+.raw-element-card.is-sticker { border-color: rgba(224, 86, 56, 0.3); }
+.raw-element-card.is-sfx { border-color: rgba(34, 197, 94, 0.3); }
+
+.raw-element-card.is-active-target {
+  box-shadow: 0 0 12px rgba(224, 86, 56, 0.5);
+  border-color: #e05638;
+  transform: translateY(-2px);
+}
+
+/* Dematerialization / Disappearing into Particles state */
+.raw-element-card.is-dematerializing {
+  animation: dissolve-element 0.65s cubic-bezier(0.87, 0, 0.13, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes dissolve-element {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  35% {
+    transform: scale(1.08) translateY(-4px);
+    opacity: 0.9;
+    filter: brightness(2) drop-shadow(0 0 12px #e05638);
+    border-color: #ff9179;
+  }
+  75% {
+    transform: scale(0.8) translateY(6px);
+    opacity: 0.3;
+    filter: blur(2px) brightness(1.5);
+  }
+  100% {
+    transform: scale(0.4) translateY(12px);
+    opacity: 0;
+    filter: blur(6px);
+    display: none;
+  }
+}
+
+.raw-element-card.is-teleported {
+  opacity: 0.35;
+  background: rgba(255, 255, 255, 0.02);
+  border-style: dashed;
+}
+
+.element-type-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.raw-element-card.is-video .element-type-badge { color: #6382ff; background: rgba(99, 130, 255, 0.15); }
+.raw-element-card.is-caption .element-type-badge { color: #ffd600; background: rgba(255, 214, 0, 0.15); }
+.raw-element-card.is-sticker .element-type-badge { color: #e05638; background: rgba(224, 86, 56, 0.15); }
+.raw-element-card.is-sfx .element-type-badge { color: #22c55e; background: rgba(34, 197, 94, 0.15); }
+
+.element-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.element-meta-title {
+  color: #eceef2;
+}
+
+.element-meta-sub {
+  font-size: 9px;
+  color: #798396;
+}
+
+/* Lower Section: Agentic Animated Placeholder Timeline */
+.agentic-timeline-board {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border-radius: 8px;
+  background: #11141a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 14px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.agentic-timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.timeline-board-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #eceef2;
+}
+
+.timeline-board-title svg {
+  color: #e05638;
+}
+
+.timeline-tracks-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+/* Timeline Track Row */
+.agentic-track-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  border-radius: 6px;
+  background: #161922;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 0 10px;
+}
+
+.agentic-track-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #798396;
+}
+
+.agentic-track-lane {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+/* Video Track Splicing Animation */
+.spliced-video-clip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #1e283d, #27344e);
+  border: 1px solid #4a679d;
+  color: #c9d8f5;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.spliced-video-clip.clip-segment-a {
+  width: 25%;
+}
+
+.spliced-video-clip.clip-segment-b {
+  width: 55%;
+}
+
+/* Ripple Slide when dead-air cut is deleted */
+.spliced-video-clip.clip-segment-b.is-rippled {
+  transform: translateX(-40px);
+}
+
+/* Dead-Air Slice during cut */
+.dead-air-splice-target {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18%;
+  height: 100%;
+  border-radius: 4px;
+  background: rgba(224, 86, 56, 0.2);
+  border: 1px dashed #e05638;
+  color: #ff9179;
+  font-size: 10px;
+  font-weight: 700;
+  transition: all 0.35s ease;
+}
+
+/* Laser Splicing Blade */
+.laser-cutter-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #ff5533;
+  box-shadow: 0 0 14px #ff5533, 0 0 4px #fff;
+  z-index: 20;
+  animation: laser-slice 1.2s cubic-bezier(0.87, 0, 0.13, 1) infinite;
+}
+
+@keyframes laser-slice {
+  0% { transform: translateY(-100%); opacity: 0; }
+  30% { transform: translateY(0%); opacity: 1; }
+  70% { transform: translateY(0%); opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+.spark-burst {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffd08a;
+  box-shadow: 0 0 12px #ff9179;
+  animation: spark-flash 0.35s ease-out infinite;
+}
+
+@keyframes spark-flash {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  50% { transform: scale(1.6); opacity: 1; }
+  100% { transform: scale(0.6); opacity: 0.8; }
+}
+
+/* Materialized Track Items with Landing Bounce */
+.materialized-clip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  padding: 0 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  animation: materialize-bounce 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes materialize-bounce {
+  0% {
+    transform: scale(0.7) translateY(8px);
+    opacity: 0;
+    filter: brightness(2.5) drop-shadow(0 0 14px #e05638);
+  }
+  60% {
+    transform: scale(1.08) translateY(-2px);
+    opacity: 1;
+    filter: brightness(1.3);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+.materialized-clip.is-caption-track {
+  background: #2b2713;
+  border: 1px solid #c9aa00;
+  color: #ffe642;
+}
+
+.materialized-clip.is-sticker-track {
+  background: #2b1712;
+  border: 1px solid #c94529;
+  color: #ff9179;
+}
+
+.materialized-clip.is-audio-track {
+  background: #14281b;
+  border: 1px solid #22c55e;
+  color: #4ade80;
+}
+
+/* Right Panel: Agentic Workflow Status & Console */
+.agentic-console-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: 8px;
+  background: #13161d;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.console-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #eceef2;
+}
+
+.console-title svg {
+  color: #e05638;
+}
+
+.workflow-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workflow-step-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  background: #1a1e27;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.2s ease;
+}
+
+.workflow-step-card.is-active {
+  background: rgba(224, 86, 56, 0.08);
+  border-color: rgba(224, 86, 56, 0.35);
+}
+
+.workflow-step-card.is-completed {
+  border-color: rgba(34, 197, 94, 0.25);
+  background: rgba(34, 197, 94, 0.04);
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+  background: #252b38;
+  color: #8c93a3;
+  flex-shrink: 0;
+}
+
+.workflow-step-card.is-active .step-indicator {
+  background: #e05638;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(224, 86, 56, 0.5);
+}
+
+.workflow-step-card.is-completed .step-indicator {
+  background: #22c55e;
+  color: #fff;
+}
+
+.step-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.step-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #eceef2;
+}
+
+.step-desc {
+  font-size: 11px;
+  color: #798396;
+  line-height: 1.35;
+}
+
+.agent-live-log {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+  padding: 10px;
+  border-radius: 6px;
+  background: #090a0e;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  color: #a2abbd;
+}
+
+.log-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.log-entry.is-highlight {
+  color: #ff9179;
+}

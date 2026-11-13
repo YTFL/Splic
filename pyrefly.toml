@@ -1,0 +1,29 @@
+# Root Pyrefly Configuration for Splic Workspace
+project-includes = [
+    "backend/composio",
+]
+project-excludes = [
+    "**/timeline studio/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/__pycache__/**",
+]
+
+# Source search paths for resolving imports across the project
+search-path = [
+    "backend/composio",
+]
+
+# Python 3.11 interpreter and site-packages
+python-interpreter-path = "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11"
+site-packages-path = [
+    "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages",
+]
+
+# Conditional / optional third-party packages handled via try/except ImportError
+ignore-missing-imports = [
+    "composio.*",
+    "composio_core.*",
+    "pytest.*",
+]
+

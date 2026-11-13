@@ -39,8 +39,14 @@ pnpm-debug.log*
 
 # local environment
 .env
+.env.local
 .env.*
 !.env.example
+
+# Firebase & Google Cloud Service Account Credentials
+*serviceAccount*.json
+*.service-account.json
+*firebase-adminsdk*.json
 
 # OS/editor noise
 .DS_Store

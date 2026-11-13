@@ -126,7 +126,7 @@ import { MAX_TIMELINE_DURATION_SECONDS, COMPACT_WORKSPACE_QUERY } from "./config
 import { arrangeSplitScreen, alignPreviewSegment, alignedOverlayStart, capturePreviewFrame, moveAlignedOverlay, previewTimingFingerprint } from "./lib/previewAlignment.js";
 
 export function App({ hostSession = null }) {
-  const [uiLanguage, setUiLanguage] = useState(() => getStoredLanguage());
+  const [uiLanguage, setUiLanguage] = useState(() => getStoredLanguage() || "en");
   const [mobilePanel, setMobilePanel] = useState("");
   const [mobilePanelClosing, setMobilePanelClosing] = useState(false);
   const mobilePanelTimerRef = useRef(null);

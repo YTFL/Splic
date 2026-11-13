@@ -39,7 +39,7 @@ export function isSupportedMediaFile(file) {
   return Boolean(getMediaFileKind(file));
 }
 
-export function isLibavCompatibilityEnabled(env = import.meta.env) {
+export function isLibavCompatibilityEnabled(env = (typeof import.meta !== "undefined" && import.meta.env) || (typeof process !== "undefined" && process.env) || {}) {
   return env?.VITE_MEDIA_COMPATIBILITY_FALLBACK !== "false";
 }
 

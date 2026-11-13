@@ -3,7 +3,7 @@ import { fetchFirstAvailableModel, mirroredModelFileUrls } from "./modelSources.
 
 export const DEFAULT_CAPTION_FONT_ID = "default";
 export const CAPTION_FONT_REPOSITORY = "timeline-studio-fonts";
-export const CAPTION_FONT_REVISION = import.meta.env?.VITE_CAPTION_FONT_REVISION || "v1.0.0";
+export const CAPTION_FONT_REVISION = (typeof import.meta !== "undefined" && import.meta.env?.VITE_CAPTION_FONT_REVISION) || (typeof process !== "undefined" && process.env?.VITE_CAPTION_FONT_REVISION) || "v1.0.0";
 
 const SYSTEM_CAPTION_STACK =
   'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';

@@ -37,7 +37,8 @@ export const FACE_SWAP_MODELS = Object.freeze({
 });
 
 function modelBaseUrl() {
-  return String(import.meta.env.VITE_MOBILE_FACE_SWAP_MODEL_BASE_URL || "")
+  const env = (typeof import.meta !== "undefined" && import.meta.env) || (typeof process !== "undefined" && process.env) || {};
+  return String(env.VITE_MOBILE_FACE_SWAP_MODEL_BASE_URL || "")
     .trim()
     .replace(/\/+$/, "");
 }
@@ -52,7 +53,8 @@ function hostedModelUrls(path) {
 export function getFaceSwapModelUrls(kind) {
   const model = FACE_SWAP_MODELS[kind];
   if (!model) throw new TypeError(`Unknown MobileFaceSwap model: ${kind}`);
-  const exact = String(import.meta.env[`VITE_MOBILE_FACE_SWAP_${kind.toUpperCase()}_URL`] || "").trim();
+  const env = (typeof import.meta !== "undefined" && import.meta.env) || (typeof process !== "undefined" && process.env) || {};
+  const exact = String(env[`VITE_MOBILE_FACE_SWAP_${kind.toUpperCase()}_URL`] || "").trim();
   if (exact) return [exact];
   const base = modelBaseUrl();
   if (base) return [`${base}/${model.path}`];

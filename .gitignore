@@ -5,6 +5,9 @@ timeline studio/node_modules/
 # build output
 dist/
 timeline studio/dist/
+.next/
+timeline studio/.next/
+*.bak
 blob-report/
 
 # AI model weights are hosted externally and downloaded at runtime.

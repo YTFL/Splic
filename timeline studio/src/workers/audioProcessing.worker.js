@@ -40,7 +40,7 @@ async function loadEngine(name, language) {
   );
   const moduleUrl = URL.createObjectURL(blobs[0]);
   try {
-    const module = await import(/* @vite-ignore */ moduleUrl);
+    const module = await import(/* webpackIgnore: true */ moduleUrl);
     const engine =
       name === "rnnoise" ? { rn: await module.Rnnoise.load() } : { module, wasm: blobs[1] };
     loaded.set(name, engine);

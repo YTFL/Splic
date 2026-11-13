@@ -129,7 +129,7 @@ export function useEditorCatalog(voiceFilter, language) {
   const [libraryStatus, setLibraryStatus] = useState("loading");
   const [libraryError, setLibraryError] = useState("");
   const [assetDownloadStates, setAssetDownloadStates] = useState({});
-  const pexelsKey = String(import.meta.env.VITE_PEXELS_API_KEY || "").trim();
+  const pexelsKey = String((typeof import.meta !== "undefined" && import.meta.env?.VITE_PEXELS_API_KEY) || (typeof process !== "undefined" && process.env?.VITE_PEXELS_API_KEY) || "").trim();
 
   const filteredVoices = useMemo(() => VOICES.filter((voice) => voiceFilter === "all" || voice.language === voiceFilter), [voiceFilter]);
   const isSoundLibrary = libraryType === "sound";

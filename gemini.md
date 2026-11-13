@@ -28,7 +28,7 @@ A 1-click **"⚡ Desi Auto-Cut"** workflow inside a browser-native multi-track v
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    FRONTEND (React + TypeScript + Vite)              │
+│                    FRONTEND (React + TypeScript + Next.js)          │
 │  Forked Timeline Studio (WebCodecs + Multi-Track Canvas Timeline)    │
 │  • "⚡ Desi Auto-Cut" Toolbar Button                                 │
 │  • Dispatches JSON Edit Plan into Timeline Tracks                    │
@@ -97,12 +97,12 @@ A 1-click **"⚡ Desi Auto-Cut"** workflow inside a browser-native multi-track v
 ## 4. Critical Technical Constraints & Guardrails
 
 1. **Cross-Origin Isolation Headers (Mandatory for WebCodecs/SharedArrayBuffer):**
-   The frontend uses browser WebWorkers and `SharedArrayBuffer` for video encoding. Any dev server, proxy, or deployment (`vite.config.ts`, `netlify.toml`, `vercel.json`) MUST preserve:
+   The frontend uses browser WebWorkers and `SharedArrayBuffer` for video encoding. Any dev server, proxy, or deployment (`next.config.mjs`, `vercel.json`) MUST preserve:
    ```http
    Cross-Origin-Opener-Policy: same-origin
    Cross-Origin-Embedder-Policy: require-corp
    ```
-   When serving dynamic stickers or audio from the FastAPI backend to the Vite frontend, ensure CORS and `Cross-Origin-Resource-Policy: cross-origin` headers are set on static asset responses so `COEP: require-corp` does not block sticker loading.
+   When serving dynamic stickers or audio from the FastAPI backend to the Next.js frontend, ensure CORS and `Cross-Origin-Resource-Policy: cross-origin` headers are set on static asset responses so `COEP: require-corp` does not block sticker loading.
 
 2. **Bypass Built-In Local Whisper:**
    Timeline Studio includes an experimental in-browser ONNX Whisper model that is slow and fails on Hinglish. Do NOT route auto-edit transcription through it; always route audio to the FastAPI `/api/sarvam-auto-edit` endpoint.

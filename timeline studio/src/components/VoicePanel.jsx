@@ -430,7 +430,7 @@ function VectorDesignDialog({ t, segment, onApply, onClose }) {
               >
                 <div className="vector-part-color-editor">
                   <input aria-label={t("vectorActionColor", "换颜色")} type="color" value={selectedPart.color} onChange={(event) => updateSelectedPart({ color: event.target.value })} />
-                  {["#35ead9", "#4d96ff", "#ff5f65", "#ffde59", "#f5fbff"].map((color) => (
+                  {["#e05638", "#4d96ff", "#ff5f65", "#ffde59", "#f5fbff"].map((color) => (
                     <button type="button" aria-label={color} style={{ "--vector-swatch": color }} onClick={() => updateSelectedPart({ color })} key={color} />
                   ))}
                 </div>

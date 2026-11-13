@@ -61,9 +61,9 @@
 
 .sound-library-categories button:hover,
 .sound-library-categories button[aria-pressed="true"] {
-  border-color: rgba(53, 234, 217, .32);
+  border-color: rgba(224, 86, 56, .32);
   color: #bafff7;
-  background: rgba(53, 234, 217, .10);
+  background: rgba(224, 86, 56, .10);
 }
 
 .media-panel .sound-library-list {
@@ -89,8 +89,8 @@
 .sound-library-row:hover,
 .sound-library-row:focus-within,
 .sound-library-row.is-auditioning {
-  border-color: rgba(53, 234, 217, .28);
-  background: linear-gradient(125deg, rgba(53, 234, 217, .075), rgba(255, 255, 255, .025));
+  border-color: rgba(224, 86, 56, .28);
+  background: linear-gradient(125deg, rgba(224, 86, 56, .075), rgba(255, 255, 255, .025));
 }
 
 .sound-library-row button {
@@ -105,7 +105,7 @@
 }
 
 .sound-library-row button:focus-visible {
-  outline: 2px solid #35ead9;
+  outline: 2px solid #e05638;
   outline-offset: 2px;
 }
 
@@ -115,13 +115,13 @@
 }
 
 .sound-library-play {
-  background: rgba(53, 234, 217, .09);
+  background: rgba(224, 86, 56, .09);
   color: #84f3e6;
 }
 
 .sound-library-play:hover,
 .is-auditioning .sound-library-play {
-  background: rgba(53, 234, 217, .17);
+  background: rgba(224, 86, 56, .17);
   color: #c4fff7;
 }
 
@@ -131,7 +131,7 @@
 }
 
 .sound-library-add:not(:disabled):hover {
-  background: rgba(53, 234, 217, .10);
+  background: rgba(224, 86, 56, .10);
   color: #aafff3;
 }
 

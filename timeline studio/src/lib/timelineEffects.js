@@ -41,7 +41,7 @@ export function normalizeEffectClips(items) {
       alignmentPitch: Math.max(-30, Math.min(30, finite(item.alignmentPitch, 0))),
       alignmentRoll: Math.max(-45, Math.min(45, finite(item.alignmentRoll, 0))),
       intensity: Math.max(0, Math.min(1, finite(item.intensity, 0.5))),
-      color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : "#35ead9",
+      color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : "#e05638",
       ...(["beat-zoom", "beat-backdrop"].includes(item.effect) || (item.effect === "shake" && item.beat)
         ? { beat: normalizeBeatSettings(item.beat) } : {}),
       ...(item.effect === "shape-flash" ? { shape: FLASH_SHAPES.includes(item.shape) ? item.shape : "circle" } : {}),

@@ -20,7 +20,7 @@ We are extending **Timeline Studio** (`MartinDelophy/ai-video-editor`) into a **
 ### Frontend (Timeline Studio)
 ```bash
 npm install
-npm run dev          # Starts Vite dev server (preserves COOP/COEP headers)
+npm run dev          # Starts Next.js dev server (preserves COOP/COEP headers)
 npm run build        # Production bundle check
 ```
 
@@ -66,7 +66,7 @@ GROQ_API_KEY=               # Optional fallback
   ```python
   response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
   ```
-- Alternatively, configure a Vite proxy (`/api` and `/dynamic_stickers` -> `http://localhost:8000`) in `vite.config.ts` so all assets appear same-origin to the browser. **Prefer the Vite proxy approach.**
+- Alternatively, configure a Next.js rewrite proxy (`/api` and `/dynamic_stickers` -> `http://localhost:8000`) in `next.config.mjs` so all assets appear same-origin to the browser. **Prefer the Next.js rewrite proxy approach.**
 
 ### Rule 5: No Emojis in UI — Lucide React Icons Only
 - **NEVER** use emojis anywhere in the React/TypeScript UI — not in button labels, status text, tooltips, track headers, panel titles, toasts, or any other interface element.

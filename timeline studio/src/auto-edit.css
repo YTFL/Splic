@@ -1,0 +1,800 @@
+/* Auto Edit — Minimalist Post-Production Engine (Matte Slate, Zero Bloom, Zero Cyan) */
+
+/* Fullscreen Soundwave Sweep Overlay (SINGLE-SHOT) */
+.soundwave-sweep-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10000;
+  overflow: hidden;
+}
+
+/* Upward moving matte sound wave band */
+.soundwave-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 200px;
+  bottom: -220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: wave-bottom-to-top 1.0s cubic-bezier(0.25, 1, 0.35, 1) forwards;
+}
+
+@keyframes wave-bottom-to-top {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(calc(-100vh - 240px));
+    opacity: 0;
+  }
+}
+
+.soundwave-svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.soundwave-line {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.soundwave-line.primary {
+  stroke: rgba(226, 230, 238, 0.5);
+  stroke-width: 1.5;
+}
+
+.soundwave-line.secondary {
+  stroke: rgba(200, 90, 58, 0.45);
+  stroke-width: 1.2;
+}
+
+.soundwave-bars-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 70px;
+  padding: 0 40px;
+}
+
+.soundwave-bar {
+  width: 2px;
+  height: 24px;
+  border-radius: 1px;
+  background: rgba(200, 90, 58, 0.4);
+}
+
+/* Fullscreen Minimal Particle Canvas (ZERO BLOOM) */
+.particle-flight-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10001;
+}
+
+/* Media Pool Thumbnail Collapse & Dissolve (Thumbnail implodes directly in the pool) */
+.asset-row-wrap.is-collapsing-thumbnail {
+  animation: thumbnail-collapse-dissolve 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  position: relative;
+  overflow: visible;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes thumbnail-collapse-dissolve {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  25% {
+    transform: scale(1.02);
+    filter: brightness(1.4);
+    box-shadow: 0 0 0 1px #c85a3a;
+  }
+  60% {
+    transform: scale(0.65) translateY(4px);
+    opacity: 0.4;
+    filter: brightness(1.1);
+  }
+  100% {
+    transform: scale(0) translateY(12px);
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Timeline Assembly Viewport Layer — 100% matched to real tracks */
+.timeline-assembly-viewport-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Timeline Presence Slot — Marks spatial presence on the real track (MATTE, ZERO BLOOM) */
+.timeline-presence-slot {
+  box-sizing: border-box;
+  border: 1px dashed rgba(200, 90, 58, 0.6);
+  background: rgba(30, 24, 21, 0.6);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 10px;
+  pointer-events: none;
+  animation: presence-subtle-pulse 1.1s ease-in-out infinite alternate;
+  z-index: 9999;
+}
+
+@keyframes presence-subtle-pulse {
+  0% {
+    border-color: rgba(200, 90, 58, 0.35);
+    background: rgba(28, 22, 19, 0.4);
+  }
+  100% {
+    border-color: rgba(215, 110, 75, 0.75);
+    background: rgba(42, 30, 26, 0.65);
+  }
+}
+
+.timeline-presence-slot .presence-corner {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-color: #c85a3a;
+  border-style: solid;
+}
+
+.timeline-presence-slot .presence-corner.top-left {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+.timeline-presence-slot .presence-corner.top-right {
+  top: -1px;
+  right: -1px;
+  border-width: 2px 2px 0 0;
+}
+.timeline-presence-slot .presence-corner.bottom-left {
+  bottom: -1px;
+  left: -1px;
+  border-width: 0 0 2px 2px;
+}
+.timeline-presence-slot .presence-corner.bottom-right {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+.timeline-presence-slot .presence-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #d68c45;
+  text-transform: uppercase;
+}
+
+.timeline-presence-slot .presence-time {
+  font-size: 8.5px;
+  color: rgba(226, 230, 238, 0.7);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Solid Matte Clips Condensing from Particles Directly onto the Real Track */
+.merged-track-clip {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 12px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: clip-merge-solidify 0.35s ease-out forwards;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.clip-take-1 {
+  background: #2b221d;
+  border: 1px solid #7c5c43;
+  color: #e5cebc;
+}
+
+.clip-take-2 {
+  background: #26221e;
+  border: 1px solid #6c543f;
+  color: #dfcfbf;
+}
+
+.clip-overlay {
+  background: #2d281a;
+  border: 1px solid #736437;
+  color: #ebe0bd;
+}
+
+.clip-audio {
+  background: #1c271e;
+  border: 1px solid #3c5740;
+  color: #bcd4bf;
+}
+
+/* Silence Dead-Air Gap directly on the track */
+.silence-dead-air-gap {
+  box-sizing: border-box;
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(140, 45, 45, 0.35) 0,
+    rgba(140, 45, 45, 0.35) 6px,
+    rgba(90, 25, 25, 0.45) 6px,
+    rgba(90, 25, 25, 0.45) 12px
+  );
+  border: 1px dashed rgba(220, 80, 80, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 9998;
+  pointer-events: none;
+  transition: width 0.45s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.35s ease;
+}
+
+.silence-dead-air-gap.is-gap-eliminated {
+  width: 0px !important;
+  opacity: 0 !important;
+  border: none !important;
+}
+
+/* Laser Blade Slicer on the Real Track */
+.dynamic-splicer-laser-line {
+  width: 2px;
+  z-index: 10001;
+  pointer-events: none;
+}
+
+/* Timeline Total Collapse Animation for Clean Slate Reset */
+body.is-timeline-collapsing .merged-track-clip,
+body.is-timeline-collapsing .image-clip,
+body.is-timeline-collapsing .timeline-board .timeline-timed-segment,
+body.is-timeline-collapsing .caption-segment,
+body.is-timeline-collapsing .caption-item,
+body.is-timeline-collapsing .silence-dead-air-gap {
+  transform: scaleX(0) scaleY(0.4) !important;
+  transform-origin: left center !important;
+  opacity: 0 !important;
+  filter: brightness(1.7) contrast(1.2) !important;
+  transition: transform 0.4s cubic-bezier(0.7, 0, 0.2, 1), opacity 0.35s ease-in, filter 0.25s ease !important;
+}
+
+.timeline-collapse-banner {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: #1e1917;
+  border: 1px solid rgba(200, 90, 58, 0.6);
+  color: #dfcfbf;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  z-index: 10002;
+  animation: banner-pop 0.25s ease-out forwards;
+}
+
+@keyframes banner-pop {
+  0% {
+    transform: translate(-50%, -8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+/* Solid Matte Clips Condensing from Particles (NO BOUNCE, ZERO BLOOM) */
+.merged-track-clip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 12px;
+  height: 100%;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: clip-merge-solidify 0.35s ease-out forwards;
+}
+
+@keyframes clip-merge-solidify {
+  0% {
+    opacity: 0;
+    filter: brightness(1.6);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+.clip-take-1 {
+  width: 200px;
+  background: #2b221d;
+  border: 1px solid #7c5c43;
+  color: #e5cebc;
+}
+
+.clip-take-2 {
+  width: 240px;
+  background: #26221e;
+  border: 1px solid #6c543f;
+  color: #dfcfbf;
+  transition: transform 0.45s cubic-bezier(0.85, 0, 0.15, 1);
+}
+
+.clip-take-2.is-rippled-left {
+  transform: translateX(-108px);
+}
+
+.clip-overlay {
+  width: 150px;
+  background: #2d281a;
+  border: 1px solid #736437;
+  color: #ebe0bd;
+}
+
+.clip-audio {
+  width: 130px;
+  background: #1c271e;
+  border: 1px solid #3c5740;
+  color: #bcd4bf;
+}
+
+.clip-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.clip-time {
+  font-size: 9px;
+  opacity: 0.7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Silence Dead-Air Gap (Matte Maroon Hatch) */
+.silence-dead-air-gap {
+  width: 100px;
+  height: 100%;
+  margin: 0 4px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(140, 45, 45, 0.35) 0,
+    rgba(140, 45, 45, 0.35) 6px,
+    rgba(90, 25, 25, 0.45) 6px,
+    rgba(90, 25, 25, 0.45) 12px
+  );
+  border: 1px dashed rgba(220, 80, 80, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.45s cubic-bezier(0.85, 0, 0.15, 1);
+  overflow: hidden;
+}
+
+.silence-dead-air-gap.is-gap-eliminated {
+  width: 0px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  opacity: 0 !important;
+}
+
+.dead-air-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #fca5a5;
+  text-decoration: line-through;
+  white-space: nowrap;
+}
+
+.ripple-closed-badge {
+  font-size: 8px;
+  font-weight: 800;
+  color: #86efac;
+}
+
+/* Laser Splicing Cut Line (Crisp 1.5px cut, ZERO BLOOM) */
+.dynamic-splicer-laser-line {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 202px;
+  width: 2px;
+  z-index: 20;
+}
+
+.laser-beam {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  animation: laser-drop 0.4s cubic-bezier(0.85, 0, 0.15, 1) forwards;
+}
+
+@keyframes laser-drop {
+  0% { transform: scaleY(0); opacity: 0; }
+  50% { transform: scaleY(1); opacity: 1; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+.laser-sparks {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: spark-burst-out 0.35s ease-out forwards;
+}
+
+@keyframes spark-burst-out {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1.6); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+}
+
+/* ============================================================ */
+/* CINEMA REEL MORPH LOADING SCREEN (Matte Slate & Burnt Sienna) */
+/* ============================================================ */
+.cinema-morph-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12, 14, 18, 0.92);
+  z-index: 10005;
+  animation: cinema-fade-in 0.25s ease-out forwards;
+}
+
+@keyframes cinema-fade-in {
+  from { opacity: 0; transform: scale(0.99); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.cinema-morph-card {
+  position: relative;
+  width: 420px;
+  padding: 32px 28px;
+  border-radius: 12px;
+  background: #161922;
+  border: 1px solid #2b3140;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.cinema-morph-stage {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* 1. Clapperboard container (snaps shut then dissolves/morphs) */
+.clapperboard-morph-container {
+  position: absolute;
+  width: 80px;
+  height: 66px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: clapper-to-reel-morph 2.2s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+}
+
+@keyframes clapper-to-reel-morph {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  30% {
+    transform: scale(1.03) translateY(2px);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.85) rotate(180deg);
+    opacity: 0.3;
+    border-radius: 50%;
+  }
+  65%, 100% {
+    transform: scale(0.5) rotate(360deg);
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.clapper-stick {
+  width: 80px;
+  height: 12px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #d1d5db 0,
+    #d1d5db 8px,
+    #181a20 8px,
+    #181a20 16px
+  );
+}
+
+.clapper-stick.top-stick {
+  transform-origin: bottom left;
+  animation: clapper-snap-shut 0.6s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+}
+
+@keyframes clapper-snap-shut {
+  0% { transform: rotate(-26deg); }
+  45% { transform: rotate(0deg); }
+  55% { transform: rotate(-2deg); }
+  70%, 100% { transform: rotate(0deg); }
+}
+
+.clapper-stick.bottom-stick {
+  margin-top: 2px;
+}
+
+.clapper-slate-body {
+  width: 76px;
+  height: 44px;
+  margin-top: 2px;
+  border-radius: 0 0 3px 3px;
+  background: #13151b;
+  border: 1px solid #282d3b;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+}
+
+.slate-label {
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #c85a3a;
+}
+
+.slate-title {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #e2e8f0;
+}
+
+/* 2. Cinema Reel container (morphs in, scales up, spins) */
+.cinema-reel-container {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: reel-morph-entrance 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes reel-morph-entrance {
+  0%, 35% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-180deg);
+  }
+  55% {
+    opacity: 0.85;
+    transform: scale(1.05) rotate(45deg);
+  }
+  70%, 100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.cinema-reel-disk {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: #181b24;
+  border: 3px solid #32394a;
+  animation: reel-spin 1.8s linear infinite;
+}
+
+@keyframes reel-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.reel-hole {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0f1117;
+  border: 1px solid #252b38;
+}
+
+.reel-hole.hole-1 { top: 8px; left: 33px; }
+.reel-hole.hole-2 { top: 20px; right: 8px; }
+.reel-hole.hole-3 { bottom: 20px; right: 8px; }
+.reel-hole.hole-4 { bottom: 8px; left: 33px; }
+.reel-hole.hole-5 { bottom: 20px; left: 8px; }
+.reel-hole.hole-6 { top: 20px; left: 8px; }
+
+.reel-center-spindle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #c85a3a;
+  border: 2px solid #e2e8f0;
+}
+
+.cinema-film-ribbon {
+  position: absolute;
+  bottom: -4px;
+  right: -8px;
+  width: 28px;
+  height: 16px;
+  border-radius: 3px;
+  border-top: 2px dashed rgba(220, 225, 235, 0.4);
+  border-bottom: 2px dashed rgba(220, 225, 235, 0.4);
+  opacity: 0.7;
+  transform: rotate(-22deg);
+}
+
+/* 3. Processing HUD readout */
+.cinema-processing-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cinema-processing-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.cinema-clapper-icon {
+  color: #c85a3a;
+  margin-right: 6px;
+}
+
+.cinema-processing-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  flex: 1;
+  text-align: left;
+}
+
+.cinema-processing-percent {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #c85a3a;
+}
+
+.cinema-progress-track {
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: #232733;
+  overflow: hidden;
+}
+
+.cinema-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #c85a3a;
+  transition: width 0.1s linear;
+}
+
+.cinema-processing-subtext {
+  font-size: 11px;
+  color: #8b92a4;
+  font-weight: 500;
+}
+
+/* Status Pill (Matte Slate, ZERO BLOOM) */
+.assembly-status-pill {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 6px;
+  background: #14171f;
+  border: 1px solid #282e3d;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  color: #d1d5db;
+  font-size: 11px;
+  font-weight: 600;
+  z-index: 10004;
+}
+
+.assembly-pulse-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c85a3a;
+}
+
+/* Quick Auto Edit button in Media Pool */
+.auto-edit-quick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 12px;
+  margin-top: 8px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  background: #20242f;
+  border: 1px solid #333a4c;
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.auto-edit-quick-btn:hover {
+  background: #282e3c;
+  border-color: #c85a3a;
+  color: #ffffff;
+}

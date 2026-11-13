@@ -35,11 +35,11 @@
   outline: none;
 }
 .caption-grouping-select select:hover:not(:disabled) {
-  border-color: rgba(53, 234, 217, .35);
+  border-color: rgba(224, 86, 56, .35);
 }
 .caption-grouping-select select:focus-visible {
-  border-color: #35ead9;
-  box-shadow: 0 0 0 2px rgba(53, 234, 217, .15);
+  border-color: #e05638;
+  box-shadow: 0 0 0 2px rgba(224, 86, 56, .15);
 }
 .caption-grouping-select select:disabled {
   opacity: .5;

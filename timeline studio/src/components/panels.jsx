@@ -3,6 +3,7 @@ import { AudioWorkspace } from "./AudioWorkspace.jsx";
 import { getCaptionEditingCopy, getCaptionSpacingCopy } from "../i18nCaptionEditing.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
+import { Sparkles } from "lucide-react";
 
 import {
   ArrowCounterClockwise,
@@ -152,6 +153,7 @@ export function MediaPanel({
   isPlaying,
   pauseForTimelineEdit,
   language = "en",
+  onTriggerAutoEdit,
   onGeneratedVector,
   onOpenAiMusic,
 }) {
@@ -198,10 +200,13 @@ export function MediaPanel({
       {libraryStatus === "loading" && mediaTab === "library" ? (
         <LibraryLoadingGrid />
       ) : items.length ? (
-        items.map((asset) => (
+        items.map((asset, index) => (
           <div
             className={`asset-row-wrap ${draggedAssetId === asset.id ? "is-dragging" : ""}`}
             key={asset.id}
+            id={`media-pool-asset-${asset.id}`}
+            data-asset-id={asset.id}
+            data-asset-index={index}
           >
             <button
               type="button"
@@ -277,6 +282,17 @@ export function MediaPanel({
             <strong>{t("uploadDropTitle")}</strong>
             <span>{t("uploadSupport")}</span>
           </button>
+          {userAssets.length > 0 && onTriggerAutoEdit ? (
+            <button
+              type="button"
+              className="auto-edit-quick-btn"
+              onClick={onTriggerAutoEdit}
+              title="Auto Edit (Smart Assembly)"
+            >
+              <Sparkles size={14} strokeWidth={1.5} />
+              <span>Auto Edit</span>
+            </button>
+          ) : null}
           {renderAssetList(userAssets, { deletable: true })}
         </>
       ) : mediaTab === "library" ? (
@@ -323,7 +339,20 @@ export function MediaPanel({
           })}
         </>
       ) : (
-        renderAssetList(assets, { deletable: mediaTab === "mine" })
+        <>
+          {userAssets.length > 0 && onTriggerAutoEdit ? (
+            <button
+              type="button"
+              className="auto-edit-quick-btn"
+              onClick={onTriggerAutoEdit}
+              title="Auto Edit (Smart Assembly)"
+            >
+              <Sparkles size={14} strokeWidth={1.5} />
+              <span>Auto Edit</span>
+            </button>
+          ) : null}
+          {renderAssetList(assets, { deletable: mediaTab === "mine" })}
+        </>
       )}
 
       {selectedAsset && mobilePanelOpen && !showSoundLibrary ? createPortal((

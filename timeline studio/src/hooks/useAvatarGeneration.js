@@ -24,7 +24,8 @@ export function useAvatarGeneration(d) {
       const portrait = d.previewVisualSegment?.blob instanceof Blob ? d.previewVisualSegment.blob : await fetch(d.previewVisualSrc).then((response) => {
         if (!response.ok) throw new Error(`读取肖像失败（HTTP ${response.status}）`); return response.blob();
       });
-      const testDuration = import.meta.env.DEV ? Number(import.meta.env.VITE_AVATAR_TEST_DURATION || 0) : 0;
+      const env = (typeof import.meta !== "undefined" && import.meta.env) || (typeof process !== "undefined" && process.env) || {};
+      const testDuration = env.DEV ? Number(env.VITE_AVATAR_TEST_DURATION || 0) : 0;
       const duration = testDuration > 0 ? Math.max(0.5, Math.min(4, testDuration))
         : Math.max(MIN_VISUAL_SEGMENT_SECONDS, Math.min(4, d.audioDuration || d.imageDuration || 4));
       let motionBuffer;
@@ -44,10 +45,10 @@ export function useAvatarGeneration(d) {
       if (!d.avatarRenderWorkerRef.current) d.avatarRenderWorkerRef.current = createRenderWorker();
       const result = await runAvatarWorkerTask(d.avatarRenderWorkerRef.current, {
         type: "generateVideo", portraitBlob: portrait, motionBuffer,
-        modelBaseUrl: import.meta.env.VITE_LIVE_PORTRAIT_MODEL_BASE_URL || "",
+        modelBaseUrl: env.VITE_LIVE_PORTRAIT_MODEL_BASE_URL || "",
         joyVasaModelBaseUrl: joyVasaModelBaseUrls, webGpuModelBaseUrl: livePortraitModelBaseUrls,
-        quality, renderFps: Math.max(1, Number(import.meta.env.VITE_AVATAR_RENDER_FPS || 8)),
-        neuralFps: Math.max(1, Number(import.meta.env.VITE_AVATAR_NEURAL_FPS || 2)), duration,
+        quality, renderFps: Math.max(1, Number(env.VITE_AVATAR_RENDER_FPS || 8)),
+        neuralFps: Math.max(1, Number(env.VITE_AVATAR_NEURAL_FPS || 2)), duration,
         portraitKey: d.previewVisualSegment?.id || d.previewVisualSrc,
       }, [motionBuffer], "videoFrames",
       (progress) => d.setAvatarJob({ running: true, progress: progress.progress, phase: formatAvatarProgress(d.t, progress) }));

@@ -105,8 +105,8 @@ export function useFaceSwapGeneration(d) {
         sourceStart: d.previewVisualSegment?.sourceStart || 0,
         requestId,
         signal: controller.signal,
-        fps: Number(import.meta.env.VITE_FACE_SWAP_FPS || 8),
-        anchorFps: Number(import.meta.env.VITE_FACE_SWAP_TRACKING_ANCHOR_FPS || 2),
+        fps: Number((typeof import.meta !== "undefined" && import.meta.env?.VITE_FACE_SWAP_FPS) || (typeof process !== "undefined" && process.env?.VITE_FACE_SWAP_FPS) || 8),
+        anchorFps: Number((typeof import.meta !== "undefined" && import.meta.env?.VITE_FACE_SWAP_TRACKING_ANCHOR_FPS) || (typeof process !== "undefined" && process.env?.VITE_FACE_SWAP_TRACKING_ANCHOR_FPS) || 2),
         onProgress: (progress) => {
           const template = d.t(progress.phaseKey || "faceSwapGeneration");
           const phase = Object.entries(progress.phaseParams || {}).reduce(

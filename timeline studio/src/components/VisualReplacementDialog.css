@@ -1,5 +1,5 @@
 .visual-replacement-dialog {
-  --replace-accent: #35ead9;
+  --replace-accent: #e05638;
   --replace-muted: #a7b3bf;
   --replace-gap: 10px;
   width: min(800px, calc(100vw - 32px));

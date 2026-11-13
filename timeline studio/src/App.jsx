@@ -246,6 +246,7 @@ export function App({ hostSession = null }) {
   const [exportError, setExportError] = useState(null);
   const [workspacePage, setWorkspacePage] = useState("editor"); // "editor" | "smart" | "export"
   const [isAutoEditRunning, setIsAutoEditRunning] = useState(false);
+  const [autoEditSessionId, setAutoEditSessionId] = useState(0);
   const [userAssets, setUserAssets] = useState([
     {
       id: "asset-raw-sample-01",
@@ -1959,15 +1960,33 @@ export function App({ hostSession = null }) {
     };
   })() : null;
 
-  const handleAutoEditCommit = useCallback(() => {
-    const primaryAsset = userAssets[0] || {
+  const handleResetTimeline = useCallback(() => {
+    setVisualSegments([]);
+    setImageClipCount(0);
+    setImageDuration(0);
+    setImageSrc("");
+    setImageName("");
+    setCaptionSegments([]);
+    setVisualOverlaySegments([]);
+    setStickerSegments([]);
+    setIsPlaying(false);
+  }, [setVisualSegments, setImageClipCount, setImageDuration, setImageSrc, setImageName, setCaptionSegments, setVisualOverlaySegments, setStickerSegments, setIsPlaying]);
+
+  const triggerAutoEdit = useCallback(() => {
+    setIsAutoEditRunning(true);
+    setAutoEditSessionId((prev) => prev + 1);
+    setWorkspacePage("editor");
+  }, []);
+
+  const handleAutoEditCommit = useCallback((plan) => {
+    const asset1 = plan?.cut1?.asset || userAssets[0] || {
       id: "raw-take-01",
       name: "Camera_A_Speaker_Main.mp4",
       type: "image",
       src: "/assets/sample-portrait.png",
       duration: 7.65,
     };
-    const bRollAsset = userAssets[1] || {
+    const asset2 = plan?.cut2?.asset || userAssets[1] || {
       id: "raw-take-02",
       name: "B_Roll_Studio_Setup.mp4",
       type: "image",
@@ -1975,54 +1994,59 @@ export function App({ hostSession = null }) {
       duration: 5.2,
     };
 
-    setImageSrc(primaryAsset.src || "/assets/sample-portrait.png");
-    setImageName(primaryAsset.name || "Camera_A_Speaker_Main.mp4");
-    setVisualType(primaryAsset.type || "image");
+    const duration1 = plan?.cut1?.duration || 3.15;
+    const duration2 = plan?.cut2?.duration || 4.5;
+    const totalDuration = Number((duration1 + duration2).toFixed(2));
+
+    setImageSrc(asset1.src || "/assets/sample-portrait.png");
+    setImageName(asset1.name || "Main Footage");
+    setVisualType(asset1.type || "image");
 
     const clip1 = {
       id: `visual-cut-1-${Date.now()}`,
-      duration: 3.15,
-      src: primaryAsset.src || "/assets/sample-portrait.png",
-      name: `${primaryAsset.name} (Take 1)`,
-      type: primaryAsset.type || "image",
+      duration: duration1,
+      src: asset1.src || "/assets/sample-portrait.png",
+      name: plan?.cut1?.name || `${asset1.name} (Part 1)`,
+      type: asset1.type || "image",
       fitMode: "contain",
     };
     const clip2 = {
       id: `visual-cut-2-${Date.now()}`,
-      duration: 4.5,
-      src: bRollAsset.src || "/assets/smart/auto-edit-card-bg.webp",
-      name: `${bRollAsset.name} (Cutaway)`,
-      type: bRollAsset.type || "image",
+      duration: duration2,
+      src: asset2.src || "/assets/smart/auto-edit-card-bg.webp",
+      name: plan?.cut2?.name || `${asset2.name} (Part 2)`,
+      type: asset2.type || "image",
       fitMode: "contain",
     };
     setVisualSegments([clip1, clip2]);
     setImageClipCount(2);
-    setImageDuration(7.65);
+    setImageDuration(totalDuration);
 
-    const captions = [
+    const captions = plan?.captions || [
       {
         id: `caption-1-${Date.now()}`,
         start: 0.35,
-        end: 3.1,
+        end: duration1 - 0.1,
         text: "Aaj hum baat karenge top AI tools ke baare mein",
       },
       {
         id: `caption-2-${Date.now()}`,
-        start: 3.25,
-        end: 7.4,
+        start: duration1 + 0.1,
+        end: totalDuration - 0.2,
         text: "Jo aapke workflow ko 10x fast kar denge",
       },
     ];
     setCaptionSegments(captions);
 
+    const stickerStart = plan?.sticker?.start || 1.5;
     setVisualOverlaySegments([
       {
         id: `overlay-zomato-${Date.now()}`,
         name: "Zomato Sticker Cutout",
         type: "image",
         src: "/assets/stickers/trend-flame.png",
-        start: 1.5,
-        duration: 2.5,
+        start: stickerStart,
+        duration: 2.2,
         baseTransform: { scale: 0.35, x: 25, y: -20, rotation: 0, opacity: 1 },
       },
     ]);
@@ -2185,7 +2209,7 @@ export function App({ hostSession = null }) {
         <>
           <section className={`editor-grid ${compactRail ? "is-compact-rail" : ""}`}>
             <EditorSidebar workspaceMode={workspacePage} model={{
-          onTriggerAutoEdit: () => setIsAutoEditRunning(true),
+          onTriggerAutoEdit: triggerAutoEdit,
           trackLocks, activeLanguage, activeTool, analyzeCurrentVisual, analyzeEffectVisual, audioBlob, audioDuration,
           builtInAssets, captionPosition, captionSegments, captionSize, captionStyle,
           captionStylePresetId, captionStylePresets,
@@ -2884,6 +2908,10 @@ export function App({ hostSession = null }) {
       {toast ? <div className="toast">{toast}</div> : null}
       <AutoEditEngine
         running={isAutoEditRunning}
+        sessionId={autoEditSessionId}
+        hasExistingTimeline={visualSegments.length > 0 || captionSegments.length > 0 || visualOverlaySegments.length > 0}
+        userAssets={userAssets}
+        onResetTimeline={handleResetTimeline}
         onComplete={() => setIsAutoEditRunning(false)}
         onCommitTimeline={handleAutoEditCommit}
         t={t}
@@ -2892,8 +2920,7 @@ export function App({ hostSession = null }) {
         activePage={isAutoEditRunning ? "smart" : workspacePage}
         onSelectPage={(page) => {
           if (page === "smart") {
-            setIsAutoEditRunning(true);
-            setWorkspacePage("editor");
+            triggerAutoEdit();
           } else {
             setWorkspacePage(page);
           }

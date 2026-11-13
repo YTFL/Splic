@@ -200,10 +200,13 @@ export function MediaPanel({
       {libraryStatus === "loading" && mediaTab === "library" ? (
         <LibraryLoadingGrid />
       ) : items.length ? (
-        items.map((asset) => (
+        items.map((asset, index) => (
           <div
             className={`asset-row-wrap ${draggedAssetId === asset.id ? "is-dragging" : ""}`}
             key={asset.id}
+            id={`media-pool-asset-${asset.id}`}
+            data-asset-id={asset.id}
+            data-asset-index={index}
           >
             <button
               type="button"

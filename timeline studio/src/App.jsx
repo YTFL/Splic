@@ -25,7 +25,7 @@ import { AssetDragPreview, ExportProgressOverlay } from "./components/EditorOver
 import { EditorSidebar } from "./components/EditorSidebar.jsx";
 import { BottomNavBar } from "./components/BottomNavBar.jsx";
 import { ExportWorkspace } from "./components/ExportWorkspace.jsx";
-import { ThanosSnapAgenticOverlay } from "./components/ThanosSnapAgenticOverlay.jsx";
+import { AutoEditEngine } from "./components/AutoEditEngine.jsx";
 import { VisualReplacementDialog } from "./components/VisualReplacementDialog.jsx";
 import { TemplateInspector } from "./components/TemplateLibrary.jsx";
 import { FirstVisualGuide } from "./components/FirstVisualGuide.jsx";
@@ -245,7 +245,45 @@ export function App({ hostSession = null }) {
     : activeTool;
   const [exportError, setExportError] = useState(null);
   const [workspacePage, setWorkspacePage] = useState("editor"); // "editor" | "smart" | "export"
-  const [userAssets, setUserAssets] = useState([]);
+  const [isAutoEditRunning, setIsAutoEditRunning] = useState(false);
+  const [userAssets, setUserAssets] = useState([
+    {
+      id: "asset-raw-sample-01",
+      name: "Camera_A_Speaker_Main.mp4",
+      type: "image",
+      src: "/assets/sample-portrait.png",
+      duration: 8.5,
+      size: 18500000,
+      createdAt: Date.now() - 3600000,
+    },
+    {
+      id: "asset-raw-sample-02",
+      name: "B_Roll_Studio_Setup.mp4",
+      type: "image",
+      src: "/assets/smart/auto-edit-card-bg.webp",
+      duration: 5.2,
+      size: 11200000,
+      createdAt: Date.now() - 2400000,
+    },
+    {
+      id: "asset-raw-sample-03",
+      name: "Zomato_UPI_Promo.png",
+      type: "image",
+      src: "/assets/stickers/trend-flame.png",
+      duration: 3.0,
+      size: 820000,
+      createdAt: Date.now() - 1200000,
+    },
+    {
+      id: "asset-raw-sample-04",
+      name: "SFX_Vine_Boom.mp3",
+      type: "audio",
+      src: "/assets/sound-effects/bell-hit.mp3",
+      duration: 1.8,
+      size: 450000,
+      createdAt: Date.now() - 600000,
+    },
+  ]);
   const [timelineMarkers, setTimelineMarkers] = useState([]);
   const [playheadRevealRequest, setPlayheadRevealRequest] = useState(null);
   const [templateDrafts, setTemplateDrafts] = useState({});
@@ -1921,6 +1959,84 @@ export function App({ hostSession = null }) {
     };
   })() : null;
 
+  const handleAutoEditCommit = useCallback(() => {
+    const primaryAsset = userAssets[0] || {
+      id: "raw-take-01",
+      name: "Camera_A_Speaker_Main.mp4",
+      type: "image",
+      src: "/assets/sample-portrait.png",
+      duration: 7.65,
+    };
+    const bRollAsset = userAssets[1] || {
+      id: "raw-take-02",
+      name: "B_Roll_Studio_Setup.mp4",
+      type: "image",
+      src: "/assets/smart/auto-edit-card-bg.webp",
+      duration: 5.2,
+    };
+
+    setImageSrc(primaryAsset.src || "/assets/sample-portrait.png");
+    setImageName(primaryAsset.name || "Camera_A_Speaker_Main.mp4");
+    setVisualType(primaryAsset.type || "image");
+
+    const clip1 = {
+      id: `visual-cut-1-${Date.now()}`,
+      duration: 3.15,
+      src: primaryAsset.src || "/assets/sample-portrait.png",
+      name: `${primaryAsset.name} (Take 1)`,
+      type: primaryAsset.type || "image",
+      fitMode: "contain",
+    };
+    const clip2 = {
+      id: `visual-cut-2-${Date.now()}`,
+      duration: 4.5,
+      src: bRollAsset.src || "/assets/smart/auto-edit-card-bg.webp",
+      name: `${bRollAsset.name} (Cutaway)`,
+      type: bRollAsset.type || "image",
+      fitMode: "contain",
+    };
+    setVisualSegments([clip1, clip2]);
+    setImageClipCount(2);
+    setImageDuration(7.65);
+
+    const captions = [
+      {
+        id: `caption-1-${Date.now()}`,
+        start: 0.35,
+        end: 3.1,
+        text: "Aaj hum baat karenge top AI tools ke baare mein",
+      },
+      {
+        id: `caption-2-${Date.now()}`,
+        start: 3.25,
+        end: 7.4,
+        text: "Jo aapke workflow ko 10x fast kar denge",
+      },
+    ];
+    setCaptionSegments(captions);
+
+    setVisualOverlaySegments([
+      {
+        id: `overlay-zomato-${Date.now()}`,
+        name: "Zomato Sticker Cutout",
+        type: "image",
+        src: "/assets/stickers/trend-flame.png",
+        start: 1.5,
+        duration: 2.5,
+        baseTransform: { scale: 0.35, x: 25, y: -20, rotation: 0, opacity: 1 },
+      },
+    ]);
+
+    // Shift to Timeline workspace & immediately preview the video
+    setWorkspacePage("editor");
+    seekTo(0, { immediate: true });
+    setTimeout(() => {
+      handlePlayToggle?.();
+    }, 350);
+
+    notify(t("autoEditSuccess", "Auto Edit complete — Spliced clips, captions & overlays assembled on timeline!"));
+  }, [userAssets, setImageSrc, setImageName, setVisualType, setVisualSegments, setImageClipCount, setImageDuration, setCaptionSegments, setVisualOverlaySegments, setWorkspacePage, seekTo, handlePlayToggle, notify, t]);
+
   return (
     <main className={`app-shell ${workspacePage === "export" ? "is-export-mode" : ""} ${isCompactViewport ? "is-compact-workspace" : ""} ${mobilePanel ? `mobile-panel-${mobilePanel}` : ""} ${isCompactViewport && mobileInspectorSection ? `mobile-section-${mobileInspectorSection}` : ""} ${isCompactViewport && mobileInspectorSection === "mask" && (selectedVisualOverlay || selectedVisualSegment)?.mask?.type && (selectedVisualOverlay || selectedVisualSegment).mask.type !== "none" ? "mobile-mask-active" : ""} ${mobilePanelClosing ? "is-mobile-panel-closing" : ""}`} lang={activeLanguage} onDragOver={(event) => {
       if (event.dataTransfer?.types?.includes("Files")) event.preventDefault();
@@ -2067,19 +2183,9 @@ export function App({ hostSession = null }) {
         />
       ) : (
         <>
-          {workspacePage === "smart" && (
-            <ThanosSnapAgenticOverlay
-              timelineDuration={exportContentDuration}
-              onClose={() => setWorkspacePage("editor")}
-              onApplyEdits={() => {
-                notify(t("autoEditApplied", "Thanos Snap Agentic Edits applied to Timeline!"));
-                setWorkspacePage("editor");
-              }}
-              t={t}
-            />
-          )}
           <section className={`editor-grid ${compactRail ? "is-compact-rail" : ""}`}>
             <EditorSidebar workspaceMode={workspacePage} model={{
+          onTriggerAutoEdit: () => setIsAutoEditRunning(true),
           trackLocks, activeLanguage, activeTool, analyzeCurrentVisual, analyzeEffectVisual, audioBlob, audioDuration,
           builtInAssets, captionPosition, captionSegments, captionSize, captionStyle,
           captionStylePresetId, captionStylePresets,
@@ -2776,9 +2882,22 @@ export function App({ hostSession = null }) {
         <LanguageIntro t={t} closing={introClosing} onChoose={chooseInterfaceLanguage} />
       ) : null}
       {toast ? <div className="toast">{toast}</div> : null}
+      <AutoEditEngine
+        running={isAutoEditRunning}
+        onComplete={() => setIsAutoEditRunning(false)}
+        onCommitTimeline={handleAutoEditCommit}
+        t={t}
+      />
       <BottomNavBar
-        activePage={workspacePage}
-        onSelectPage={setWorkspacePage}
+        activePage={isAutoEditRunning ? "smart" : workspacePage}
+        onSelectPage={(page) => {
+          if (page === "smart") {
+            setIsAutoEditRunning(true);
+            setWorkspacePage("editor");
+          } else {
+            setWorkspacePage(page);
+          }
+        }}
         currentTime={currentTime}
         duration={exportContentDuration}
         ratioId={ratioId}

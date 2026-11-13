@@ -52,6 +52,7 @@ Domain-specific guidance for mutating **Timeline Studio** (`MartinDelophy/ai-vid
 
 The Timeline Studio canvas organizes media across dedicated horizontal tracks:
 
+
 | Track Index | Type | Purpose | Dispatcher Action |
 | :--- | :--- | :--- | :--- |
 | **Track 1** | `video` | Primary user video footage | Split clip, ripple-delete intervals |

@@ -34,20 +34,19 @@ export function BottomNavBar({
     {
       id: "editor",
       label: "Editor",
-      sublabel: "Cut & Assembly",
+      sublabel: "Timeline & Preview",
       icon: Film,
     },
     {
       id: "smart",
-      label: "Smart / AI",
-      sublabel: "Auto-Cut & Subtitles",
+      label: "Auto Edit",
+      sublabel: "Smart Assembly",
       icon: Sparkles,
-      badge: "Sarvam",
     },
     {
       id: "export",
-      label: "Deliver & Share",
-      sublabel: "Export & Social",
+      label: "Export",
+      sublabel: "Deliver Video",
       icon: Rocket,
     },
   ];

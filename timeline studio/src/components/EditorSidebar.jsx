@@ -131,6 +131,7 @@ export function EditorSidebar({ model: d, workspaceMode = "editor" }) {
                 isPlaying={d.isPlaying}
                 pauseForTimelineEdit={d.pauseForTimelineEdit}
                 language={d.activeLanguage}
+                onTriggerAutoEdit={d.onTriggerAutoEdit}
                 onGeneratedVector={d.handleGeneratedVector}
                 onOpenAiMusic={() => {
                   d.setSmartMode("ai-music");

@@ -213,6 +213,8 @@ export function AutoEditEngine({
   const [currentPlan, setCurrentPlan] = useState(null);
   const [clipGeometry, setClipGeometry] = useState(null);
   const [currentPresence, setCurrentPresence] = useState("none");
+  // Describes the asset currently being focused by the agentic workflow (null when idle)
+  const [, setAgenticFocus] = useState(null);
 
   // Multi-Track Live Visual State (Media, Sticker, Effects, Audio)
   const [timelineTracks, setTimelineTracks] = useState({

@@ -33,6 +33,7 @@
     "fflate": "^0.8.3",
     "hangul-romanization": "^1.0.1",
     "kokoro-js": "^1.2.1",
+    "lucide-react": "^1.72.0",
     "mediabunny": "^1.50.8",
     "next": "^15.1.0",
     "onnxruntime-web": "^1.27.0",

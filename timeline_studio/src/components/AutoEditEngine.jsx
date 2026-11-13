@@ -163,25 +163,6 @@ function computeClipGeometry(plan, layout) {
 // Placeholder layout used while the live backend plan is still pending.
 const PROVISIONAL_LIVE_PLAN = { cuts: [{ start: 3.15, end: 4.95, reason: "dead_air" }] };
 
-// Map a FastAPI EditPlan onto the shape the animation normalizer expects.
-function toAnimationPlan(backendPlan, userAssets = []) {
-  const cuts = backendPlan?.cuts?.length ? backendPlan.cuts : PROVISIONAL_LIVE_PLAN.cuts;
-  const lastCut = cuts[cuts.length - 1];
-  // Both animated "takes" are pieces of the user's own video, not demo B-roll.
-  const source = userAssets.find((asset) => asset?.type === "video") || userAssets[0];
-  const media = source ? {
-    cut1: { asset: source, name: `${source.name} [Part 01]` },
-    cut2: { asset: source, name: `${source.name} [Part 02]` },
-  } : undefined;
-  return {
-    ...backendPlan,
-    ...(media ? { media } : {}),
-    cuts,
-    totalDuration: Number(backendPlan?.duration) || Number(lastCut.end) + 4,
-    stickers: (backendPlan?.stickers || []).map((sticker) => ({ ...sticker, asset: sticker.asset_url || sticker.asset })),
-    sfx: (backendPlan?.sfx || []).map((sfx) => ({ ...sfx, name: sfx.label ? `SFX: ${sfx.label}` : undefined })),
-  };
-}
 
 function formatElapsed(seconds) {
   const s = Math.max(0, Math.floor(seconds));
@@ -614,19 +595,15 @@ export function AutoEditEngine({
         liveStageRef.current = "ready";
         setLiveProgress((current) => ({ ...current, percent: 100 }));
         setStatusText(`Sarvam plan ready: ${describeLivePlan(backendPlan)}`);
-        await sleep(700); // let the loader land on 100% before the particles start
+        await sleep(700); // let the loader land on 100% before handing over
         if (isCancelled) return;
-        setPhase("wave");
-        try {
-          plan = normalizeEditPlan(toAnimationPlan(backendPlan, userAssetsRef.current), userAssetsRef.current);
-        } catch {
-          // Keep the provisional layout: the animation is cosmetic.
-        }
-        setCurrentPlan(plan);
-        geo = computeClipGeometry(plan, getTimelineLayout());
-        setClipGeometry(geo);
-        setStatusText(`Sarvam plan ready: ${describeLivePlan(backendPlan)}`);
-        await sleep(900);
+        // Live runs end here: the processing screen closes and App animates the
+        // real edit on the editor's own timeline (playhead sweep from 0 to the end).
+        setPhase("idle");
+        isExecutingRef.current = false;
+        onCommitTimelineRef.current?.(backendPlan);
+        onCompleteRef.current?.();
+        return;
       } else {
         setPhase("wave");
         setStatusText("Acoustic analysis: Sarvam Saaras v4 frequency sweep...");
@@ -834,7 +811,8 @@ export function AutoEditEngine({
           inset: 0,
           pointerEvents: "none",
           zIndex: 9998,
-          display: running ? "block" : "none",
+          // Live runs never show the full-screen particle canvas (it can paint black on some GPUs).
+          display: running && !liveRun ? "block" : "none",
         }}
       />
 

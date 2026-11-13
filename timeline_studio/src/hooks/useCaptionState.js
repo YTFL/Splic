@@ -4,9 +4,9 @@ import { DEFAULT_SCRIPT } from "../config/editor.js";
 import { createCaptionSegments } from "../lib/timeline.js";
 
 const DEFAULT_CAPTION_STYLE = {
-  backgroundColor: "#05080d",
-  backgroundOpacity: 0.62,
-  textColor: "#f5fbff",
+  backgroundColor: "#000000",
+  backgroundOpacity: 0.5,
+  textColor: "#ffffff",
   highlightWords: "",
   highlightColor: "#ffe066",
   borderColor: "#35f0dd",

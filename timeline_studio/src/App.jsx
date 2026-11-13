@@ -26,6 +26,7 @@ import { EditorSidebar } from "./components/EditorSidebar.jsx";
 import { BottomNavBar } from "./components/BottomNavBar.jsx";
 import { ExportWorkspace } from "./components/ExportWorkspace.jsx";
 import { AutoEditEngine } from "./components/AutoEditEngine.jsx";
+import { AutoCutSweep } from "./components/AutoCutSweep.jsx";
 import { AutoEditModal } from "./components/AutoEditModal.jsx";
 import { normalizeEditPlan } from "./lib/editPlanEngine.js";
 import { GetStartedSplash } from "./components/GetStartedSplash.jsx";
@@ -1789,13 +1790,16 @@ export function App({ hostSession = null }) {
   // Auto-Cut: the pipeline awaits network + decoding, so every timeline
   // mutation reads the editor through this ref to avoid stale closures.
   const autoCutLiveRef = useRef(null);
+  // Live run: the original processing screen (AutoEditEngine, live-wait phase)
+  // resolves this when it hands over after the plan lands.
   const autoCutAnimationDoneRef = useRef(null);
-  // True from the start of a live Auto-Cut until its animation finishes, even when
-  // the 25 s safety timer applied the plan first: a late animation commit must
-  // never fall through to the demo importer and overwrite the real edit.
+  // Set while a demo JSON import owns the agentic animation (its commit imports the plan).
   const autoCutLiveActiveRef = useRef(false);
   const [autoCutLiveRun, setAutoCutLiveRun] = useState(null);
   const [autoCutLiveStatus, setAutoCutLiveStatus] = useState("");
+  // Post-processing editing animation state (status pill, sweep clock, cut flash).
+  const [autoCutSweep, setAutoCutSweep] = useState(null);
+  const autoCutBusyRef = useRef(false);
   autoCutLiveRef.current = {
     visualSegments, selectedVisualSegment, audioSegments, trackLocks, trackVisibility, rippleEditing,
     getProjectSnapshot, getBrowserRuntimeProject, applyBrowserReview, checkpointHistory,
@@ -1806,15 +1810,14 @@ export function App({ hostSession = null }) {
     const initialTarget = findAutoCutTargetClip(initial.visualSegments, initial.selectedVisualSegment);
     if (!initialTarget) throw new Error("Import a video onto the timeline first, then run Auto-Cut.");
     if (initial.trackLocks.image) throw new Error("Unlock the video track to run Auto-Cut.");
-    if (autoCutAnimationDoneRef.current) throw new Error("Auto-Cut is already running.");
+    if (autoCutBusyRef.current) throw new Error("Auto-Cut is already running.");
+    autoCutBusyRef.current = true;
 
     const report = (phase) => {
       onPhase?.(phase);
       setAutoCutLiveStatus(AUTO_CUT_LIVE_STATUS[phase] || "");
     };
-    // Backend work and the agentic animation run in parallel: the engine holds
-    // its acoustic sweep until the plan resolves, animates it, then signals
-    // its commit step, which is where the real edits are applied.
+    // The processing screen shows while FastAPI + Sarvam work.
     const fetched = (async () => {
       report("uploading");
       const plan = providedPlan || await requestAutoCutEditPlan(initialTarget.clip, { languageCode });
@@ -1824,14 +1827,13 @@ export function App({ hostSession = null }) {
     })();
     const planPromise = fetched.then((result) => result.plan);
     planPromise.catch(() => {}); // the engine observes it; avoid an unhandled rejection
-    const animationDone = new Promise((resolve) => { autoCutAnimationDoneRef.current = resolve; });
-    const stopLiveRun = () => {
+    const processingDone = new Promise((resolve) => { autoCutAnimationDoneRef.current = resolve; });
+    const stopProcessingScreen = () => {
       autoCutAnimationDoneRef.current = null;
       setAutoCutLiveRun(null);
       setAutoCutLiveStatus("");
       setIsAutoEditRunning(false);
     };
-    autoCutLiveActiveRef.current = true;
     setAutoCutLiveRun({ planPromise });
     setAutoEditPlan(null);
     setShowAutoEditModal(false);
@@ -1843,21 +1845,38 @@ export function App({ hostSession = null }) {
     try {
       fetchedResult = await fetched;
     } catch (error) {
-      stopLiveRun();
-      autoCutLiveActiveRef.current = false;
+      stopProcessingScreen();
+      autoCutBusyRef.current = false;
       setShowAutoEditModal(true); // surface the error in the modal
       throw error;
     }
-    // Safety net: never let a cancelled animation block the edit.
-    await Promise.race([animationDone, new Promise((resolve) => setTimeout(resolve, 25000))]);
+    // The processing screen closes ~0.7 s after the plan lands (safety net: 5 s).
+    await Promise.race([processingDone, new Promise((resolve) => setTimeout(resolve, 5000))]);
+    stopProcessingScreen();
     try {
-      return applyAutoCutPlan(fetchedResult, initialTarget, report);
+      return await applyAutoCutPlan(fetchedResult, initialTarget, report);
     } finally {
-      stopLiveRun();
+      autoCutBusyRef.current = false;
+      setAutoCutSweep(null);
     }
   };
-  const applyAutoCutPlan = ({ plan, decodedByAsset, failed: failedSfx }, initialTarget, report) => {
+  // Editing animation: the cuts land first, then the editor's playhead sweeps the
+  // clip from 0 s to its end and every JSON edit appears on the real timeline the
+  // moment the sweep reaches its time.
+  const applyAutoCutPlan = async ({ plan, decodedByAsset, failed: failedSfx }, initialTarget, report) => {
+    const pace = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
     report("assembling");
+    setAutoCutSweep({ text: "Preparing the timeline...", time: 0, total: 0, flash: 0 });
+
+    // Ripple cuts need the clip fully prepared (proxy / thumbnails). A fast plan
+    // or a long upload can arrive first, so wait for it instead of skipping cuts.
+    const targetPreparing = () => autoCutLiveRef.current.visualSegments.find((clip) => clip.id === initialTarget.clip.id)?.preparing;
+    if (targetPreparing()) {
+      setAutoCutSweep((current) => ({ ...current, text: "Waiting for the video to finish preparing..." }));
+      const deadline = Date.now() + 90000;
+      while (targetPreparing() && Date.now() < deadline) await pace(400);
+    }
+
     const live = autoCutLiveRef.current;
     const liveClip = live.visualSegments.find((clip) => clip.id === initialTarget.clip.id);
     const target = liveClip ? findAutoCutTargetClip(live.visualSegments, liveClip) : null;
@@ -1865,6 +1884,7 @@ export function App({ hostSession = null }) {
     const warnings = [...(plan.warnings || [])];
     if (failedSfx.length) warnings.push(`SFX unavailable: ${failedSfx.join(", ")}`);
 
+    setAutoCutSweep((current) => ({ ...current, text: "Cutting dead air and filler words..." }));
     let mapping = planClipMapping(plan, target);
     let cutsApplied = 0;
     let reviewedVisuals = null;
@@ -1883,25 +1903,26 @@ export function App({ hostSession = null }) {
         mapping = planClipMapping({ ...plan, cuts: [] }, target);
       }
     }
-    // applyBrowserReview records the undo checkpoint; otherwise record one here
-    // so the whole auto-cut is a single undo step.
+    // applyBrowserReview records the undo checkpoint; otherwise record one here.
     if (!cutsApplied) live.checkpointHistory();
 
-    const captions = live.trackLocks.caption ? [] : buildAutoCutCaptionSegments(plan, mapping);
+    // Every edit on the post-cut timeline clock, in time order.
+    const byStart = (a, b) => (a.start || 0) - (b.start || 0);
+    const captions = live.trackLocks.caption ? [] : buildAutoCutCaptionSegments(plan, mapping).sort(byStart);
     if (live.trackLocks.caption && plan.captions?.length) warnings.push("Caption track is locked; captions skipped");
-    if (captions.length) {
-      setCaptionSegments(captions);
-      setScript(captions.map((caption) => caption.text).join("\n"));
-      setCaptionsEnabled(true);
-    }
-    const stickers = live.trackLocks.sticker ? [] : buildAutoCutStickerSegments(plan, mapping);
-    if (stickers.length) {
-      setStickerSegments((current) => [...current.filter((item) => item.category !== "auto-cut"), ...stickers]);
-    }
+    const stickers = live.trackLocks.sticker ? [] : buildAutoCutStickerSegments(plan, mapping).sort(byStart);
     const sfx = live.trackLocks.audio ? [] : buildAutoCutSfxSegments(plan, mapping, decodedByAsset, {
       existingSegments: live.audioSegments, trackLocks: live.trackLocks, trackVisibility: live.trackVisibility,
+    }).sort(byStart);
+    const effects = live.trackLocks.effects ? [] : buildAutoCutEffectClips(plan, mapping).sort(byStart);
+    let removedSoFar = 0;
+    const seams = mapping.timelineCuts.map((cut) => {
+      const at = cut.start - removedSoFar;
+      removedSoFar += cut.end - cut.start;
+      return at;
     });
-    if (sfx.length) setAudioSegments((current) => [...current, ...sfx]);
+    const clipStart = target.start;
+    const clipSpan = Math.max(0.1, (Number(target.clip.duration) || 0) - removedSoFar);
 
     // Transitions on the cut seams + zoom punch-ins as scale keyframes on the pieces.
     let polish = { transitions: 0, zooms: 0 };
@@ -1909,27 +1930,78 @@ export function App({ hostSession = null }) {
     if (wantsPolish && live.trackLocks.image) {
       warnings.push("Video track is locked; transitions and zooms skipped");
     } else if (wantsPolish) {
-      const removed = mapping.timelineCuts.reduce((sum, cut) => sum + (cut.end - cut.start), 0);
-      const range = { rangeStart: target.start, rangeEnd: target.start + Math.max(0, (Number(target.clip.duration) || 0) - removed) };
+      const range = { rangeStart: clipStart, rangeEnd: clipStart + clipSpan };
       polish = applyAutoCutVisualPolish(reviewedVisuals || live.visualSegments, plan, mapping, range);
       if (polish.transitions || polish.zooms) {
         setVisualSegments((current) => applyAutoCutVisualPolish(current, plan, mapping, range).segments);
       }
     }
-    const effects = live.trackLocks.effects ? [] : buildAutoCutEffectClips(plan, mapping);
-    if (effects.length) setEffectClips((current) => [...current.filter((clip) => clip.source !== "auto-cut"), ...effects]);
 
+    // Clear the tracks this run fills, then sweep.
+    if (captions.length) {
+      setCaptionSegments([]);
+      setCaptionsEnabled(true);
+    }
+    if (stickers.length) setStickerSegments((current) => current.filter((item) => item.category !== "auto-cut"));
+    if (effects.length) setEffectClips((current) => current.filter((clip) => clip.source !== "auto-cut"));
     setTrackVisibility((current) => ({
       ...current, ...(captions.length ? { caption: true } : {}), ...(stickers.length ? { sticker: true } : {}),
     }));
 
+    // Show the whole clip (0 s to the end) so the sweep stays on screen.
+    await pace(80); // let the cut timeline render first
+    window.dispatchEvent(new CustomEvent("editor-timeline-command", { detail: "zoom-fit" }));
+
+    // ~0.2 s of animation per second of video, kept between 6 and 15 seconds.
+    const sweepMs = Math.min(15000, Math.max(6000, clipSpan * 200));
+    const sweepStart = performance.now();
+    const shown = { captions: 0, stickers: 0, sfx: 0, effects: 0, seams: 0 };
+    let flash = 0;
+    for (;;) {
+      const progress = Math.min(1, (performance.now() - sweepStart) / sweepMs);
+      const time = clipStart + clipSpan * progress;
+      const reach = (list, key) => {
+        const from = shown[key];
+        let to = from;
+        while (to < list.length && (list[to].start || 0) <= time + 0.001) to += 1;
+        shown[key] = to;
+        return list.slice(from, to);
+      };
+      const newCaptions = reach(captions, "captions");
+      if (newCaptions.length) setCaptionSegments(captions.slice(0, shown.captions));
+      const newStickers = reach(stickers, "stickers");
+      if (newStickers.length) setStickerSegments((current) => [...current, ...newStickers]);
+      const newSfx = reach(sfx, "sfx");
+      if (newSfx.length) setAudioSegments((current) => [...current, ...newSfx]);
+      const newEffects = reach(effects, "effects");
+      if (newEffects.length) setEffectClips((current) => [...current, ...newEffects]);
+      let crossedSeam = false;
+      while (shown.seams < seams.length && seams[shown.seams] <= time) { shown.seams += 1; crossedSeam = true; }
+      if (crossedSeam) flash += 1;
+
+      const latest = newSfx.at(-1)?.name || newStickers.at(-1)?.name || (crossedSeam ? "Ripple cut" : "") || newCaptions.at(-1)?.text;
+      setAutoCutSweep({
+        text: latest ? `Editing: ${latest}` : "Editing the timeline...",
+        time: time - clipStart,
+        total: clipSpan,
+        flash,
+      });
+      seekTo(time, { immediate: true });
+      if (progress >= 1) break;
+      await pace(90);
+    }
+
+    if (captions.length) setScript(captions.map((caption) => caption.text).join("\n"));
+    setAutoCutSweep((current) => ({ ...current, text: "Edit ready: everything is editable on the timeline" }));
     setWorkspacePage("editor");
-    seekTo(target.start, { immediate: true });
+    seekTo(clipStart, { immediate: true });
+    if (warnings.length) console.warn(`Auto-Cut warnings: ${warnings.join(" | ")}`);
     const summary = {
       cuts: cutsApplied, captions: captions.length, stickers: stickers.length, sfx: sfx.length,
       transitions: polish.transitions, zooms: polish.zooms, effects: effects.length, warnings, director: plan.director,
     };
     notify(`Auto-Cut: ${summary.cuts} cuts, ${summary.transitions} transitions, ${summary.captions} captions, ${summary.stickers} stickers, ${summary.sfx} SFX, ${summary.zooms} zooms, ${summary.effects} effects`);
+    await pace(900);
     return summary;
   };
   const isEditorBusy = () => Boolean(projectImportProgress || exporting || timelineClipDragRef.current || pointerAssetDragRef.current ||
@@ -2271,7 +2343,7 @@ export function App({ hostSession = null }) {
             return;
           }
           const normalized = normalizeEditPlan(parsed, userAssets);
-          autoCutLiveActiveRef.current = false; // a demo JSON import owns this animation
+          autoCutLiveActiveRef.current = true; // a demo JSON import owns this animation
           setAutoEditPlan(normalized);
           setShowAutoEditModal(false);
           setWorkspacePage("editor");
@@ -3373,6 +3445,7 @@ export function App({ hostSession = null }) {
         isOpen={showAutoEditModal}
         onClose={() => setShowAutoEditModal(false)}
         onStartAutoEdit={(plan) => {
+          autoCutLiveActiveRef.current = true; // demo animation commits this plan
           setAutoEditPlan(plan);
           setShowAutoEditModal(false);
           setWorkspacePage("editor");
@@ -3385,6 +3458,7 @@ export function App({ hostSession = null }) {
         targetClipName={autoCutTarget ? autoCutTarget.clip.name || "Timeline video" : ""}
         userAssets={userAssets}
       />
+      <AutoCutSweep sweep={autoCutSweep} />
       <AutoEditEngine
         running={isAutoEditRunning}
         sessionId={autoEditSessionId}
@@ -3395,11 +3469,13 @@ export function App({ hostSession = null }) {
         liveStatus={autoCutLiveStatus}
         onCommitTimeline={(plan) => {
           if (autoCutAnimationDoneRef.current) {
-            // Live run: the animation finished; runAutoCut applies the real plan.
+            // Live run: the processing screen is done; runAutoCut animates the real edit.
             autoCutAnimationDoneRef.current();
             return;
           }
-          if (autoCutLiveActiveRef.current) return; // the live plan was already applied by the safety timer
+          // Demo JSON imports: the agentic animation commits its plan.
+          if (!autoCutLiveActiveRef.current) return;
+          autoCutLiveActiveRef.current = false;
           handleAutoEditCommit(plan);
           setIsAutoEditRunning(false);
           setAutoEditPlan(null);
@@ -3407,7 +3483,7 @@ export function App({ hostSession = null }) {
           notify("Auto-Cut: Imported JSON instructions into timeline");
         }}
         onComplete={() => {
-          if (autoCutAnimationDoneRef.current) return; // live run stops itself after applying
+          if (autoCutAnimationDoneRef.current) return; // live run stops itself
           autoCutLiveActiveRef.current = false;
           setIsAutoEditRunning(false);
           setAutoEditPlan(null);

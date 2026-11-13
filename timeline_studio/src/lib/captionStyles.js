@@ -68,9 +68,9 @@ export const BUILTIN_CAPTION_STYLE_PRESETS = [
     sampleClass: "is-classic",
     captionSize: 14,
     style: {
-      textColor: "#f5fbff",
-      backgroundColor: "#05080d",
-      backgroundOpacity: 0.72,
+      textColor: "#ffffff",
+      backgroundColor: "#000000",
+      backgroundOpacity: 0.5,
       borderColor: "#35f0dd",
       borderWidth: 0,
       radius: 7,

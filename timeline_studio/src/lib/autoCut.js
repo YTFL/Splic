@@ -21,11 +21,30 @@ const MIN_ITEM_SECONDS = 0.1;
 
 export const AUTO_CUT_ENDPOINT = "/api/sarvam-auto-edit";
 
+// Auto-Cut caption look: white text at full opacity on a 50% black box. Stored as
+// per-caption styleOverrides so it wins over whatever global caption style the
+// project has, renders identically in preview and export, and stays editable.
+export const AUTO_CUT_CAPTION_STYLE = Object.freeze({
+  textColor: "#ffffff",
+  backgroundColor: "#000000",
+  backgroundOpacity: 0.5,
+  textStrokeWidth: 0,
+  borderWidth: 0,
+  effect: "normal",
+});
+
 // Progress text shown in the modal and in the agentic animation sweep.
 export const AUTO_CUT_LIVE_STATUS = {
-  uploading: "Sarvam Saaras is transcribing and the director is planning the edit (usually 2-3 minutes)...",
-  assets: "Plan received: loading stickers and SFX...",
-  assembling: "Applying cuts, captions, stickers and SFX to the timeline...",
+  uploading: "Sarvam is transcribing and the director is planning the edit (usually under a minute)...",
+  assets: "Plan received: loading stickers and sound effects...",
+  assembling: "Applying the edit to the timeline...",
+  cuts: "Cutting dead air and filler words...",
+  captions: "Laying down karaoke captions...",
+  stickers: "Popping in stickers on the spoken words...",
+  sfx: "Dropping sound effects on the beats...",
+  polish: "Adding transitions and zoom punch-ins...",
+  effects: "Finishing with timeline effects...",
+  done: "Edit ready: everything is editable on the timeline.",
 };
 
 /** Backend EditPlan (schemas.EditPlan) vs. the legacy demo JSON used by AutoEditEngine. */
@@ -171,6 +190,7 @@ export function buildAutoCutCaptionSegments(plan, mapping) {
       weight: "bold",
       hidden: false,
       fontId: "default",
+      styleOverrides: { ...AUTO_CUT_CAPTION_STYLE },
       ...(words.length ? { words } : {}),
       ...(caption.highlight_color ? { highlightColor: caption.highlight_color } : {}),
     }];

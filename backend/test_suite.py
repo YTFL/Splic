@@ -550,5 +550,69 @@ class TestLivePipelineStubbed(unittest.TestCase):
         self.assertEqual(resp.headers.get("cross-origin-resource-policy"), "cross-origin")
 
 
+
+# ============================================================================
+# Merged Composio + Firebase service (branch Kiran) mounted on the main app
+# ============================================================================
+
+class TestComposioServiceMounted(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        import composio_integration
+        if not composio_integration.COMPOSIO_AVAILABLE:
+            raise unittest.SkipTest(f"Composio service unavailable: {composio_integration.IMPORT_ERROR}")
+        from app.auth.firebase import get_firebase_auth_manager
+        cls.auth = get_firebase_auth_manager()
+        cls.client = TestClient(app)
+
+    def tearDown(self):
+        self.auth.reset_mock_verifier()
+
+    def test_composio_sdk_not_shadowed_by_repo_folder(self):
+        import composio
+        self.assertIn("site-packages", composio.__file__)
+        from composio import Composio  # noqa: F401
+
+    def test_health_reports_both_services(self):
+        data = self.client.get("/api/health").json()
+        self.assertEqual(data["status"], "ok")
+        self.assertTrue(data["composio"]["mounted"])
+        self.assertEqual(data["composio"]["prefix"], "/api/v1")
+        v1 = self.client.get("/api/v1/health")
+        self.assertEqual(v1.status_code, 200)
+        self.assertEqual(v1.json()["service"], "composio-backend")
+        self.assertEqual(self.client.get("/api/v1/ready").json()["status"], "ready")
+
+    def test_all_v1_routes_registered(self):
+        paths = set(self.client.get("/openapi.json").json()["paths"])
+        for p in ("/api/v1/composio/status", "/api/v1/composio/toolkits", "/api/v1/composio/execute",
+                  "/api/v1/composio/connect/instagram", "/api/v1/composio/connect/youtube",
+                  "/api/v1/composio/accounts", "/api/v1/composio/accounts/{account_id}",
+                  "/api/sarvam-auto-edit", "/api/projects"):
+            self.assertIn(p, paths)
+
+    def test_protected_routes_require_firebase_token(self):
+        for path in ("/api/v1/composio/status", "/api/v1/composio/accounts", "/api/v1/composio/toolkits"):
+            resp = self.client.get(path)
+            self.assertEqual(resp.status_code, 401, path)
+        resp = self.client.get("/api/v1/composio/status", headers={"Authorization": "Token abc"})
+        self.assertEqual(resp.status_code, 401)
+
+    def test_authenticated_request_with_mock_verifier(self):
+        self.auth.set_mock_verifier(lambda token, check_revoked=True: {"uid": token.replace("tok_", ""), "email": None})
+        resp = self.client.get("/api/v1/composio/status", headers={"Authorization": "Bearer tok_creator42"})
+        self.assertEqual(resp.status_code, 200, resp.text)
+        self.assertEqual(resp.json()["authenticated_user_id"], "creator42")
+        toolkits = self.client.get("/api/v1/composio/toolkits", headers={"Authorization": "Bearer tok_creator42"})
+        self.assertEqual(toolkits.status_code, 200, toolkits.text)
+        self.assertTrue({"instagram", "youtube"} <= {t["slug"] for t in toolkits.json()})
+
+    def test_pipeline_routes_unaffected_by_v1_error_mapping(self):
+        # Main pipeline routes still behave exactly as before the merge.
+        self.assertEqual(self.client.get("/api/projects/does-not-exist").status_code, 404)
+        self.assertEqual(self.client.get("/api/stickers/does-not-exist.png").status_code, 404)
+
+
 if __name__ == "__main__":
     unittest.main()

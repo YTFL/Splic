@@ -50,6 +50,9 @@ from scraper import (
 )
 from scraper.sticker_engine import find_static_fallback
 
+import composio_integration
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("splic.main")
 
 
@@ -58,15 +61,22 @@ async def lifespan(app: FastAPI):
     # Ensure user storage directories are ready on startup
     SPLIC_DIR.mkdir(parents=True, exist_ok=True)
     STICKERS_DIR.mkdir(parents=True, exist_ok=True)
+    composio_integration.startup()
     yield
 
 
 app = FastAPI(
     title="Splic Backend API",
-    version="1.3.0",
-    description="Video auto-cut backend with TinyDB local document storage and sticker synthesis.",
+    version="1.5.0",
+    description=(
+        "Splic backend: Sarvam AI Desi Auto-Cut pipeline, TinyDB projects, and sticker synthesis "
+        "(/api/...), plus Composio OAuth for Instagram/YouTube behind Firebase Auth (/api/v1/...)."
+    ),
     lifespan=lifespan,
 )
+
+# Composio + Firebase Auth service (merged from branch Kiran) -> /api/v1/*
+composio_integration.register(app)
 
 # CORS Middleware
 app.add_middleware(
@@ -155,6 +165,7 @@ class BatchStickerResponse(BaseModel):
 # ============================================================================
 
 @app.get("/")
+@app.get("/health")
 @app.get("/api/health")
 async def health_check():
     return {
@@ -177,6 +188,7 @@ async def health_check():
             not in ("", "your_sarvam_api_subscription_key"),
             "fallback_provider": os.getenv("FALLBACK_PROVIDER", "none"),
         },
+        "composio": composio_integration.status_summary(),
     }
 
 
@@ -330,7 +342,8 @@ async def list_stickers_for_project(project_id: str):
     return {"project_id": project_id, "total": len(stickers), "stickers": stickers}
 
 
-@app.api_route("/api/stickers/{filename}", methods=["GET", "HEAD"])
+@app.get("/api/stickers/{filename}")
+@app.head("/api/stickers/{filename}", include_in_schema=False)
 async def serve_sticker(filename: str):
     """Serve a transparent sticker PNG directly from ~/.splic/stickers/ with CORP headers."""
     file_path = get_sticker_path(filename)

@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     # Firebase Admin SDK Authentication (loaded from root .env.local)
     FIREBASE_PROJECT_ID: Optional[str] = None
     FIREBASE_SERVICE_ACCOUNT_JSON: Optional[str] = None
+    # Allowed clock drift (seconds, 0-60) when verifying Firebase ID tokens
+    FIREBASE_CLOCK_SKEW_SECONDS: int = 10
 
     # Server Configuration
     HOST: str = "0.0.0.0"

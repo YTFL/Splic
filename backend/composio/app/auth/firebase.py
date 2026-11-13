@@ -111,7 +111,12 @@ class FirebaseAuthManager:
             from firebase_admin import auth
             from firebase_admin.exceptions import FirebaseError
 
-            decoded_claims = auth.verify_id_token(token, check_revoked=check_revoked)
+            # Tolerate small clock drift between this machine and Google's token issuer;
+            # without it, freshly minted tokens fail with "Token used too early".
+            skew = max(0, min(60, int(self.settings.FIREBASE_CLOCK_SKEW_SECONDS)))
+            decoded_claims = auth.verify_id_token(
+                token, check_revoked=check_revoked, clock_skew_seconds=skew
+            )
             return decoded_claims
 
         except ImportError:

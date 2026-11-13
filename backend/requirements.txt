@@ -11,3 +11,14 @@ pydub>=0.25.1
 python-multipart>=0.0.9
 audioop-lts>=0.2.1; python_version >= "3.13"
 imageio-ffmpeg>=0.5.1
+
+# --- Composio + Firebase Auth service (backend/composio, merged from branch Kiran) ---
+pydantic-settings>=2.4.0
+firebase-admin>=6.5.0
+composio>=0.1.0
+# composio-core (legacy SDK fallback) is intentionally omitted: it pins an old Pillow
+# with no wheels for Python 3.13+. Install it manually only on Python <= 3.12 if needed.
+
+# --- Testing ---
+pytest>=8.0.0
+pytest-asyncio>=0.23.0

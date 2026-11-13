@@ -109,7 +109,7 @@ class TestFirebaseLiveIntegration(unittest.TestCase):
         test_uid, id_token = self._create_test_user_and_acquire_id_token()
 
         # Verify token using official Firebase Admin SDK directly
-        decoded = self.fb_auth.verify_id_token(id_token, check_revoked=True)
+        decoded = self.fb_auth.verify_id_token(id_token, check_revoked=True, clock_skew_seconds=10)
         self.assertEqual(decoded["uid"], test_uid)
         self.assertEqual(decoded["aud"], self.settings.FIREBASE_PROJECT_ID)
         self.assertEqual(decoded["iss"], f"https://securetoken.google.com/{self.settings.FIREBASE_PROJECT_ID}")
@@ -185,7 +185,9 @@ class TestFirebaseLiveIntegration(unittest.TestCase):
         )
         self.assertEqual(initial_resp.status_code, 200)
 
-        # Revoke tokens for the user in Firebase Auth
+        # Revocation timestamps have 1-second resolution: make sure the revocation
+        # lands strictly after the token's `iat` second, or it is (correctly) not revoked.
+        time.sleep(1.5)
         self.fb_auth.revoke_refresh_tokens(test_uid)
         time.sleep(1)  # Clock boundary
 

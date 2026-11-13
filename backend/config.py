@@ -29,3 +29,4 @@ BACKEND_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BACKEND_DIR.parent
 TIMELINE_STUDIO_STICKERS_DIR = PROJECT_ROOT / "timeline studio" / "public" / "assets" / "stickers"
 TIMELINE_STUDIO_MANIFEST = TIMELINE_STUDIO_STICKERS_DIR / "stickers-manifest.json"
+TIMELINE_STUDIO_SFX_DIR = PROJECT_ROOT / "timeline studio" / "public" / "assets" / "sound-effects"

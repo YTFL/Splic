@@ -61,3 +61,6 @@ desktop.ini
 
 # Local Netlify folder
 .netlify
+
+# backend test storage
+backend/.splic_test/

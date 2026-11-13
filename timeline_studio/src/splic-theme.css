@@ -1,0 +1,2234 @@
+/* =========================================================================
+   SPLIC STUDIO — DARK CHARCOAL & CRIMSON RED LUXURY DESIGN SYSTEM
+   Matte, zero-bloom, double-bezel cards, Emil Kowalski fluid microinteractions
+   ========================================================================= */
+
+:root {
+  --splic-bg-deep: #0a0b0e;
+  --splic-bg-base: #111317;
+  --splic-bg-card: #16191f;
+  --splic-bg-elevated: #1d2028;
+  --splic-bg-surface: #242833;
+  --splic-bg-hover: #2b303d;
+
+  --splic-border-subtle: #20242e;
+  --splic-border-strong: #2e3442;
+  --splic-border-active: #e53935;
+
+  /* Crimson Red Signature Indic Accents (Matte, No Bloom) */
+  --splic-red-primary: #e53935;
+  --splic-red-hover: #ef4444;
+  --splic-red-active: #b71c1c;
+  --splic-red-muted: rgba(229, 57, 53, 0.14);
+  --splic-red-border: rgba(229, 57, 53, 0.38);
+
+  --splic-text-bright: #f5f6f8;
+  --splic-text-subtle: #a0a6b5;
+  --splic-text-muted: #646b7a;
+
+  --splic-radius-sm: 6px;
+  --splic-radius-md: 10px;
+  --splic-radius-lg: 14px;
+  --splic-radius-xl: 20px;
+
+  --splic-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --splic-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* =========================================================================
+   1. GET STARTED / HERO SPLASH SCREEN
+   ========================================================================= */
+
+.splic-splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: radial-gradient(circle at 50% 25%, #181418 0%, var(--splic-bg-deep) 70%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  overflow-y: auto;
+  animation: splic-fade-in 0.4s var(--splic-ease-out) forwards;
+}
+
+.splic-splash-card {
+  width: 100%;
+  max-width: 680px;
+  background: var(--splic-bg-base);
+  border: 1px solid var(--splic-border-strong);
+  border-radius: var(--splic-radius-xl);
+  padding: 44px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65);
+}
+
+.splic-hero-logo-box {
+  position: relative;
+  margin-bottom: 24px;
+  padding: 12px;
+  border-radius: var(--splic-radius-lg);
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.splic-hero-logo-img {
+  width: 140px;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+
+.splic-splash-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: var(--splic-red-muted);
+  border: 1px solid var(--splic-red-border);
+  color: #ff6b6b;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.splic-splash-title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--splic-text-bright);
+  margin: 0 0 12px 0;
+  line-height: 1.2;
+}
+
+.splic-splash-title span {
+  color: var(--splic-red-primary);
+}
+
+.splic-splash-desc {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--splic-text-subtle);
+  max-width: 520px;
+  margin: 0 0 32px 0;
+}
+
+.splic-feature-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 36px;
+}
+
+.splic-feature-item {
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-md);
+  padding: 16px 14px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.2s ease;
+}
+
+.splic-feature-item:hover {
+  border-color: var(--splic-border-strong);
+}
+
+.splic-feature-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--splic-red-muted);
+  color: var(--splic-red-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.splic-feature-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--splic-text-bright);
+}
+
+.splic-feature-detail {
+  font-size: 11px;
+  color: var(--splic-text-muted);
+  line-height: 1.4;
+}
+
+.splic-splash-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 440px;
+}
+
+.splic-btn-primary {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border-radius: var(--splic-radius-md);
+  background: var(--splic-red-primary);
+  border: 1px solid var(--splic-red-hover);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s var(--splic-ease-out);
+}
+
+.splic-btn-primary:hover {
+  background: var(--splic-red-hover);
+  transform: translateY(-1px);
+}
+
+.splic-btn-primary:active {
+  background: var(--splic-red-active);
+  transform: translateY(0);
+}
+
+.splic-btn-secondary {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border-radius: var(--splic-radius-md);
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-strong);
+  color: var(--splic-text-bright);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--splic-ease-out);
+}
+
+.splic-btn-secondary:hover {
+  background: var(--splic-bg-elevated);
+  border-color: var(--splic-text-muted);
+}
+
+/* =========================================================================
+   2. LOGIN / SIGNUP MODAL & VIEW
+   ========================================================================= */
+
+.splic-auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10060;
+  background: rgba(10, 11, 14, 0.88);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: splic-fade-in 0.25s ease-out forwards;
+}
+
+.splic-auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--splic-bg-base);
+  border: 1px solid var(--splic-border-strong);
+  border-radius: var(--splic-radius-lg);
+  padding: 36px 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+}
+
+.splic-auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.splic-auth-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--splic-text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.splic-auth-close-btn:hover {
+  color: var(--splic-text-bright);
+  background: var(--splic-bg-card);
+}
+
+.splic-auth-tabs {
+  display: flex;
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-sm);
+  padding: 3px;
+  margin-bottom: 24px;
+}
+
+.splic-auth-tab {
+  flex: 1;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--splic-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.splic-auth-tab.is-active {
+  background: var(--splic-bg-elevated);
+  color: var(--splic-text-bright);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.splic-social-login-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.splic-social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: var(--splic-radius-sm);
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-strong);
+  color: var(--splic-text-bright);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.splic-social-btn:hover {
+  background: var(--splic-bg-elevated);
+  border-color: var(--splic-border-active);
+}
+
+.splic-auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 16px 0 20px 0;
+  color: var(--splic-text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.splic-auth-divider::before,
+.splic-auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--splic-border-subtle);
+}
+
+.splic-auth-divider span {
+  padding: 0 12px;
+}
+
+.splic-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.splic-form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--splic-text-subtle);
+}
+
+.splic-form-input {
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-strong);
+  border-radius: var(--splic-radius-sm);
+  padding: 10px 14px;
+  color: var(--splic-text-bright);
+  font-size: 13px;
+  outline: none;
+  transition: all 0.18s ease;
+}
+
+.splic-form-input:focus {
+  border-color: var(--splic-red-primary);
+  background: var(--splic-bg-elevated);
+}
+
+/* =========================================================================
+   3. PROJECTS DASHBOARD
+   ========================================================================= */
+
+.splic-dashboard-view {
+  position: fixed;
+  inset: 0;
+  z-index: 10040;
+  background: var(--splic-bg-deep);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: splic-fade-in 0.25s ease-out forwards;
+}
+
+.splic-dashboard-topbar {
+  height: 56px;
+  background: var(--splic-bg-base);
+  border-bottom: 1px solid var(--splic-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.splic-dashboard-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.splic-dashboard-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.splic-dashboard-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 24px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.splic-dashboard-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.splic-dashboard-title-group h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--splic-text-bright);
+  margin: 0 0 6px 0;
+}
+
+.splic-dashboard-title-group p {
+  font-size: 13px;
+  color: var(--splic-text-muted);
+  margin: 0;
+}
+
+.splic-projects-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.splic-search-input-wrap {
+  position: relative;
+  width: 320px;
+}
+
+.splic-search-input-wrap svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--splic-text-muted);
+}
+
+.splic-search-input {
+  width: 100%;
+  background: var(--splic-bg-base);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-md);
+  padding: 9px 14px 9px 38px;
+  color: var(--splic-text-bright);
+  font-size: 13px;
+  outline: none;
+  transition: all 0.18s ease;
+}
+
+.splic-search-input:focus {
+  border-color: var(--splic-red-primary);
+  background: var(--splic-bg-card);
+}
+
+.splic-filter-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.splic-filter-pill {
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--splic-bg-base);
+  border: 1px solid var(--splic-border-subtle);
+  color: var(--splic-text-subtle);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.splic-filter-pill:hover {
+  background: var(--splic-bg-card);
+  color: var(--splic-text-bright);
+}
+
+.splic-filter-pill.is-active {
+  background: var(--splic-red-muted);
+  border-color: var(--splic-red-border);
+  color: #ff6b6b;
+}
+
+/* Projects Grid */
+.splic-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* New Project Hero Card */
+.splic-new-project-card {
+  background: var(--splic-bg-base);
+  border: 1.5px dashed var(--splic-border-strong);
+  border-radius: var(--splic-radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 240px;
+  cursor: pointer;
+  transition: all 0.2s var(--splic-ease-out);
+}
+
+.splic-new-project-card:hover {
+  border-color: var(--splic-red-primary);
+  background: rgba(229, 57, 53, 0.04);
+  transform: translateY(-2px);
+}
+
+.splic-new-project-plus {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--splic-red-muted);
+  border: 1px solid var(--splic-red-border);
+  color: var(--splic-red-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  transition: transform 0.2s var(--splic-ease-spring);
+}
+
+.splic-new-project-card:hover .splic-new-project-plus {
+  transform: scale(1.1);
+  background: var(--splic-red-primary);
+  color: #ffffff;
+}
+
+.splic-new-project-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--splic-text-bright);
+  margin-bottom: 4px;
+}
+
+.splic-new-project-sub {
+  font-size: 12px;
+  color: var(--splic-text-muted);
+}
+
+/* Existing Project Card */
+.splic-project-card {
+  background: var(--splic-bg-base);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.2s var(--splic-ease-out);
+}
+
+.splic-project-card:hover {
+  border-color: var(--splic-border-strong);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.splic-project-thumb-box {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  background: var(--splic-bg-card);
+  overflow: hidden;
+}
+
+.splic-project-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.splic-project-card:hover .splic-project-thumb-img {
+  transform: scale(1.04);
+}
+
+.splic-project-ratio-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(10, 11, 14, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--splic-text-bright);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.splic-project-dur-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.splic-project-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.splic-project-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.splic-project-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--splic-text-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.splic-project-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--splic-text-muted);
+}
+
+/* =========================================================================
+   4. NEW PROJECT SETUP MODAL (VISUAL PERSPECTIVES)
+   ========================================================================= */
+
+.splic-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10070;
+  background: rgba(10, 11, 14, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: splic-fade-in 0.2s ease-out forwards;
+}
+
+.splic-modal-card {
+  width: 100%;
+  max-width: 660px;
+  background: var(--splic-bg-base);
+  border: 1px solid var(--splic-border-strong);
+  border-radius: var(--splic-radius-xl);
+  padding: 32px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+}
+
+.splic-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.splic-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--splic-text-bright);
+}
+
+.splic-aspect-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.splic-aspect-card {
+  background: var(--splic-bg-card);
+  border: 1.5px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-md);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+}
+
+.splic-aspect-card:hover {
+  border-color: var(--splic-border-strong);
+  background: var(--splic-bg-elevated);
+}
+
+.splic-aspect-card.is-selected {
+  border-color: var(--splic-red-primary);
+  background: rgba(229, 57, 53, 0.06);
+}
+
+/* Platform Perspective Wireframes */
+.splic-aspect-wireframe-stage {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.splic-wireframe-reel {
+  width: 32px;
+  height: 56px;
+  border: 1.5px solid var(--splic-text-muted);
+  border-radius: 5px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.splic-aspect-card.is-selected .splic-wireframe-reel {
+  border-color: var(--splic-red-primary);
+}
+
+.splic-wireframe-reel::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 8px;
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--splic-red-primary);
+  opacity: 0.8;
+}
+
+.splic-wireframe-video {
+  width: 58px;
+  height: 33px;
+  border: 1.5px solid var(--splic-text-muted);
+  border-radius: 4px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.splic-aspect-card.is-selected .splic-wireframe-video {
+  border-color: var(--splic-red-primary);
+}
+
+.splic-wireframe-square {
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--splic-text-muted);
+  border-radius: 4px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.splic-aspect-card.is-selected .splic-wireframe-square {
+  border-color: var(--splic-red-primary);
+}
+
+.splic-aspect-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--splic-text-bright);
+  margin-bottom: 3px;
+}
+
+.splic-aspect-ratio-tag {
+  font-size: 11px;
+  color: var(--splic-red-primary);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.splic-aspect-desc {
+  font-size: 10px;
+  color: var(--splic-text-muted);
+}
+
+/* =========================================================================
+   5. SETTINGS & SOCIAL MEDIA PLATFORMS LINKING
+   ========================================================================= */
+
+.splic-settings-modal {
+  width: 100%;
+  max-width: 620px;
+  background: var(--splic-bg-base);
+  border: 1px solid var(--splic-border-strong);
+  border-radius: var(--splic-radius-xl);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.splic-settings-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--splic-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.splic-settings-body {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.splic-social-link-card {
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-md);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color 0.15s ease;
+}
+
+.splic-social-link-card:hover {
+  border-color: var(--splic-border-strong);
+}
+
+.splic-social-link-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.splic-social-link-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--splic-bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--splic-text-bright);
+}
+
+.splic-social-link-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--splic-text-bright);
+}
+
+.splic-social-link-handle {
+  font-size: 11px;
+  color: var(--splic-text-muted);
+}
+
+.splic-link-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.splic-link-status-badge.is-connected {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+}
+
+.splic-link-status-badge.is-disconnected {
+  background: var(--splic-bg-elevated);
+  border: 1px solid var(--splic-border-subtle);
+  color: var(--splic-text-muted);
+}
+
+/* =========================================================================
+   6. REVAMPED EXPORT WORKSPACE (DARK CHARCOAL & RED)
+   ========================================================================= */
+
+.davinci-export-screen {
+  width: 100%;
+  height: 100%;
+  background: var(--splic-bg-deep);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.davinci-deliver-header {
+  height: 52px;
+  padding: 0 24px;
+  background: var(--splic-bg-base);
+  border-bottom: 1px solid var(--splic-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.deliver-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deliver-header-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--splic-text-bright);
+  margin: 0;
+}
+
+.deliver-header-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--splic-red-muted);
+  border: 1px solid var(--splic-red-border);
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.deliver-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deliver-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--splic-text-muted);
+  background: var(--splic-bg-card);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--splic-border-subtle);
+}
+
+.davinci-deliver-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 360px 1fr 360px;
+  gap: 16px;
+  padding: 16px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.deliver-panel {
+  background: var(--splic-bg-surface);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: var(--splic-shadow-inner-card);
+  box-sizing: border-box;
+}
+
+.deliver-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--splic-text-bright);
+  margin-bottom: 16px;
+}
+
+.deliver-preset-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.deliver-preset-card {
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-sm);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.deliver-preset-card:hover {
+  border-color: var(--splic-border-strong);
+  background: var(--splic-bg-elevated);
+}
+
+.deliver-preset-card.is-selected {
+  border-color: var(--splic-red-primary);
+  background: rgba(229, 57, 53, 0.08);
+}
+
+.preset-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.preset-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--splic-text-bright);
+}
+
+.preset-rec-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--splic-red-muted);
+  color: #ff6b6b;
+}
+
+.preset-res {
+  font-size: 11px;
+  color: var(--splic-text-subtle);
+}
+
+.preset-spec {
+  font-size: 10px;
+  color: var(--splic-text-muted);
+}
+
+.preset-selected-check {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  color: var(--splic-red-primary);
+}
+
+.deliver-segmented-pill {
+  display: flex;
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.seg-pill-btn {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--splic-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.seg-pill-btn.is-active {
+  background: var(--splic-red-primary);
+  color: #ffffff;
+}
+
+.deliver-primary-btn {
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: var(--splic-red-primary);
+  border: 1px solid var(--splic-red-hover);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: auto;
+  transition: all 0.18s ease;
+  box-sizing: border-box;
+}
+
+.deliver-primary-btn:hover:not(:disabled) {
+  background: var(--splic-red-hover);
+  border-color: #ef5350;
+  box-shadow: 0 4px 14px rgba(229, 57, 53, 0.35);
+}
+
+/* Bottom Nav Bar Active Tab - Zero Cyan */
+.davinci-page-tab.is-active {
+  color: #ffffff !important;
+  background: rgba(229, 57, 53, 0.14) !important;
+  border: 1px solid var(--splic-red-primary) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.davinci-page-tab.is-active .davinci-tab-icon-wrap svg {
+  color: var(--splic-red-primary) !important;
+}
+
+.davinci-page-tab .davinci-tab-indicator {
+  background: var(--splic-red-primary) !important;
+  box-shadow: 0 0 6px rgba(229, 57, 53, 0.8) !important;
+}
+
+.davinci-page-tab:focus-visible {
+  outline: 2px solid var(--splic-red-primary) !important;
+  outline-offset: -1px !important;
+}
+
+/* Topbar Matched Buttons & Zero Cyan */
+.topbar-actions .preview-button,
+.topbar-actions .export-button,
+.preview-button,
+.export-button {
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  padding: 0 14px !important;
+  box-sizing: border-box !important;
+  gap: 6px !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.topbar-actions .preview-button,
+.preview-button {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #eceef2 !important;
+}
+
+.topbar-actions .preview-button:hover,
+.preview-button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+}
+
+.topbar-actions .export-button,
+.export-button {
+  background: linear-gradient(135deg, #e53935, #c62828) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 2px 8px rgba(229, 57, 53, 0.28) !important;
+}
+
+.topbar-actions .export-button:hover:not(:disabled),
+.export-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ef5350, #d32f2f) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 4px 14px rgba(229, 57, 53, 0.4) !important;
+}
+
+/* Animations */
+@keyframes splic-fade-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* =========================================================================
+   8. MINIMAL GET STARTED SCREEN (VS CODE BLANK STATE AESTHETIC)
+   ========================================================================= */
+
+.splic-minimal-home {
+  min-height: 100vh;
+  width: 100vw;
+  background: #0d1117;
+  color: #f4f5f8;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  user-select: none;
+}
+
+.splic-minimal-topbar {
+  height: 38px;
+  background: #090c10;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  position: relative;
+  z-index: 50;
+}
+
+.splic-window-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.splic-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.splic-dot.is-red {
+  background: #ff5f56;
+}
+
+.splic-dot.is-yellow {
+  background: #ffbd2e;
+}
+
+.splic-dot.is-green {
+  background: #27c93f;
+}
+
+.splic-minimal-topbar-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.splic-minimal-app-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #9aa0a6;
+  letter-spacing: 0.02em;
+}
+
+.splic-topbar-signin-pill {
+  background: #e53935;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.4;
+}
+
+.splic-topbar-signin-pill:hover {
+  background: #d32f2f;
+  transform: scale(1.03);
+}
+
+.splic-minimal-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.splic-minimal-icon-btn {
+  background: none;
+  border: none;
+  color: #767d86;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.splic-minimal-icon-btn:hover {
+  color: #ffffff;
+}
+
+.splic-minimal-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  padding: 32px 24px;
+  outline: none;
+}
+
+.splic-minimal-watermark-wrap {
+  max-width: 480px;
+  width: 85%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.splic-minimal-watermark-logo {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  filter: drop-shadow(0 0 35px rgba(229, 57, 53, 0.15));
+  opacity: 0.88;
+  transition: all 0.4s ease;
+}
+
+.splic-minimal-stage:hover .splic-minimal-watermark-logo {
+  opacity: 1;
+  filter: drop-shadow(0 0 50px rgba(229, 57, 53, 0.3));
+  transform: scale(1.02);
+}
+
+.splic-minimal-cta-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 36px;
+}
+
+.splic-minimal-getstarted-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(229, 57, 53, 0.12);
+  border: 1px solid rgba(229, 57, 53, 0.35);
+  color: #ff6b6b;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.splic-minimal-getstarted-btn:hover {
+  background: #e53935;
+  color: #ffffff;
+  border-color: #e53935;
+  transform: translateY(-1px);
+}
+
+.splic-minimal-hint {
+  font-size: 12px;
+  color: #636b75;
+  font-weight: 400;
+}
+
+.splic-welcome-page {
+  min-height: 100vh;
+  width: 100vw;
+  background: var(--splic-bg-base);
+  color: var(--splic-text-normal);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+  z-index: 10050;
+}
+
+.splic-welcome-topbar {
+  height: 60px;
+  border-bottom: 1px solid var(--splic-border-subtle);
+  background: var(--splic-bg-surface);
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+}
+
+.splic-welcome-topbar-inner {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.splic-welcome-version-pill {
+  font-size: 11px;
+  color: var(--splic-text-muted);
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-subtle);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+.splic-welcome-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 36px 24px 60px;
+  box-sizing: border-box;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.splic-welcome-hero {
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr;
+  gap: 32px;
+  align-items: center;
+  background: var(--splic-bg-surface);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-lg);
+  padding: 36px;
+  box-shadow: var(--splic-shadow-inner-card);
+}
+
+.splic-welcome-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.splic-welcome-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ff6b6b;
+  background: var(--splic-red-muted);
+  border: 1px solid var(--splic-red-border);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.splic-welcome-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--splic-text-bright);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.splic-welcome-title span {
+  color: var(--splic-red-primary);
+}
+
+.splic-welcome-subtitle {
+  font-size: 14px;
+  color: var(--splic-text-muted);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 540px;
+}
+
+.splic-welcome-hero-art {
+  display: flex;
+  justify-content: center;
+}
+
+.splic-hero-art-frame {
+  position: relative;
+  border-radius: var(--splic-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--splic-border-strong);
+  background: #000;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.splic-hero-art-img {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+.splic-hero-art-overlay {
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 100%);
+}
+
+.splic-hero-art-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f4f5f8;
+}
+
+.splic-welcome-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.splic-welcome-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.splic-welcome-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--splic-border-subtle);
+  padding-bottom: 8px;
+  margin-bottom: 6px;
+}
+
+.splic-welcome-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--splic-text-subtle);
+}
+
+.splic-welcome-section-meta {
+  font-size: 11px;
+  color: var(--splic-text-muted);
+}
+
+.splic-welcome-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.splic-welcome-action-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--splic-bg-surface);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.16s ease;
+  width: 100%;
+}
+
+.splic-welcome-action-item:hover {
+  border-color: var(--splic-red-primary);
+  background: var(--splic-bg-elevated);
+  transform: translateY(-1px);
+}
+
+.splic-welcome-action-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--splic-text-bright);
+  flex-shrink: 0;
+}
+
+.splic-welcome-action-icon.is-red {
+  background: var(--splic-red-muted);
+  border-color: var(--splic-red-border);
+  color: #ff6b6b;
+}
+
+.splic-welcome-action-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.splic-welcome-action-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--splic-text-bright);
+}
+
+.splic-welcome-action-hint {
+  font-size: 11px;
+  color: var(--splic-text-muted);
+  line-height: 1.4;
+}
+
+.splic-welcome-action-arrow {
+  color: var(--splic-text-muted);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.splic-welcome-action-item:hover .splic-welcome-action-arrow {
+  transform: translateX(3px);
+  color: var(--splic-red-primary);
+}
+
+.splic-welcome-recents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.splic-welcome-recent-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--splic-bg-surface);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.splic-welcome-recent-row:hover {
+  border-color: var(--splic-border-strong);
+  background: var(--splic-bg-elevated);
+}
+
+.splic-welcome-recent-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+  flex-shrink: 0;
+  border: 1px solid var(--splic-border-subtle);
+}
+
+.splic-welcome-recent-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.splic-welcome-recent-ratio {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 8px;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.85);
+  color: #ff6b6b;
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+.splic-welcome-recent-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.splic-welcome-recent-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--splic-text-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.splic-welcome-recent-sub {
+  font-size: 10px;
+  color: var(--splic-text-muted);
+}
+
+.splic-welcome-recent-arrow {
+  color: var(--splic-text-muted);
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.splic-welcome-recent-row:hover .splic-welcome-recent-arrow {
+  opacity: 1;
+  color: var(--splic-red-primary);
+}
+
+.splic-welcome-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.splic-welcome-feature-card {
+  background: var(--splic-bg-surface);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.splic-feature-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.splic-feature-card-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--splic-bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--splic-text-bright);
+}
+
+.splic-feature-card-icon.is-red {
+  background: var(--splic-red-muted);
+  color: #ff6b6b;
+}
+
+.splic-feature-card-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--splic-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.splic-feature-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--splic-text-bright);
+  margin: 0;
+}
+
+.splic-feature-card-desc {
+  font-size: 11px;
+  color: var(--splic-text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.splic-welcome-shortcuts-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--splic-bg-surface);
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: var(--splic-radius-sm);
+  padding: 10px 16px;
+  margin-top: 4px;
+}
+
+.splic-welcome-shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.splic-key-kbd {
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--splic-bg-card);
+  border: 1px solid var(--splic-border-strong);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--splic-text-bright);
+}
+
+.splic-key-label {
+  font-size: 11px;
+  color: var(--splic-text-muted);
+}
+
+.splic-welcome-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--splic-border-subtle);
+  padding-top: 24px;
+  margin-top: 16px;
+}
+
+.splic-footer-link {
+  background: none;
+  border: none;
+  color: var(--splic-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.splic-footer-link:hover {
+  color: var(--splic-text-bright);
+}
+
+/* =========================================================================
+   9. ISOLATED FULL-PAGE AUTH / LOGIN SCREEN
+   ========================================================================= */
+
+.splic-auth-page {
+  min-height: 100vh;
+  width: 100vw;
+  background: var(--splic-bg-base);
+  color: var(--splic-text-normal);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+  z-index: 10060;
+}
+
+.splic-auth-page-topbar {
+  height: 60px;
+  border-bottom: 1px solid var(--splic-border-subtle);
+  background: var(--splic-bg-surface);
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+}
+
+.splic-auth-page-topbar-inner {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.splic-auth-page-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 60px;
+}
+
+.splic-auth-page-container {
+  max-width: 1200px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.15fr 0.95fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.splic-auth-brand-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.splic-auth-hero-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--splic-text-bright);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.splic-auth-hero-title span {
+  color: var(--splic-red-primary);
+}
+
+.splic-auth-hero-subtitle {
+  font-size: 14px;
+  color: var(--splic-text-muted);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 480px;
+}
+
+.splic-auth-logo-preview {
+  border-radius: var(--splic-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--splic-border-strong);
+  max-width: 380px;
+  background: #000;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+}
+
+.splic-auth-logo-preview-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.splic-auth-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.splic-auth-feature-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--splic-text-subtle);
+}
+
+.splic-auth-feature-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--splic-red-muted);
+  border: 1px solid var(--splic-red-border);
+  color: #ff6b6b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.splic-auth-card-col {
+  display: flex;
+  justify-content: center;
+}
+
+.splic-auth-isolated-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--splic-bg-surface);
+  border: 1px solid var(--splic-border-strong);
+  border-radius: var(--splic-radius-lg);
+  padding: 32px;
+  box-shadow: var(--splic-shadow-inner-card), 0 20px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* =========================================================================
+   10. GLOBAL ZERO-CYAN ENFORCEMENT & BUTTON/CONTAINER HARMONIZATION
+   ========================================================================= */
+
+:root {
+  --desktop-focus: var(--splic-red-primary) !important;
+  --desktop-hover-border: rgba(229, 57, 53, 0.4) !important;
+  --marker-color: #e53935 !important;
+}
+
+/* Eradicate cyan focus rings everywhere */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible {
+  outline: 2px solid var(--splic-red-primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Force Topbar Export Button to Splic Crimson Red */
+.export-button,
+.export-confirm-button {
+  background: linear-gradient(135deg, #e53935, #c62828) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 2px 8px rgba(229, 57, 53, 0.28) !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  font-weight: 600 !important;
+  box-sizing: border-box !important;
+}
+
+.export-button:hover:not(:disabled),
+.export-confirm-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ef5350, #d32f2f) !important;
+  box-shadow: 0 4px 14px rgba(229, 57, 53, 0.4) !important;
+}
+
+/* Harmonize Topbar Buttons: Preview and Export buttons share exact 34px height and 8px border-radius */
+.preview-button {
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-sizing: border-box !important;
+}
+
+/* Projects Dashboard Topbar Buttons Harmonization */
+.splic-dashboard-topbar-right .splic-dash-btn,
+.splic-dashboard-topbar-right button {
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  border-radius: 8px !important;
+  padding: 0 14px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  box-sizing: border-box !important;
+}
+
+.splic-user-pill {
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  border-radius: 8px !important;
+  padding: 0 12px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--splic-text-bright) !important;
+  background: var(--splic-bg-card) !important;
+  border: 1px solid var(--splic-border-subtle) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  box-sizing: border-box !important;
+}
+
+/* Bottom Navigation Bar - Active Tab Harmonization */
+.davinci-page-tab.is-active {
+  background: rgba(229, 57, 53, 0.14) !important;
+  border: 1px solid var(--splic-red-primary) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  border-radius: 6px !important;
+}
+
+.davinci-page-tab.is-active .davinci-tab-icon-wrap svg {
+  color: var(--splic-red-primary) !important;
+}
+
+.davinci-page-tab .davinci-tab-indicator {
+  background: var(--splic-red-primary) !important;
+  box-shadow: 0 0 6px rgba(229, 57, 53, 0.8) !important;
+}
+
+/* Autosave indicator checkmark: Red accent */
+.autosave svg {
+  color: var(--splic-red-primary) !important;
+}
+
+/* Symmetrical Panels & Harmonized Buttons in Deliver/Export Workspace */
+.davinci-deliver-grid {
+  grid-template-columns: 360px 1fr 360px !important;
+  gap: 16px !important;
+  padding: 16px !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.deliver-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+  padding: 20px !important;
+  border: 1px solid var(--splic-border-subtle) !important;
+  background: var(--splic-bg-surface) !important;
+  box-shadow: var(--splic-shadow-inner-card) !important;
+  box-sizing: border-box !important;
+}
+
+.deliver-panel-title {
+  flex-shrink: 0 !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--splic-text-bright) !important;
+  margin-bottom: 16px !important;
+}
+
+.deliver-panel-body {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  padding-right: 2px !important;
+}
+
+.deliver-panel-footer {
+  flex-shrink: 0 !important;
+  margin-top: auto !important;
+  padding-top: 16px !important;
+  border-top: 1px solid var(--splic-border-subtle) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  min-height: 60px !important;
+  box-sizing: border-box !important;
+}
+
+.deliver-preview-footer {
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.deliver-preview-spec-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  font-size: 11px !important;
+  color: var(--splic-text-muted) !important;
+  font-weight: 600 !important;
+  width: 100% !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.deliver-divider {
+  color: var(--splic-border-strong) !important;
+}
+
+/* Both Action Buttons in Deliver Panels: Identical 44px Height & Splic Crimson Red Styling */
+.deliver-panel .deliver-primary-btn {
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  background: var(--splic-red-primary) !important;
+  border: 1px solid var(--splic-red-hover) !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+  transition: all 0.18s ease !important;
+  cursor: pointer !important;
+}
+
+.deliver-panel .deliver-primary-btn:hover:not(:disabled) {
+  background: var(--splic-red-hover) !important;
+  box-shadow: 0 4px 14px rgba(229, 57, 53, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+

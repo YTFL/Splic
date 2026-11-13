@@ -2,20 +2,20 @@ import React, { useState } from "react";
 import {
   Download,
   Share2,
-  Clapperboard,
-  Camera,
+  Film,
+  Sparkles,
   Sliders,
   CheckCircle2,
   Clock,
-  Film,
-  Sparkles,
-  Layers,
   HardDrive,
   Eye,
   RefreshCw,
   Video,
   FileVideo,
   Check,
+  Camera,
+  Radio,
+  Layers,
 } from "lucide-react";
 
 export function ExportWorkspace({
@@ -31,15 +31,16 @@ export function ExportWorkspace({
   ratioId = "9:16",
   previewCanvasRef,
   previewVideoRef,
+  connectedSocials,
   t = (k, fallback) => fallback || k,
 }) {
   const [selectedPreset, setSelectedPreset] = useState("instagram-reels");
   const [socialPlatform, setSocialPlatform] = useState("instagram");
   const [videoTitle, setVideoTitle] = useState("My Desi Reel — Splic Studio");
   const [videoDescription, setVideoDescription] = useState(
-    "Created with Splic Studio #DesiAutoCut #SarvamAI #Reels"
+    "Created with Splic Studio #DesiAutoCut #SarvamAI #Reels #IndicCreators"
   );
-  const [tags, setTags] = useState("desi, reel, comedy, viral, sarvam");
+  const [tags, setTags] = useState("desi, reel, viral, sarvam, hinglish, ai");
   const [privacy, setPrivacy] = useState("public");
   const [qualityPreset, setQualityPreset] = useState("high");
   const [burnCaptions, setBurnCaptions] = useState(true);
@@ -50,7 +51,7 @@ export function ExportWorkspace({
       id: "instagram-reels",
       name: "Instagram Reels",
       format: "9:16 Vertical",
-      resolution: "1080 x 1920",
+      resolution: "1080 × 1920",
       fps: "30 / 60 FPS",
       bitrate: "12 Mbps (H.264)",
       badge: "Reels / Stories",
@@ -60,28 +61,31 @@ export function ExportWorkspace({
       id: "youtube-shorts",
       name: "YouTube Shorts",
       format: "9:16 Vertical",
-      resolution: "1080 x 1920",
+      resolution: "1080 × 1920",
       fps: "60 FPS",
       bitrate: "15 Mbps (H.264)",
-      badge: "Shorts",
+      badge: "Shorts Feed",
+      recommended: false,
     },
     {
       id: "youtube-hd",
       name: "YouTube 16:9 HD",
       format: "16:9 Landscape",
-      resolution: "1920 x 1080",
+      resolution: "1920 × 1080",
       fps: "30 / 60 FPS",
       bitrate: "16 Mbps (H.264)",
       badge: "Full HD",
+      recommended: false,
     },
     {
       id: "custom-pro",
-      name: "Custom Master",
+      name: "Lossless Master",
       format: "NLE Master",
       resolution: "Native Source",
       fps: "Project FPS",
-      bitrate: "Maximum Quality",
-      badge: "Lossless",
+      bitrate: "Pro Quality",
+      badge: "Master",
+      recommended: false,
     },
   ];
 
@@ -99,7 +103,7 @@ export function ExportWorkspace({
     setSocialUploadState("uploading");
     setTimeout(() => {
       setSocialUploadState("success");
-    }, 2200);
+    }, 2000);
   };
 
   const estimatedSizeMB = Math.max(
@@ -112,10 +116,11 @@ export function ExportWorkspace({
       {/* Top Deliver Header */}
       <header className="davinci-deliver-header">
         <div className="deliver-header-left">
-          <Film size={18} strokeWidth={1.25} />
+          <Film size={18} strokeWidth={1.25} style={{ color: "var(--splic-red-primary)" }} />
           <h2 className="deliver-header-title">Deliver & Social Publish</h2>
           <span className="deliver-header-badge">WebCodecs Hardware Accelerated</span>
         </div>
+
         <div className="deliver-header-stats">
           <div className="deliver-stat-pill">
             <Clock size={13} strokeWidth={1.25} />
@@ -125,83 +130,93 @@ export function ExportWorkspace({
             <HardDrive size={13} strokeWidth={1.25} />
             <span>Est. Size: ~{estimatedSizeMB} MB</span>
           </div>
+          <div className="deliver-stat-pill">
+            <Layers size={13} strokeWidth={1.25} />
+            <span>Format: {ratioId}</span>
+          </div>
         </div>
       </header>
 
       {/* Main Deliver Grid */}
       <div className="davinci-deliver-grid">
         {/* Left: Render Settings & Format Presets */}
-        <section className="deliver-panel deliver-presets-panel">
+        <section className="deliver-panel">
           <div className="deliver-panel-title">
-            <FileVideo size={15} strokeWidth={1.25} />
+            <FileVideo size={16} strokeWidth={1.25} style={{ color: "var(--splic-red-primary)" }} />
             <span>Export Format Presets</span>
           </div>
 
-          <div className="deliver-preset-cards">
-            {presets.map((preset) => {
-              const isSelected = selectedPreset === preset.id;
-              return (
-                <div
-                  key={preset.id}
-                  className={`deliver-preset-card ${isSelected ? "is-selected" : ""}`}
-                  onClick={() => setSelectedPreset(preset.id)}
-                >
-                  <div className="preset-card-top">
-                    <span className="preset-card-name">{preset.name}</span>
-                    {preset.recommended && (
-                      <span className="preset-rec-tag">Recommended</span>
+          <div className="deliver-panel-body">
+            <div className="deliver-preset-cards">
+              {presets.map((preset) => {
+                const isSelected = selectedPreset === preset.id;
+                return (
+                  <div
+                    key={preset.id}
+                    className={`deliver-preset-card ${isSelected ? "is-selected" : ""}`}
+                    onClick={() => setSelectedPreset(preset.id)}
+                  >
+                    <div className="preset-card-top">
+                      <span className="preset-card-name">{preset.name}</span>
+                      {preset.recommended && (
+                        <span className="preset-rec-tag">Recommended</span>
+                      )}
+                    </div>
+                    <div className="preset-card-details">
+                      <span className="preset-res">{preset.resolution}</span>
+                      <span className="preset-spec">
+                        {preset.format} • {preset.bitrate}
+                      </span>
+                    </div>
+                    {isSelected && (
+                      <div className="preset-selected-check">
+                        <Check size={14} strokeWidth={2} />
+                      </div>
                     )}
                   </div>
-                  <div className="preset-card-details">
-                    <span className="preset-res">{preset.resolution}</span>
-                    <span className="preset-spec">
-                      {preset.format} • {preset.bitrate}
-                    </span>
-                  </div>
-                  {isSelected && (
-                    <div className="preset-selected-check">
-                      <Check size={13} strokeWidth={1.5} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="deliver-encoding-options">
-            <div className="deliver-panel-title">
-              <Sliders size={15} strokeWidth={1.25} />
-              <span>Encoding Parameters</span>
+                );
+              })}
             </div>
 
-            <div className="deliver-option-row">
-              <label>Quality Target</label>
-              <div className="deliver-segmented-pill">
-                {["balanced", "high", "master"].map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    className={`seg-pill-btn ${qualityPreset === q ? "is-active" : ""}`}
-                    onClick={() => setQualityPreset(q)}
-                  >
-                    {q.charAt(0).toUpperCase() + q.slice(1)}
-                  </button>
-                ))}
+            <div style={{ marginTop: "4px" }}>
+              <div className="deliver-panel-title" style={{ fontSize: "12px", marginBottom: "12px" }}>
+                <Sliders size={14} strokeWidth={1.25} style={{ color: "var(--splic-red-primary)" }} />
+                <span>Encoding Parameters</span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <label style={{ fontSize: "12px", color: "var(--splic-text-subtle)" }}>Quality Target</label>
+                  <div className="deliver-segmented-pill" style={{ width: "180px", height: "32px" }}>
+                    {["balanced", "high", "master"].map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        className={`seg-pill-btn ${qualityPreset === q ? "is-active" : ""}`}
+                        onClick={() => setQualityPreset(q)}
+                      >
+                        {q.charAt(0).toUpperCase() + q.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <label style={{ fontSize: "12px", color: "var(--splic-text-subtle)" }}>
+                    Burn Romanized Karaoke Subtitles
+                  </label>
+                  <input
+                    type="checkbox"
+                    checked={burnCaptions}
+                    onChange={(e) => setBurnCaptions(e.target.checked)}
+                    style={{ accentColor: "var(--splic-red-primary)", width: "16px", height: "16px", cursor: "pointer" }}
+                  />
+                </div>
               </div>
             </div>
-
-            <div className="deliver-option-row">
-              <label>Burn Indic Karaoke Subtitles</label>
-              <input
-                type="checkbox"
-                checked={burnCaptions}
-                onChange={(e) => setBurnCaptions(e.target.checked)}
-                className="deliver-checkbox"
-              />
-            </div>
           </div>
 
-          <div className="deliver-render-cta">
+          <div className="deliver-panel-footer">
             <button
               type="button"
               className="deliver-primary-btn"
@@ -216,156 +231,248 @@ export function ExportWorkspace({
               ) : (
                 <>
                   <Download size={15} strokeWidth={1.5} />
-                  <span>Export MP4 Video</span>
+                  <span>Export Hardware MP4</span>
                 </>
               )}
             </button>
           </div>
         </section>
 
-        {/* Center: Live Composition Preview */}
-        <section className="deliver-panel deliver-preview-panel">
+        {/* Center: Live Composition Master Preview */}
+        <section className="deliver-panel">
           <div className="deliver-panel-title">
-            <Eye size={15} strokeWidth={1.25} />
-            <span>Master Output Preview</span>
+            <Eye size={16} strokeWidth={1.25} style={{ color: "var(--splic-red-primary)" }} />
+            <span>Master Output Stage</span>
           </div>
 
-          <div className="deliver-preview-stage">
-            <div className="deliver-video-container">
-              {/* Reference preview display */}
-              <div className="deliver-preview-placeholder">
-                <Video size={36} strokeWidth={1.25} />
-                <span className="deliver-preview-caption">
-                  Active Timeline Media ({ratioId})
+          <div className="deliver-panel-body deliver-preview-body" style={{ alignItems: "center", justifyContent: "center" }}>
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                background: "#08090b",
+                borderRadius: "8px",
+                border: "1px solid var(--splic-border-subtle)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                overflow: "hidden",
+                minHeight: "320px",
+              }}
+            >
+              {/* Aspect ratio frame box */}
+              <div
+                style={{
+                  width: ratioId === "16:9" ? "80%" : "220px",
+                  height: ratioId === "16:9" ? "200px" : "360px",
+                  background: "#0d0e12",
+                  border: "1.5px solid var(--splic-border-strong)",
+                  borderRadius: "6px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                }}
+              >
+                <Video size={36} strokeWidth={1.25} style={{ color: "var(--splic-text-muted)", marginBottom: "10px" }} />
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--splic-text-bright)" }}>
+                  Canvas Preview ({ratioId})
                 </span>
-                <span className="deliver-preview-sub">
-                  Full 1080p hardware-accelerated preview
+                <span style={{ fontSize: "11px", color: "var(--splic-text-muted)", marginTop: "4px" }}>
+                  1080p WebCodecs Render Source
                 </span>
               </div>
-            </div>
 
-            {exporting && (
-              <div className="deliver-live-progress-box">
-                <div className="progress-top-info">
-                  <span className="progress-label">{exportPhase || "Rendering Video Frames..."}</span>
-                  <span className="progress-num">{exportPercent}%</span>
-                </div>
-                <div className="progress-bar-track">
+              {/* Rendering Progress Overlay */}
+              {exporting && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "20px",
+                    left: "24px",
+                    right: "24px",
+                    background: "rgba(16, 18, 23, 0.95)",
+                    border: "1px solid var(--splic-border-strong)",
+                    borderRadius: "8px",
+                    padding: "16px 20px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "12px" }}>
+                    <span style={{ color: "var(--splic-text-bright)", fontWeight: 600 }}>
+                      {exportPhase || "Encoding Frames via WebCodecs..."}
+                    </span>
+                    <span style={{ color: "var(--splic-red-primary)", fontWeight: 700 }}>
+                      {exportPercent}%
+                    </span>
+                  </div>
+
                   <div
-                    className="progress-bar-fill"
-                    style={{ width: `${exportPercent}%` }}
-                  />
-                </div>
-                {onCancelExport && (
-                  <button
-                    type="button"
-                    className="deliver-cancel-btn"
-                    onClick={onCancelExport}
+                    style={{
+                      width: "100%",
+                      height: "6px",
+                      background: "var(--splic-bg-surface)",
+                      borderRadius: "3px",
+                      overflow: "hidden",
+                      marginBottom: "10px",
+                    }}
                   >
-                    Cancel Render
-                  </button>
-                )}
-              </div>
-            )}
+                    <div
+                      style={{
+                        width: `${exportPercent}%`,
+                        height: "100%",
+                        background: "var(--splic-red-primary)",
+                        transition: "width 0.2s ease",
+                      }}
+                    />
+                  </div>
+
+                  {onCancelExport && (
+                    <button
+                      type="button"
+                      onClick={onCancelExport}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--splic-text-muted)",
+                        fontSize: "11px",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Cancel Render
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="deliver-panel-footer deliver-preview-footer">
+            <div className="deliver-preview-spec-bar">
+              <span>WebCodecs Acceleration</span>
+              <span className="deliver-divider">•</span>
+              <span>H.264 / AAC High-Profile</span>
+              <span className="deliver-divider">•</span>
+              <span>1080p Master Output</span>
+            </div>
           </div>
         </section>
 
-        {/* Right: Direct Social Media Upload */}
-        <section className="deliver-panel deliver-social-panel">
+        {/* Right: 1-Click Social Media Upload */}
+        <section className="deliver-panel">
           <div className="deliver-panel-title">
-            <Share2 size={15} strokeWidth={1.25} />
-            <span>1-Click Social Media Upload</span>
+            <Share2 size={16} strokeWidth={1.25} style={{ color: "var(--splic-red-primary)" }} />
+            <span>1-Click Social Media Publish</span>
           </div>
 
-          <div className="social-tabs">
-            <button
-              type="button"
-              className={`social-tab ${socialPlatform === "instagram" ? "is-active" : ""}`}
-              onClick={() => setSocialPlatform("instagram")}
-            >
-              <Camera size={15} strokeWidth={1.25} />
-              <span>Instagram Reels</span>
-            </button>
-            <button
-              type="button"
-              className={`social-tab ${socialPlatform === "youtube" ? "is-active" : ""}`}
-              onClick={() => setSocialPlatform("youtube")}
-            >
-              <Clapperboard size={15} strokeWidth={1.25} />
-              <span>YouTube Shorts</span>
-            </button>
-          </div>
+          <div className="deliver-panel-body">
+            {/* Social Platform Toggle */}
+            <div className="deliver-segmented-pill" style={{ height: "36px" }}>
+              <button
+                type="button"
+                className={`seg-pill-btn ${socialPlatform === "instagram" ? "is-active" : ""}`}
+                onClick={() => setSocialPlatform("instagram")}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+              >
+                <Camera size={13} strokeWidth={1.5} />
+                <span>Instagram Reels</span>
+              </button>
 
-          <div className="social-form">
-            <div className="social-field">
-              <label>Reel / Short Title</label>
+              <button
+                type="button"
+                className={`seg-pill-btn ${socialPlatform === "youtube" ? "is-active" : ""}`}
+                onClick={() => setSocialPlatform("youtube")}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+              >
+                <Video size={13} strokeWidth={1.5} />
+                <span>YouTube Shorts</span>
+              </button>
+            </div>
+
+            <div className="splic-form-group">
+              <label>Post Title</label>
               <input
                 type="text"
+                className="splic-form-input"
                 value={videoTitle}
                 onChange={(e) => setVideoTitle(e.target.value)}
-                placeholder="Enter compelling video title..."
+                placeholder="Enter engaging title..."
               />
             </div>
 
-            <div className="social-field">
-              <label>Caption & Description</label>
+            <div className="splic-form-group">
+              <label>Caption & Hashtags</label>
               <textarea
+                className="splic-form-input"
                 rows={4}
                 value={videoDescription}
                 onChange={(e) => setVideoDescription(e.target.value)}
-                placeholder="Write caption with hashtags and credits..."
+                placeholder="Write caption with hashtags..."
+                style={{ resize: "none" }}
               />
             </div>
 
-            <div className="social-field">
-              <label>Tags & Hashtags</label>
-              <input
-                type="text"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="comma, separated, tags"
-              />
-            </div>
-
-            <div className="social-field">
+            <div className="splic-form-group">
               <label>Visibility</label>
               <select
+                className="splic-form-input"
                 value={privacy}
                 onChange={(e) => setPrivacy(e.target.value)}
               >
-                <option value="public">Public (Immediate Publish)</option>
-                <option value="unlisted">Unlisted (Share via link)</option>
-                <option value="private">Private (Draft)</option>
+                <option value="public">Public (Instant Publish)</option>
+                <option value="unlisted">Unlisted (Review Draft)</option>
+                <option value="private">Private</option>
               </select>
             </div>
+          </div>
 
-            <div className="social-upload-cta">
-              {socialUploadState === "success" ? (
-                <div className="social-success-banner">
-                  <CheckCircle2 size={16} strokeWidth={1.5} />
-                  <span>Ready to upload to {socialPlatform === "instagram" ? "Instagram" : "YouTube"}!</span>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="social-publish-btn"
-                  disabled={socialUploadState === "uploading"}
-                  onClick={handleSocialPublish}
-                >
-                  {socialUploadState === "uploading" ? (
-                    <>
-                      <RefreshCw size={14} className="spin-icon" strokeWidth={1.5} />
-                      <span>Preparing Upload Package...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 size={14} strokeWidth={1.5} />
-                      <span>Publish Directly to {socialPlatform === "instagram" ? "Instagram" : "YouTube"}</span>
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
+          <div className="deliver-panel-footer">
+            {socialUploadState === "success" ? (
+              <div
+                style={{
+                  background: "rgba(34, 197, 94, 0.12)",
+                  border: "1px solid rgba(34, 197, 94, 0.3)",
+                  borderRadius: "8px",
+                  height: "44px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  color: "#4ade80",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+              >
+                <CheckCircle2 size={16} strokeWidth={2} />
+                <span>
+                  Queued for {socialPlatform === "instagram" ? "Instagram Reels" : "YouTube Shorts"}!
+                </span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="deliver-primary-btn"
+                disabled={socialUploadState === "uploading"}
+                onClick={handleSocialPublish}
+              >
+                {socialUploadState === "uploading" ? (
+                  <>
+                    <RefreshCw size={15} className="spin-icon" strokeWidth={1.5} />
+                    <span>Syncing Upload Package...</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 size={15} strokeWidth={1.5} />
+                    <span>Publish Directly to {socialPlatform === "instagram" ? "Instagram" : "YouTube"}</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </section>
       </div>

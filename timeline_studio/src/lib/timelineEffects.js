@@ -147,20 +147,20 @@ export function drawTimelineEffects(ctx, canvas, clips, time, drawRipple, { comp
       const source = copyFrame(canvas);
       if (clip.effect === "glow") {
         ctx.globalCompositeOperation = "screen";
-        ctx.globalAlpha = amount * 0.45;
-        ctx.filter = `blur(${Math.max(1, w * 0.012)}px)`;
+        ctx.globalAlpha = Math.min(0.75, amount * 0.65);
+        ctx.filter = `blur(${Math.max(2, w * 0.015)}px)`;
         ctx.drawImage(source, 0, 0);
       } else if (clip.effect === "shake") {
-        const envelope = Math.exp(-resolveBeatAge(clip, time, markers) * 12) * amount;
+        const envelope = Math.exp(-resolveBeatAge(clip, time, markers) * 8) * amount;
         ctx.clearRect(0, 0, w, h);
         ctx.translate(
-          w / 2 + Math.sin(t * 85) * w * 0.012 * envelope,
-          h / 2 + Math.cos(t * 71) * h * 0.012 * envelope,
+          w / 2 + Math.sin(t * 85) * w * 0.018 * envelope,
+          h / 2 + Math.cos(t * 71) * h * 0.018 * envelope,
         );
-        ctx.scale(1 + 0.035 * amount, 1 + 0.035 * amount);
+        ctx.scale(1 + 0.045 * amount * envelope, 1 + 0.045 * amount * envelope);
         ctx.drawImage(source, -w / 2, -h / 2);
       } else if (clip.effect === "chromatic") {
-        const offset = w * 0.008 * amount;
+        const offset = Math.max(6, w * 0.014 * amount);
         let channel = scratch.get(source);
         if (!channel) {
           channel = document.createElement("canvas");
@@ -182,15 +182,15 @@ export function drawTimelineEffects(ctx, canvas, clips, time, drawRipple, { comp
         });
       } else if (clip.effect === "glitch") {
         const frame = Math.floor(t * 24),
-          pulse = frame % 19 < 4;
+          pulse = (frame % 7 < 4) || (frame % 4 === 0);
         if (pulse)
-          for (let i = 0; i < 8; i++) {
+          for (let i = 0; i < 9; i++) {
             const y = (((frame * 37 + i * 71) % 100) / 100) * h,
-              height = h * (0.008 + (i % 3) * 0.012);
-            const dx = Math.sin(frame * 17 + i * 9) * w * 0.045 * amount;
+              height = h * (0.010 + (i % 3) * 0.016);
+            const dx = Math.sin(frame * 17 + i * 9) * w * 0.065 * amount;
             ctx.drawImage(source, 0, y, w, height, dx, y, w, height);
-            ctx.globalAlpha = amount * 0.16;
-            ctx.fillStyle = clip.color;
+            ctx.globalAlpha = Math.min(0.35, amount * 0.28);
+            ctx.fillStyle = clip.color || "#f5c542";
             ctx.fillRect(0, y, w, height);
             ctx.globalAlpha = 1;
           }

@@ -180,7 +180,7 @@
   background: currentColor;
 }
 
-.is-auditioning .sound-library-waveform { color: #58e5d5; }
+.is-auditioning .sound-library-waveform { color: #e53935; }
 
 @media (pointer: coarse) {
   .sound-library-categories button { min-height: 32px; }

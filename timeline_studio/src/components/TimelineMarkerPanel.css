@@ -34,7 +34,7 @@
 }
 
 .timeline-marker-panel :is(button, input, textarea, select):focus-visible {
-  outline: 2px solid var(--desktop-focus, #59eadf);
+  outline: 2px solid var(--desktop-focus, #e53935);
   outline-offset: 2px;
 }
 
@@ -52,7 +52,7 @@
 }
 
 .timeline-marker-panel :is(input, textarea, select):focus {
-  border-color: rgba(89, 234, 223, 0.5);
+  border-color: rgba(229, 57, 53, 0.5);
 }
 
 .timeline-marker-panel :is(input, textarea)[aria-invalid="true"] {
@@ -88,7 +88,7 @@
 
 .timeline-marker-panel-heading > svg {
   flex-shrink: 0;
-  color: #61e9de;
+  color: #e53935;
 }
 
 .timeline-marker-panel-heading h2 {
@@ -102,7 +102,7 @@
   min-width: 22px;
   padding: 1px 6px;
   border-radius: 5px;
-  background: rgba(89, 234, 223, 0.08);
+  background: rgba(229, 57, 53, 0.08);
   color: #95b8bc;
   font-size: var(--desktop-meta, 11px);
   text-align: center;
@@ -154,7 +154,7 @@
   padding: 6px 8px;
   border: 1px solid rgba(133, 174, 185, 0.16);
   border-radius: 7px;
-  background: rgba(84, 142, 158, 0.07);
+  background: rgba(229, 57, 53, 0.07);
   color: #c5d8de;
   font-size: 12px;
   font-weight: 550;
@@ -162,11 +162,11 @@
 
 .timeline-marker-panel-add > button > svg {
   flex-shrink: 0;
-  color: #62c8c4;
+  color: #e53935;
 }
 
 .timeline-marker-panel-add > button:hover {
-  border-color: var(--desktop-hover-border, rgba(76, 238, 222, 0.34));
+  border-color: var(--desktop-hover-border, rgba(229, 57, 53, 0.34));
   background: var(--desktop-hover-fill, rgba(224, 86, 56, 0.075));
   color: #e1fffc;
 }
@@ -257,7 +257,7 @@
 
 .timeline-marker-panel-item > svg {
   margin-top: 1px;
-  color: var(--marker-color, #59eadf);
+  color: var(--marker-color, #e53935);
 }
 
 .timeline-marker-panel-item:hover {
@@ -265,8 +265,8 @@
 }
 
 .timeline-marker-panel-item.is-selected {
-  border-color: rgba(82, 226, 213, 0.23);
-  background: rgba(67, 215, 207, 0.075);
+  border-color: rgba(229, 57, 53, 0.23);
+  background: rgba(229, 57, 53, 0.075);
 }
 
 .timeline-marker-panel-item-copy {
@@ -408,12 +408,12 @@
   width: 17px;
   height: 17px;
   border-radius: 50%;
-  background: var(--marker-color, #59eadf);
+  background: var(--marker-color, #e53935);
   color: #102327;
 }
 
 .timeline-marker-panel-color.is-selected {
-  border-color: var(--marker-color, #59eadf);
+  border-color: var(--marker-color, #e53935);
 }
 
 .timeline-marker-panel-time-heading {
@@ -431,12 +431,12 @@
   padding: 0;
   border: 0;
   border-radius: 4px;
-  background: rgba(85, 211, 205, 0.06);
-  color: #75b9b9;
+  background: rgba(229, 57, 53, 0.06);
+  color: #e53935;
 }
 
 .timeline-marker-panel-playhead:hover {
-  background: rgba(85, 211, 205, 0.13);
+  background: rgba(229, 57, 53, 0.13);
   color: #9cfff1;
 }
 
@@ -499,12 +499,12 @@
 }
 
 .timeline-marker-panel-save {
-  background: #55dfd0;
+  background: #e53935;
   color: #072b2b;
 }
 
 .timeline-marker-panel-save:hover:not(:disabled) {
-  background: #72eee0;
+  background: #e53935;
 }
 
 @media (max-width: 760px) {

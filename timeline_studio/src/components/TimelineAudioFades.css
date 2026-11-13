@@ -1,5 +1,5 @@
 .audio-clip {
-  --timeline-fade-accent: #74e1d1;
+  --timeline-fade-accent: #e53935;
   --timeline-fade-visibility: hidden;
   --timeline-fade-duration-visibility: visible;
 }
@@ -146,7 +146,7 @@
 }
 
 .video-clip-audio {
-  --timeline-fade-accent: #74e1d1;
+  --timeline-fade-accent: #e53935;
   --timeline-fade-visibility: hidden;
 }
 

@@ -36,11 +36,11 @@
   position: absolute; left: 7px; right: 7px; height: 14px; transform: translateY(-50%);
   cursor: ns-resize; touch-action: none; z-index: 3;
 }
-.video-clip-audio .timeline-gain::before { background: #b5efeb; height: 1px; }
+.video-clip-audio .timeline-gain::before { background: rgba(229, 57, 53, 0.45); height: 1px; }
 .video-clip-audio .timeline-gain:hover::before,
 .video-clip-audio .timeline-gain:focus-visible::before,
-.video-clip-audio .timeline-gain.is-adjusting::before { background: #67e8f9; height: 2px; }
-.video-clip-audio-status { position: absolute; left: 8px; right: 8px; bottom: 0; font-size: 11px; line-height: 12px; color: #c1dddd; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; pointer-events: none; }
+.video-clip-audio .timeline-gain.is-adjusting::before { background: #e53935; height: 2px; }
+.video-clip-audio-status { position: absolute; left: 8px; right: 8px; bottom: 0; font-size: 11px; line-height: 12px; color: #a0a3ad; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; pointer-events: none; }
 .video-clip-audio.is-muted canvas { opacity: .35; }
 
 .image-clip.is-video:not(:has(.video-clip-audio)) > .image-thumbnails,

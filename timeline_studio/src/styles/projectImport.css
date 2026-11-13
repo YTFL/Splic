@@ -74,8 +74,8 @@
   height: 15px;
   margin-top: 3px;
   box-sizing: border-box;
-  border: 2px solid rgba(75, 216, 227, 0.2);
-  border-top-color: #74e5ed;
+  border: 2px solid rgba(229, 57, 53, 0.2);
+  border-top-color: #e53935;
   border-radius: 50%;
   animation: project-import-spin 0.9s linear infinite;
 }
@@ -101,14 +101,14 @@
   margin-top: 13px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(112, 155, 175, 0.16);
+  background: rgba(229, 57, 53, 0.16);
 }
 
 .project-import-progress > span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #40b8cd, #81e5e6);
+  background: linear-gradient(90deg, #e53935, #ff6b6b);
   transition: width 140ms ease-out;
 }
 

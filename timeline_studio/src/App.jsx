@@ -60,7 +60,7 @@ import { useAutoEdit } from "./hooks/useAutoEdit.js";
 import { useSilenceRemoval } from "./hooks/useSilenceRemoval.js";
 import { buildSilenceRemovalReview, canRemovePauses } from "./lib/silenceRemoval.js";
 import {
-  AUTO_CUT_LIVE_STATUS, buildAutoCutCaptionSegments, buildAutoCutSfxSegments, extractEditPlan, buildAutoCutStickerSegments, findAutoCutTargetClip,
+  AUTO_CUT_LIVE_STATUS, applyAutoCutVisualPolish, buildAutoCutCaptionSegments, buildAutoCutEffectClips, buildAutoCutSfxSegments, extractEditPlan, buildAutoCutStickerSegments, findAutoCutTargetClip,
   isBackendEditPlan, planClipMapping, preloadAutoCutSfx, requestAutoCutEditPlan,
 } from "./lib/autoCut.js";
 import { useWebMcpEditor } from "./hooks/useWebMcpEditor.js";
@@ -1778,6 +1778,7 @@ export function App({ hostSession = null }) {
     const nextTime = Math.min(Math.max(0, focusTime), Math.max(0, review.duration));
     currentTimeRef.current = nextTime;
     setCurrentTime(nextTime);
+    return nextVisuals;
   };
   const silenceRemoval = useSilenceRemoval({
     language: activeLanguage, selectedSegment: selectedVisualSegment, visualSegments, projectVersion: historySignature,
@@ -1789,6 +1790,10 @@ export function App({ hostSession = null }) {
   // mutation reads the editor through this ref to avoid stale closures.
   const autoCutLiveRef = useRef(null);
   const autoCutAnimationDoneRef = useRef(null);
+  // True from the start of a live Auto-Cut until its animation finishes, even when
+  // the 25 s safety timer applied the plan first: a late animation commit must
+  // never fall through to the demo importer and overwrite the real edit.
+  const autoCutLiveActiveRef = useRef(false);
   const [autoCutLiveRun, setAutoCutLiveRun] = useState(null);
   const [autoCutLiveStatus, setAutoCutLiveStatus] = useState("");
   autoCutLiveRef.current = {
@@ -1826,6 +1831,7 @@ export function App({ hostSession = null }) {
       setAutoCutLiveStatus("");
       setIsAutoEditRunning(false);
     };
+    autoCutLiveActiveRef.current = true;
     setAutoCutLiveRun({ planPromise });
     setAutoEditPlan(null);
     setShowAutoEditModal(false);
@@ -1838,6 +1844,7 @@ export function App({ hostSession = null }) {
       fetchedResult = await fetched;
     } catch (error) {
       stopLiveRun();
+      autoCutLiveActiveRef.current = false;
       setShowAutoEditModal(true); // surface the error in the modal
       throw error;
     }
@@ -1860,6 +1867,7 @@ export function App({ hostSession = null }) {
 
     let mapping = planClipMapping(plan, target);
     let cutsApplied = 0;
+    let reviewedVisuals = null;
     if (mapping.candidates.length) {
       try {
         if (!canRemovePauses(target.clip, live.visualSegments[target.index - 1])) {
@@ -1868,7 +1876,7 @@ export function App({ hostSession = null }) {
         const review = buildSilenceRemovalReview(
           live.getProjectSnapshot(), live.getBrowserRuntimeProject(), target.clip.id, mapping.candidates, live.rippleEditing,
         );
-        live.applyBrowserReview(review, "Auto-Cut applied");
+        reviewedVisuals = live.applyBrowserReview(review, "Auto-Cut applied") || null;
         cutsApplied = mapping.candidates.length;
       } catch (error) {
         warnings.push(`Ripple cuts skipped (${error.code || error.message || "unsupported clip"})`);
@@ -1894,14 +1902,34 @@ export function App({ hostSession = null }) {
       existingSegments: live.audioSegments, trackLocks: live.trackLocks, trackVisibility: live.trackVisibility,
     });
     if (sfx.length) setAudioSegments((current) => [...current, ...sfx]);
+
+    // Transitions on the cut seams + zoom punch-ins as scale keyframes on the pieces.
+    let polish = { transitions: 0, zooms: 0 };
+    const wantsPolish = (plan.transitions || []).length || (plan.zooms || []).length;
+    if (wantsPolish && live.trackLocks.image) {
+      warnings.push("Video track is locked; transitions and zooms skipped");
+    } else if (wantsPolish) {
+      const removed = mapping.timelineCuts.reduce((sum, cut) => sum + (cut.end - cut.start), 0);
+      const range = { rangeStart: target.start, rangeEnd: target.start + Math.max(0, (Number(target.clip.duration) || 0) - removed) };
+      polish = applyAutoCutVisualPolish(reviewedVisuals || live.visualSegments, plan, mapping, range);
+      if (polish.transitions || polish.zooms) {
+        setVisualSegments((current) => applyAutoCutVisualPolish(current, plan, mapping, range).segments);
+      }
+    }
+    const effects = live.trackLocks.effects ? [] : buildAutoCutEffectClips(plan, mapping);
+    if (effects.length) setEffectClips((current) => [...current.filter((clip) => clip.source !== "auto-cut"), ...effects]);
+
     setTrackVisibility((current) => ({
       ...current, ...(captions.length ? { caption: true } : {}), ...(stickers.length ? { sticker: true } : {}),
     }));
 
     setWorkspacePage("editor");
     seekTo(target.start, { immediate: true });
-    const summary = { cuts: cutsApplied, captions: captions.length, stickers: stickers.length, sfx: sfx.length, warnings, director: plan.director };
-    notify(`Auto-Cut: ${summary.cuts} cuts, ${summary.captions} captions, ${summary.stickers} stickers, ${summary.sfx} SFX`);
+    const summary = {
+      cuts: cutsApplied, captions: captions.length, stickers: stickers.length, sfx: sfx.length,
+      transitions: polish.transitions, zooms: polish.zooms, effects: effects.length, warnings, director: plan.director,
+    };
+    notify(`Auto-Cut: ${summary.cuts} cuts, ${summary.transitions} transitions, ${summary.captions} captions, ${summary.stickers} stickers, ${summary.sfx} SFX, ${summary.zooms} zooms, ${summary.effects} effects`);
     return summary;
   };
   const isEditorBusy = () => Boolean(projectImportProgress || exporting || timelineClipDragRef.current || pointerAssetDragRef.current ||
@@ -2243,6 +2271,7 @@ export function App({ hostSession = null }) {
             return;
           }
           const normalized = normalizeEditPlan(parsed, userAssets);
+          autoCutLiveActiveRef.current = false; // a demo JSON import owns this animation
           setAutoEditPlan(normalized);
           setShowAutoEditModal(false);
           setWorkspacePage("editor");
@@ -3370,6 +3399,7 @@ export function App({ hostSession = null }) {
             autoCutAnimationDoneRef.current();
             return;
           }
+          if (autoCutLiveActiveRef.current) return; // the live plan was already applied by the safety timer
           handleAutoEditCommit(plan);
           setIsAutoEditRunning(false);
           setAutoEditPlan(null);
@@ -3378,6 +3408,7 @@ export function App({ hostSession = null }) {
         }}
         onComplete={() => {
           if (autoCutAnimationDoneRef.current) return; // live run stops itself after applying
+          autoCutLiveActiveRef.current = false;
           setIsAutoEditRunning(false);
           setAutoEditPlan(null);
         }}

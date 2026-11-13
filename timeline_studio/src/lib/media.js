@@ -51,6 +51,7 @@ import { createVideoTrackFrame } from "./videoTrackFrames.js";
 import { composeColorGradeFilter, resolveColorGrade } from "./colorGrade.js";
 import { isMaskTransition, maskTransitionPaths, strokeMaskTransition } from "./maskTransitions.js";
 import { drawTimelineEffects } from "./timelineEffects.js";
+import { animateStickerAtTime } from "./stickerMotion.js";
 import { normalizeClickRippleEffect, resolveClickRippleState } from "./clickRippleEffect.js";
 
 export function getAudioRecordingFormat() {
@@ -2063,7 +2064,7 @@ export async function exportBrowserVideo({
     const { item: visualItem, range: visualRange } = getVisualItemAtTime(timelineTime);
     const localTime = Math.max(0, timelineTime - (visualRange?.start ?? 0));
     const visualSourceTime = syncVideoItem(visualItem, localTime);
-    const exportStickers = getStickersAtTime(timelineTime);
+    const exportStickers = getStickersAtTime(timelineTime).map((item) => animateStickerAtTime(item, timelineTime));
     const activeVisualOverlays = getVisualOverlaysAtTime(timelineTime);
     syncVisualOverlays(activeVisualOverlays, timelineTime);
     const renderedVisualOverlays = activeVisualOverlays.map((item) => {
@@ -2179,7 +2180,7 @@ export async function exportBrowserVideo({
     const finalSegmentIndex = getSegmentIndexAtTime(exportSegments, finalTimelineTime, captionTargetDuration);
     const finalCaptionSegment = finalSegmentIndex >= 0 ? exportSegments[finalSegmentIndex] : null;
     const { item: finalVisualItem, range: finalVisualRange } = getVisualItemAtTime(finalTimelineTime);
-    const finalStickers = getStickersAtTime(finalTimelineTime);
+    const finalStickers = getStickersAtTime(finalTimelineTime).map((item) => animateStickerAtTime(item, finalTimelineTime));
     const finalVisualOverlays = getVisualOverlaysAtTime(finalTimelineTime);
     syncVisualOverlays(finalVisualOverlays, finalTimelineTime);
     const finalLocalTime = Math.max(0, finalTimelineTime - (finalVisualRange?.start ?? 0));

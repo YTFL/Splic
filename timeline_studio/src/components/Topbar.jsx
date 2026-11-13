@@ -29,6 +29,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
+  Keyboard,
 } from "lucide-react";
 
 import { RATIO_OPTIONS } from "../config/editor.js";

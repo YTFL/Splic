@@ -1261,7 +1261,7 @@ export function PreviewStage({
                 <div
                   key={sticker.id || `${sticker.src}-${index}`}
                   className={`sticker-overlay sticker-transform-box ${isEditable ? "is-editable" : ""}`}
-                  onPointerDown={(event) => startStickerDrag(event, sticker)}
+                  onPointerDown={(event) => startStickerDrag(event, sticker.motionBase || sticker)}
                   style={{
                     width: `${stickerBaseSize}px`,
                     height: `${stickerBaseSize}px`,
@@ -1273,8 +1273,8 @@ export function PreviewStage({
                 >
                   <img className="sticker-overlay-image" src={sticker.src} alt="" draggable={false} />
                   {isEditable ? <>
-                    <button className="sticker-rotate-handle" type="button" aria-label={t("visualRotation", "旋转")} onPointerDown={(event) => startStickerTransform(event, "rotate", sticker)} />
-                    <button className="sticker-scale-handle" type="button" aria-label={t("visualScale", "缩放")} onPointerDown={(event) => startStickerTransform(event, "scale", sticker)}>
+                    <button className="sticker-rotate-handle" type="button" aria-label={t("visualRotation", "旋转")} onPointerDown={(event) => startStickerTransform(event, "rotate", sticker.motionBase || sticker)} />
+                    <button className="sticker-scale-handle" type="button" aria-label={t("visualScale", "缩放")} onPointerDown={(event) => startStickerTransform(event, "scale", sticker.motionBase || sticker)}>
                       <Resize size={12} weight="bold" aria-hidden="true" />
                     </button>
                   </> : null}

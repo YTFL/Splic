@@ -11,6 +11,10 @@ import { MIN_VISUAL_SEGMENT_SECONDS } from "../config/editor.js";
 import { collapseTime } from "./silenceRemoval.js";
 import { createStickerSegment, getAvailableAudioLane } from "./timeline.js";
 import { decodeWaveform } from "./media.js";
+import { isMaskTransition } from "./maskTransitions.js";
+import { createEffectClip, TIMELINE_EFFECT_IDS } from "./timelineEffects.js";
+import { normalizeVisualTransform } from "./visualEffects.js";
+import { STICKER_EMPHASIS_IDS, STICKER_MOTION_IN_IDS, STICKER_MOTION_OUT_IDS } from "./stickerMotion.js";
 
 const EPS = 0.000001;
 const MIN_ITEM_SECONDS = 0.1;
@@ -192,7 +196,8 @@ export function buildAutoCutStickerSegments(plan, mapping) {
       x: Number.isFinite(x) ? (x <= 1 ? x * 100 : x) : undefined,
       y: Number.isFinite(y) ? (y <= 1 ? y * 100 : y) : undefined,
       scale: Number.isFinite(num(sticker.scale)) ? num(sticker.scale) : 1,
-    }, Number(start.toFixed(3)), Number((end - start).toFixed(3)))];
+      rotation: Number.isFinite(num(sticker.rotation)) ? num(sticker.rotation) : 0,
+    }, Number(start.toFixed(3)), Number((end - start).toFixed(3)))].map((segment) => withStickerAnimation(segment, sticker));
   });
 }
 
@@ -252,4 +257,133 @@ export function buildAutoCutSfxSegments(plan, mapping, decodedByAsset, { existin
     segments.push(Number.isInteger(lane) ? { ...segment, lane } : segment);
   }
   return segments;
+}
+
+// ---------------------------------------------------------------------------
+// Sticker animation, transitions, zooms and effects from the director's plan
+// ---------------------------------------------------------------------------
+
+const NATIVE_CLIP_ANIMATIONS = ["fade", "zoom", "slide-left", "slide-up"];
+
+/**
+ * Copy the director's sticker animation onto a sticker segment.
+ * Editor-native ids (fade / zoom / slide-left / slide-up) go to `animation`
+ * exactly as the editor stores clip animations; the rest go to `motion`,
+ * which lib/stickerMotion.js turns into keyframes at render time.
+ */
+export function withStickerAnimation(segment, sticker) {
+  const phase = (raw, fallbackId) => {
+    const id = raw?.id || fallbackId;
+    if (!NATIVE_CLIP_ANIMATIONS.includes(id)) return null;
+    const duration = Number(raw?.duration);
+    return { id, duration: Number.isFinite(duration) && duration >= 0.1 ? Math.min(3, duration) : 0.35 };
+  };
+  const inPhase = phase(sticker?.animation?.in, sticker?.animation_in);
+  const outPhase = phase(sticker?.animation?.out, sticker?.animation_out);
+  const motion = {
+    ...(STICKER_MOTION_IN_IDS.includes(sticker?.animation_in) ? { in: sticker.animation_in } : {}),
+    ...(STICKER_MOTION_OUT_IDS.includes(sticker?.animation_out) ? { out: sticker.animation_out } : {}),
+    ...(STICKER_EMPHASIS_IDS.includes(sticker?.emphasis) ? { emphasis: sticker.emphasis } : {}),
+  };
+  return {
+    ...segment,
+    ...(inPhase || outPhase ? {
+      animation: { in: inPhase || { id: "none", duration: 0.4 }, out: outPhase || { id: "none", duration: 0.4 } },
+    } : {}),
+    ...(Object.keys(motion).length ? { motion } : {}),
+  };
+}
+
+function visualRanges(visualSegments) {
+  let cursor = 0;
+  return visualSegments.map((segment, index) => {
+    const start = cursor;
+    cursor += Number(segment.duration) || 0;
+    return { segment, index, start, end: cursor };
+  });
+}
+
+/**
+ * Apply plan transitions (on cut seams) and zoom punch-ins (scale keyframes)
+ * to the visual pieces the ripple cuts produced. Pure: returns a new array.
+ * Only video pieces inside [rangeStart, rangeEnd] (the auto-cut clip on the
+ * post-cut timeline) are touched, and pieces with user transitions or
+ * keyframes are left alone.
+ */
+export function applyAutoCutVisualPolish(visualSegments, plan, mapping, { rangeStart = 0, rangeEnd = Infinity } = {}) {
+  const ranges = visualRanges(visualSegments);
+  const inRange = (r) => r.segment.type === "video" && r.start >= rangeStart - 0.05 && r.end <= rangeEnd + 0.05;
+  const patches = new Map();
+  const patch = (index, value) => patches.set(index, { ...(patches.get(index) || {}), ...value });
+  let transitions = 0;
+  let zooms = 0;
+
+  for (const transition of plan.transitions || []) {
+    const id = transition?.transition_id || transition?.transitionId || transition?.type;
+    const at = num(transition?.at);
+    if (!id || id === "none" || !Number.isFinite(at)) continue;
+    const seam = mapping.toTimeline(at);
+    const left = ranges.find((r) => inRange(r) && Math.abs(r.end - seam) < 0.06);
+    const right = left && ranges[left.index + 1];
+    if (!left || !right || !inRange(right) || left.segment.transition?.id || patches.get(left.index)?.transition) continue;
+    const leftDuration = Number(left.segment.duration) || 0;
+    const rightDuration = Number(right.segment.duration) || 0;
+    const maximum = isMaskTransition(id)
+      ? Math.max(0.1, leftDuration)
+      : Math.max(0.1, Math.min(2, leftDuration / 2, rightDuration / 2));
+    const requested = num(transition.duration);
+    const duration = Math.min(maximum, Number.isFinite(requested) && requested >= 0.1 ? requested : 0.3);
+    patch(left.index, { transition: { id, duration: Number(duration.toFixed(3)) } });
+    transitions += 1;
+  }
+
+  for (const zoom of plan.zooms || []) {
+    if (!mapping.inClip(zoom?.start)) continue;
+    const zs = mapping.toTimeline(zoom.start);
+    const ze = mapping.toTimeline(zoom.end);
+    const factor = Math.max(1.02, Math.min(1.6, num(zoom.scale) || 1.2));
+    if (!(ze - zs >= 0.25)) continue;
+    let applied = false;
+    for (const r of ranges) {
+      if (!inRange(r) || r.end <= zs || r.start >= ze) continue;
+      if (r.segment.keyframes?.length) continue; // never overwrite the user's own keyframes
+      const base = normalizeVisualTransform(r.segment.baseTransform);
+      const duration = Number(r.segment.duration) || 0;
+      const ls = Math.max(0, zs - r.start);
+      const le = Math.min(duration, ze - r.start);
+      if (le - ls < 0.1) continue;
+      const ramp = Math.min(0.15, (le - ls) / 3);
+      const peak = Number((base.scale * factor).toFixed(4));
+      const frames = [];
+      // Ramp only at the real zoom edges; a zoom crossing a seam holds through it.
+      if (zs > r.start + 0.001) frames.push({ time: ls, scale: base.scale }, { time: ls + ramp, scale: peak });
+      else frames.push({ time: 0, scale: peak });
+      if (ze < r.end - 0.001) frames.push({ time: le - ramp, scale: peak }, { time: le, scale: base.scale });
+      else frames.push({ time: duration, scale: peak });
+      // Several zooms can land on one long piece: merge their frames in time order.
+      const previous = patches.get(r.index)?.keyframes || [];
+      patch(r.index, {
+        keyframes: [...previous, ...frames.map((frame) => ({ ...frame, time: Number(Math.max(0, Math.min(duration, frame.time)).toFixed(3)) }))]
+          .sort((a, b) => a.time - b.time),
+      });
+      applied = true;
+    }
+    if (applied) zooms += 1;
+  }
+
+  const segments = visualSegments.map((segment, index) => (patches.has(index) ? { ...segment, ...patches.get(index) } : segment));
+  return { segments, transitions, zooms };
+}
+
+/** EditPlan effects -> timeline effect clips (glitch, shake, ...). */
+export function buildAutoCutEffectClips(plan, mapping) {
+  return (plan.effects || []).flatMap((effect) => {
+    if (!TIMELINE_EFFECT_IDS.includes(effect?.effect) || !mapping.inClip(effect.start)) return [];
+    const start = mapping.toTimeline(effect.start);
+    const end = mapping.toTimeline(num(effect.start) + (num(effect.duration) || 0.6));
+    if (!(end - start >= MIN_ITEM_SECONDS)) return [];
+    const clip = createEffectClip(effect.effect, Number(start.toFixed(3)), Number((end - start).toFixed(3)));
+    const intensity = num(effect.intensity);
+    return [{ ...clip, ...(Number.isFinite(intensity) ? { intensity: Math.max(0, Math.min(1, intensity)) } : {}), source: "auto-cut" }];
+  });
 }

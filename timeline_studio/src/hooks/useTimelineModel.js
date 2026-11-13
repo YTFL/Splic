@@ -1,5 +1,6 @@
 import { isMaskTransition } from "../lib/maskTransitions.js";
 import { useMemo } from "react";
+import { animateStickerAtTime } from "../lib/stickerMotion.js";
 
 import {
   DEFAULT_STICKER_SEGMENT_SECONDS,
@@ -174,7 +175,8 @@ export function useTimelineModel(d) {
   // The preview is timeline-driven. A library selection is only a source for
   // creating a clip; it must not survive after the final sticker clip is deleted.
   const previewSticker = d.trackVisibility.sticker ? currentStickerSegment : null;
-  const previewStickers = currentStickerSegments;
+  // Stickers as drawn right now (in / out / emphasis animation applied).
+  const previewStickers = currentStickerSegments.map((segment) => animateStickerAtTime(segment, d.currentTime));
   const previewVisualOverlays = d.trackVisibility.overlay === false
     ? []
     : getActiveVisualOverlays(d.visualOverlaySegments, d.currentTime).map((overlay) => {

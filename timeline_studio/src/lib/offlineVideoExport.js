@@ -42,6 +42,7 @@ import { hasSubjectEffect } from "./subjectEffects.js";
 import { getGeneratedMediaTags } from "./generatedMediaMetadata.js";
 import { prepareDepthFrame, getDepthFrame, resolveDepthAnalysisAtTime } from "./depthOfField.js";
 import { mixOfflineAudio } from "./audioExport.js";
+import { animateStickerAtTime } from "./stickerMotion.js";
 
 export { mixOfflineAudio } from "./audioExport.js";
 
@@ -344,7 +345,8 @@ async function renderCompositionAt(context, canvas, prepared, options, time) {
   const captionIndex = getSegmentIndexAtTime(captionSegments, time, options.captionTargetDuration || 0);
   const activeCaptionSegment = captionIndex >= 0 ? captionSegments[captionIndex] : null;
   const caption = activeCaptionSegment && !activeCaptionSegment.hidden ? activeCaptionSegment.text : "";
-  const stickers = getOfflineStickersAtTime(options.stickerSegments, options.sticker, time);
+  const stickers = getOfflineStickersAtTime(options.stickerSegments, options.sticker, time)
+    .map((item) => animateStickerAtTime(item, time));
   try {
     const overlayFrames = await Promise.allSettled(activeOverlayItems.map(async (overlay) => {
       const sourceTime = overlay.segment.type === "video"

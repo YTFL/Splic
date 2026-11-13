@@ -1,15 +1,22 @@
 """
 Pydantic V2 schemas for the Splic Indic Auto-Editor pipeline.
 All timestamps are floating-point seconds.
+
+The director LLM returns ONE response holding two JSON documents:
+  * sticker_requests -> StickerRequest[]   (fed to the scraper / sticker library)
+  * edit_plan        -> cuts, transitions, sticker placements (+ animations), sfx, zooms, effects
+plan_builder sanitises both and main.py returns them merged as one EditPlan.
 """
 
 from __future__ import annotations
 
 import uuid
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from catalog import EFFECT_IDS, TRANSITION_IDS
 
 
 # ---------------------------------------------------------------------------
@@ -31,10 +38,11 @@ class CaptionWord(BaseModel):
     word: str
     start_time: float = Field(..., description="Start time in seconds")
     end_time: float = Field(..., description="End time in seconds")
+    emphasis: bool = Field(default=False, description="Director flagged this as a punch word")
 
 
 # ---------------------------------------------------------------------------
-# Captions
+# Captions (built from Sarvam STT word timestamps, never from the LLM)
 # ---------------------------------------------------------------------------
 
 
@@ -75,25 +83,17 @@ class CutSegment(BaseModel):
     )
 
 
-class TransitionType(str, Enum):
-    fade_black = "fade_black"
-    wipe_left = "wipe_left"
-    crossfade = "crossfade"
-    zoom_in = "zoom_in"
+# Exact Timeline Studio transition ids (PROJECT_TRANSITION_IDS), e.g. "wipe-left".
+TransitionType = Enum("TransitionType", {t.replace("-", "_"): t for t in TRANSITION_IDS}, type=str)
 
 
 class TransitionEvent(BaseModel):
-    """Transition that occurs between two clips at a given timeline position."""
+    """Transition applied on the clip seam a ripple cut leaves behind."""
 
-    at: float = Field(..., description="Timeline position in seconds")
-    type: TransitionType = Field(
-        default=TransitionType.fade_black,
-        description="Transition style",
-    )
-    duration: float = Field(
-        default=0.3,
-        description="Transition duration in seconds",
-    )
+    at: float = Field(..., description="Seam position on the ORIGINAL clock (the cut's end), seconds")
+    cut_index: int = Field(..., ge=0, description="Index into EditPlan.cuts this transition belongs to")
+    transition_id: TransitionType = Field(..., description="Timeline Studio transition id")
+    duration: float = Field(default=0.3, ge=0.1, le=1.5, description="Transition duration in seconds")
 
 
 # ---------------------------------------------------------------------------
@@ -108,10 +108,49 @@ class StickerPosition(BaseModel):
     y: float = Field(..., ge=0.0, le=1.0, description="Vertical 0=top, 1=bottom")
 
 
-class StickerOverlay(BaseModel):
-    """Dynamic Indian-entity sticker placed on a timeline track."""
+class StickerRequest(BaseModel):
+    """JSON 1 entry: what the scraper / library must supply, and how it resolved."""
 
-    keyword: str = Field(..., description="Detected entity keyword (e.g. 'Zomato')")
+    ref: str = Field(..., description="Id the edit plan's sticker placements point at")
+    concept: str = Field(..., description="What the sticker depicts (spoken word / idea)")
+    source: Literal["library", "scrape"] = Field(..., description="Requested source")
+    library_id: Optional[str] = Field(default=None, description="Sticker library id when source=library")
+    query: Optional[str] = Field(default=None, description="Image-search query when source=scrape")
+    resolved: bool = Field(default=False, description="True when an image was found")
+    resolution: Optional[str] = Field(
+        default=None, description="library | cache | scraped | fallback_library | unresolved")
+    asset_url: Optional[str] = Field(default=None, description="Resolved PNG URL")
+
+
+class AnimationPhase(BaseModel):
+    """Editor-native clip animation phase (timeline_studio/src/lib/visualClipAnimations.js)."""
+
+    id: Literal["none", "fade", "zoom", "slide-left", "slide-up"] = "none"
+    duration: float = Field(default=0.4, ge=0.1, le=3.0)
+
+
+class StickerAnimation(BaseModel):
+    """Same shape as Timeline Studio's segment.animation: {"in": {id, duration}, "out": {id, duration}}."""
+
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
+    in_: AnimationPhase = Field(default_factory=AnimationPhase, alias="in")
+    out: AnimationPhase = Field(default_factory=AnimationPhase)
+
+
+class TransformKeyframe(BaseModel):
+    """Editor transform keyframe (lib/visualEffects.js). time is local to the sticker; values are absolute."""
+
+    time: float = Field(..., ge=0.0, description="Seconds from the sticker's start")
+    scale: Optional[float] = Field(default=None, ge=0.1, le=20)
+    rotation: Optional[float] = None
+    opacity: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+
+
+class StickerOverlay(BaseModel):
+    """Sticker placed on the sticker track, with in/out animation."""
+
+    keyword: str = Field(..., description="Concept the sticker depicts")
     slug: str = Field(..., description="Filesystem-safe slug for the PNG asset")
     asset_url: str = Field(..., description="URL path to the RGBA PNG sticker")
     start: float = Field(..., description="Sticker appear time in seconds")
@@ -120,17 +159,32 @@ class StickerOverlay(BaseModel):
         default_factory=lambda: StickerPosition(x=0.5, y=0.3)
     )
     scale: float = Field(default=1.0, description="Sticker scale multiplier")
+    ref: Optional[str] = Field(default=None, description="StickerRequest.ref this placement uses")
+    rotation: float = Field(default=0.0, ge=-45, le=45, description="Base rotation in degrees")
+    source: Optional[str] = Field(default=None, description="How the asset resolved (StickerRequest.resolution)")
+    animation_in: str = Field(default="none", description="Director's in-animation id (native or keyframed)")
+    animation_out: str = Field(default="none", description="Director's out-animation id (native or keyframed)")
+    emphasis: str = Field(default="none", description="none | wiggle | pulse")
+    animation: StickerAnimation = Field(
+        default_factory=StickerAnimation,
+        description="Editor-native in/out phases (ids the editor already renders)",
+    )
+    keyframes: List[TransformKeyframe] = Field(
+        default_factory=list,
+        description="Compiled keyframes for animations the editor lacks (pop, bounce, spin, wiggle, pulse)",
+    )
 
 
 # ---------------------------------------------------------------------------
-# Audio SFX & Zoom
+# Audio SFX, Zoom, Effects
 # ---------------------------------------------------------------------------
 
 
 class SfxEvent(BaseModel):
-    """Meme sound-effect event placed on the audio SFX track."""
+    """Sound-effect event placed on the audio SFX track."""
 
     asset: str = Field(..., description="Path or URL to the audio asset")
+    sound_id: Optional[str] = Field(default=None, description="Bundled sound id (file stem)")
     start: float = Field(..., description="Playback start time in seconds")
     volume: float = Field(default=0.8, ge=0.0, le=1.0, description="Playback volume 0–1")
     label: Optional[str] = Field(
@@ -144,6 +198,33 @@ class ZoomKeyframe(BaseModel):
     start: float = Field(..., description="Zoom ramp-in start in seconds")
     end: float = Field(..., description="Zoom ramp-out end in seconds")
     scale: float = Field(default=1.25, description="Peak scale multiplier")
+
+
+# Timeline Studio effect ids (subset of TIMELINE_EFFECT_IDS) allowed in auto-edits.
+EffectType = Enum("EffectType", {e.replace("-", "_"): e for e in EFFECT_IDS}, type=str)
+
+
+class TimelineEffect(BaseModel):
+    """Short timeline effect clip (glitch hit, shake on an impact, ...)."""
+
+    effect: EffectType
+    start: float = Field(..., description="Effect start in seconds")
+    duration: float = Field(default=0.6, ge=0.1, le=3.0)
+    intensity: float = Field(default=0.6, ge=0.0, le=1.0)
+
+
+# ---------------------------------------------------------------------------
+# Raw director response (shape check before sanitising)
+# ---------------------------------------------------------------------------
+
+
+class DirectorResponse(BaseModel):
+    """Top-level shape the director LLM must return: two JSON documents in one object."""
+
+    model_config = ConfigDict(extra="allow")
+
+    sticker_requests: List[Dict[str, Any]] = Field(default_factory=list)
+    edit_plan: Dict[str, Any]
 
 
 # ---------------------------------------------------------------------------
@@ -175,16 +256,22 @@ class EditPlan(BaseModel):
         default_factory=list, description="Ripple-cut intervals"
     )
     transitions: List[TransitionEvent] = Field(
-        default_factory=list, description="Clip transitions after cuts"
+        default_factory=list, description="Clip transitions on cut seams"
     )
     stickers: List[StickerOverlay] = Field(
-        default_factory=list, description="Dynamic sticker overlays"
+        default_factory=list, description="Sticker placements with animations"
     )
     sfx: List[SfxEvent] = Field(
-        default_factory=list, description="Meme SFX events"
+        default_factory=list, description="SFX events"
     )
     zooms: List[ZoomKeyframe] = Field(
         default_factory=list, description="Punch-in zoom keyframes"
+    )
+    effects: List[TimelineEffect] = Field(
+        default_factory=list, description="Sparing timeline effects (glitch, shake, ...)"
+    )
+    sticker_requests: List[StickerRequest] = Field(
+        default_factory=list, description="JSON 1: sticker requests and how each resolved"
     )
 
     # Pipeline diagnostics (non-fatal). All timestamps above are on the
@@ -193,6 +280,10 @@ class EditPlan(BaseModel):
     director: Optional[str] = Field(
         default=None,
         description="Which engine produced the creative decisions: sarvam | groq | gemini | heuristic",
+    )
+    run_id: Optional[str] = Field(
+        default=None,
+        description="Folder under ~/.splic/runs/ holding sticker_requests.json + edit_plan.json",
     )
     warnings: List[str] = Field(
         default_factory=list, description="Non-fatal pipeline warnings (fallbacks taken, items dropped)"
@@ -218,7 +309,7 @@ class EditPlan(BaseModel):
             ],
             captions=[
                 CaptionChunk(
-                    id="cap-001",
+                    id="cap_1",
                     start=0.0,
                     end=1.70,
                     text="Aaj hum baat karenge",
@@ -230,12 +321,12 @@ class EditPlan(BaseModel):
                     ],
                 ),
                 CaptionChunk(
-                    id="cap-002",
+                    id="cap_2",
                     start=1.80,
                     end=3.30,
                     text="Zomato ke baare mein",
                     words=[
-                        CaptionWord(word="Zomato", start_time=1.80, end_time=2.40),
+                        CaptionWord(word="Zomato", start_time=1.80, end_time=2.40, emphasis=True),
                         CaptionWord(word="ke", start_time=2.45, end_time=2.60),
                         CaptionWord(word="baare", start_time=2.65, end_time=2.95),
                         CaptionWord(word="mein", start_time=3.00, end_time=3.30),
@@ -246,28 +337,43 @@ class EditPlan(BaseModel):
                 CutSegment(start=4.50, end=6.20, duration=1.70, reason="dead_air"),
             ],
             transitions=[
-                TransitionEvent(at=4.50, type=TransitionType.fade_black, duration=0.3),
+                TransitionEvent(at=6.20, cut_index=0, transition_id="fade", duration=0.3),
             ],
             stickers=[
                 StickerOverlay(
                     keyword="Zomato",
                     slug="zomato",
-                    asset_url="/assets/dynamic_stickers/zomato.png",
+                    asset_url="/api/stickers/zomato.png",
                     start=1.80,
                     duration=2.0,
                     position=StickerPosition(x=0.5, y=0.3),
                     scale=1.0,
+                    ref="s1",
+                    source="scraped",
+                    animation_in="pop",
+                    animation_out="fade",
+                    animation=StickerAnimation(out=AnimationPhase(id="fade", duration=0.3)),
+                    keyframes=[
+                        TransformKeyframe(time=0.0, scale=0.2, opacity=0.0),
+                        TransformKeyframe(time=0.22, scale=1.18, opacity=1.0),
+                        TransformKeyframe(time=0.35, scale=1.0),
+                    ],
                 ),
             ],
             sfx=[
                 SfxEvent(
-                    asset="/assets/sfx/cash.mp3",
+                    asset="/assets/sound-effects/coins-1.mp3",
+                    sound_id="coins-1",
                     start=1.80,
                     volume=0.8,
-                    label="cash register",
+                    label="coins-1",
                 ),
             ],
             zooms=[
                 ZoomKeyframe(start=1.80, end=2.40, scale=1.25),
+            ],
+            sticker_requests=[
+                StickerRequest(ref="s1", concept="Zomato", source="scrape", query="Zomato logo",
+                               resolved=True, resolution="scraped", asset_url="/api/stickers/zomato.png"),
             ],
         )

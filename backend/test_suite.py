@@ -188,13 +188,16 @@ class TestSarvamAutoEditPipeline(unittest.TestCase):
                 "highlight_color": "#FFD600", "position": {"x": 50, "y": 75}
             }],
             "cuts": [{"start": 2.0, "end": 3.0, "duration": 1.0, "reason": "dead_air"}],
-            "transitions": [{"at": 3.0, "type": "fade_black", "duration": 0.3}],
+            "transitions": [{"at": 3.0, "cut_index": 0, "transition_id": "wipe-left", "duration": 0.3}],
             "stickers": [],
             "sfx": [],
             "zooms": [],
         }
         plan = EditPlan.model_validate(plan_dict)
         self.assertEqual(plan.transcript, "Test transcript")
+        bad = dict(plan_dict, transitions=[{"at": 3.0, "cut_index": 0, "transition_id": "fade_black"}])
+        with self.assertRaises(Exception):  # not an editor transition id
+            EditPlan.model_validate(bad)
         self.assertEqual(len(plan.captions), 1)
         self.assertEqual(len(plan.cuts), 1)
 
@@ -339,17 +342,42 @@ class TestPlanBuilderAndClient(unittest.TestCase):
         self.assertTrue(all(s["volume"] <= 1.0 for s in plan["sfx"]))
         for s in plan["sfx"]:
             self.assertFalse(any(c["start"] <= s["start"] < c["end"] for c in plan["cuts"]))
-        # transitions: one per interior cut, honouring the director's hint
-        self.assertIn("wipe_left", [t["type"] for t in plan["transitions"]])
+        # transitions: legacy "wipe_left" mapped onto the editor id, attached to a cut seam
+        self.assertEqual([t["transition_id"] for t in plan["transitions"]], ["wipe-left"])
+        t0 = plan["transitions"][0]
+        self.assertEqual(t0["at"], plan["cuts"][t0["cut_index"]]["end"])
         self.assertEqual(plan["zooms"][0]["scale"], 1.25)
+
+    def test_gapless_stt_timings_still_cut_real_silences(self):
+        """Saaras timestamps tile the audio with no gaps; acoustic silences must still be cut."""
+        from plan_builder import build_edit_plan, refine_words_with_silences
+        # Contiguous timings: "M," straddles the 1.0-2.0 pause, "U M M," is a spelled-out "umm".
+        toks = [("hello", 0.0, 0.5), ("U", 0.5, 0.6), ("M", 0.6, 0.7), ("M,", 0.7, 1.4),
+                ("dosto", 1.4, 2.4), ("aaj", 2.4, 3.0)]
+        words = [{"word": w, "start_time": s, "end_time": e} for w, s, e in toks]
+        silences = [{"start": 1.0, "end": 2.0}]
+        refined = refine_words_with_silences(words, silences)
+        self.assertEqual([w["word"] for w in refined], [w for w, _, _ in toks])
+        self.assertTrue(all(not (1.05 < w["start_time"] < 1.95) for w in refined))
+        self.assertEqual(refined, refine_words_with_silences(refined, silences))  # idempotent
+        plan = build_edit_plan({"edit_plan": {"cuts": [{"start": 0.55, "end": 1.0, "reason": "filler_word"}]}},
+                               words=words, silence_cuts=silences, duration=3.0)
+        removed = sum(c["duration"] for c in plan["cuts"])
+        self.assertGreater(removed, 0.8, plan["cuts"])
+        cap_words = [w["word"] for c in plan["captions"] for w in c["words"]]
+        self.assertEqual(cap_words, ["hello", "dosto", "aaj"])  # the whole "U M M," is gone
 
     def test_heuristic_director(self):
         from plan_builder import heuristic_director, normalize_words
         from sarvam_client import normalize_stt_response
         words = normalize_words(normalize_stt_response(_stub_stt_timestamps(b"", "", ""))["words"])
         h = heuristic_director(words)
-        self.assertEqual({s["keyword"] for s in h["stickers"]}, {"Zomato", "Biryani", "UPI"})
-        self.assertTrue(any(s["asset"] == "cash" for s in h["sfx"]))
+        concepts = {r["concept"] for r in h["sticker_requests"]}
+        self.assertTrue({"Zomato", "Biryani", "UPI"} <= concepts, concepts)
+        self.assertTrue(any(r["source"] == "library" for r in h["sticker_requests"]))  # "paise" -> coins
+        refs = {r["ref"] for r in h["sticker_requests"]}
+        self.assertTrue(all(p["ref"] in refs for p in h["edit_plan"]["stickers"]))
+        self.assertTrue(any(s["sound_id"] == "coins-1" for s in h["edit_plan"]["sfx"]))
 
     def test_audio_utils_stereo_resample(self):
         from audio_utils import prepare_audio, split_wav
@@ -496,6 +524,173 @@ class TestLivePipelineStubbed(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.headers.get("cross-origin-resource-policy"), "cross-origin")
 
+
+
+# ============================================================================
+# Two-document director contract (GLM-5.3-flash): sticker_requests + edit_plan
+# ============================================================================
+
+_STUB_DIRECTOR_V2 = {
+    "sticker_requests": [
+        {"ref": "s1", "concept": "money", "source": "library", "library_id": "shop-coins"},
+        {"ref": "s2", "concept": "Zomato", "source": "scrape", "query": "Zomato logo"},
+        {"ref": "s3", "concept": "party", "source": "library", "library_id": "does-not-exist"},
+        {"ref": "s4", "concept": "quantum flux capacitor", "source": "scrape", "query": "qfc"},
+    ],
+    "edit_plan": {
+        "cuts": [{"start": 0.1, "end": 0.35, "reason": "filler_word"}],
+        "transitions": [
+            {"at": 3.5, "transition_id": "wipe-left", "duration": 0.3},
+            {"at": 3.5, "transition_id": "star-wipe"},                          # unknown id
+        ],
+        "stickers": [
+            {"ref": "s1", "start": 4.6, "duration": 1.5, "x": 0.8, "y": 0.2,
+             "animation_in": "pop", "animation_out": "fade", "emphasis": "pulse"},
+            {"ref": "s2", "start": 0.8, "x": 0.2, "y": 0.75,                    # caption band
+             "animation_in": "slide-up", "animation_out": "pop"},
+            {"ref": "s3", "start": 1.3, "animation_in": "teleport"},           # unknown animation
+            {"ref": "s4", "start": 3.6},                                       # unresolvable image
+            {"ref": "s9", "start": 2.0},                                       # no such request
+        ],
+        "sfx": [
+            {"sound_id": "coins-1", "start": 4.6, "volume": 0.7, "reason": "money"},
+            {"sound_id": "airhorn-9000", "start": 1.0},                        # not bundled
+            {"sound_id": "ui-click-1", "start": 4.7},                          # stacked on coins-1
+        ],
+        "zooms": [{"start": 4.6, "end": 5.8, "scale": 1.25}],
+        "effects": [
+            {"effect": "shake", "start": 4.6, "duration": 0.5, "intensity": 0.7},
+            {"effect": "explode", "start": 1.0},                               # unsupported
+            {"effect": "glitch", "start": 5.0},                                # too close to shake
+        ],
+        "caption_emphasis": [{"word": "paise", "time": 4.6}],
+    },
+}
+
+
+class TestDirectorTwoDocuments(unittest.TestCase):
+    """GLM director returns sticker_requests (JSON 1) + edit_plan (JSON 2) in one call."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.client = TestClient(app)
+
+    def _run(self, director_output):
+        import sarvam_client
+        captured = {}
+
+        def fake_post(url, headers, payload, provider):
+            captured["payload"] = payload
+            return json.loads(json.dumps(director_output))
+
+        with umock.patch.object(sarvam_client, "_stt_request", side_effect=_stub_stt_timestamps), \
+             umock.patch.object(sarvam_client, "_post_chat", side_effect=fake_post):
+            resp = self.client.post("/api/sarvam-auto-edit",
+                                    files={"file": ("clip.wav", _make_wav(_SPEECH_LAYOUT), "audio/wav")})
+        return resp, captured
+
+    def test_request_uses_glm_and_ships_catalog(self):
+        resp, captured = self._run(_STUB_DIRECTOR_V2)
+        self.assertEqual(resp.status_code, 200, resp.text)
+        payload = captured["payload"]
+        self.assertEqual(payload["model"], "glm5.3-flash")
+        self.assertEqual(payload["response_format"], {"type": "json_object"})
+        self.assertNotIn("reasoning_effort", payload)
+        user = json.loads(payload["messages"][1]["content"])
+        self.assertIn("wipe-left", user["catalog"]["transitions"])
+        self.assertIn("pop", user["catalog"]["animation_in"])
+        self.assertIn("coins-1", user["catalog"]["sound_effects"])
+        self.assertNotIn("piano-c4", user["catalog"]["sound_effects"])
+        self.assertTrue(any(s["id"] == "shop-coins" for s in user["catalog"]["sticker_library"]))
+        self.assertTrue(user["captions"] and all("id" in c and "text" in c for c in user["captions"]))
+        self.assertIn("stickers", user["targets"])
+
+    def test_plan_is_sanitised_against_editor_vocabulary(self):
+        resp, _ = self._run(_STUB_DIRECTOR_V2)
+        self.assertEqual(resp.status_code, 200, resp.text)
+        plan = resp.json()
+        self.assertEqual(plan["director"], "sarvam")
+
+        # JSON 1: every request reported with its resolution
+        reqs = {r["ref"]: r for r in plan["sticker_requests"]}
+        self.assertEqual(reqs["s1"]["resolution"], "library")
+        self.assertEqual(reqs["s1"]["asset_url"], "/assets/stickers/shop-coins.png")
+        self.assertEqual(reqs["s3"]["source"], "scrape")                 # bad library id -> scrape
+        self.assertEqual(reqs["s3"]["resolution"], "fallback_library")   # offline -> confetti icon
+        self.assertFalse(reqs["s4"]["resolved"])
+
+        # transitions: only editor ids, one per seam
+        self.assertEqual([t["transition_id"] for t in plan["transitions"]], ["wipe-left"])
+
+        # stickers: unresolved + unknown refs dropped, animations compiled
+        stickers = {s["ref"]: s for s in plan["stickers"]}
+        expected = {"s1", "s3"} | ({"s2"} if reqs["s2"]["resolved"] else set())
+        self.assertEqual(set(stickers), expected)
+        money = stickers["s1"]
+        self.assertEqual(money["animation"]["out"]["id"], "fade")        # native editor animation
+        self.assertEqual(money["animation"]["in"]["id"], "none")         # pop is keyframed instead
+        self.assertEqual(money["keyframes"][0]["scale"], 0.2)
+        self.assertEqual(money["keyframes"][0]["opacity"], 0.0)
+        self.assertTrue(any((k["scale"] or 0) > 1.05 for k in money["keyframes"][3:]))  # pulse
+        self.assertEqual(stickers["s3"]["animation_in"], "pop")          # unknown id -> house style
+        for s in plan["stickers"]:
+            self.assertFalse(0.62 < s["position"]["y"] < 0.9, s)          # never on the captions
+
+        # sfx / effects: unknown ids dropped, no stacking
+        self.assertEqual([s["sound_id"] for s in plan["sfx"]], ["coins-1"])
+        self.assertEqual([e["effect"] for e in plan["effects"]], ["shake"])
+        self.assertTrue(any("not in the bundled library" in w for w in plan["warnings"]))
+
+        # caption emphasis comes back on the STT caption words
+        emph = [w["word"] for c in plan["captions"] for w in c["words"] if w["emphasis"]]
+        self.assertEqual(emph, ["paise"])
+
+    def test_both_json_files_saved_for_the_run(self):
+        from main import RUNS_DIR
+        resp, _ = self._run(_STUB_DIRECTOR_V2)
+        run_dir = RUNS_DIR / resp.json()["run_id"]
+        sticker_json = json.loads((run_dir / "sticker_requests.json").read_text(encoding="utf-8"))
+        edit_json = json.loads((run_dir / "edit_plan.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(sticker_json["sticker_requests"]), 4)
+        self.assertIn("transitions", edit_json)
+        self.assertIn("keyframes", edit_json["stickers"][0])
+        self.assertTrue((run_dir / "director_raw.json").exists())
+
+    def test_wrong_shape_falls_back_to_heuristics(self):
+        resp, _ = self._run({"thoughts": "I would add some stickers"})
+        self.assertEqual(resp.status_code, 200, resp.text)
+        plan = resp.json()
+        self.assertEqual(plan["director"], "heuristic")
+        self.assertTrue(any("sarvam" in w for w in plan["warnings"]))
+
+    def test_density_caps_and_concurrency(self):
+        from plan_builder import build_edit_plan, density_caps
+        from schemas import EditPlan
+        reqs = [{"ref": f"s{i}", "concept": f"thing{i}", "source": "library", "library_id": "trend-flame"}
+                for i in range(30)]
+        raw = {"sticker_requests": reqs, "edit_plan": {
+            "stickers": [{"ref": f"s{i}", "start": i * 0.3, "duration": 2.0} for i in range(30)],
+            "sfx": [{"sound_id": "ui-click-1", "start": i * 0.1} for i in range(100)],
+        }}
+        plan = build_edit_plan(raw, words=[{"word": "x", "start_time": 0, "end_time": 0.2}], duration=9.0)
+        EditPlan.model_validate(plan)
+        caps = density_caps(9.0)
+        self.assertLessEqual(len(plan["stickers"]), caps["stickers"])
+        self.assertLessEqual(len(plan["sfx"]), caps["sfx"])
+        for s in plan["stickers"]:
+            live = [o for o in plan["stickers"]
+                    if o["start"] < s["start"] + s["duration"] and s["start"] < o["start"] + o["duration"]]
+            self.assertLessEqual(len(live), 2)
+
+    def test_resolve_endpoint(self):
+        resp = self.client.post("/api/stickers/resolve", json={"sticker_requests": [
+            {"ref": "a", "concept": "money", "source": "library", "library_id": "shop-coins"},
+            {"ref": "b", "concept": "zzqqxx", "source": "scrape", "query": "zzqqxx"},
+        ], "allow_network": False})
+        self.assertEqual(resp.status_code, 200, resp.text)
+        body = resp.json()
+        self.assertEqual(body["sticker_requests"][0]["asset_url"], "/assets/stickers/shop-coins.png")
+        self.assertEqual(body["failed"], ["zzqqxx"])
 
 
 # ============================================================================

@@ -62,6 +62,46 @@ STATIC_FALLBACK_MAP = {
     "mic": "/assets/stickers/voice-mic.png",
     "crown": "/assets/stickers/trend-crown.png",
     "rocket": "/assets/stickers/trend-rocket.png",
+    # Extra spoken-word aliases (Hinglish + English) onto real bundled files
+    "paisa": "/assets/stickers/shop-coins.png",
+    "rupaye": "/assets/stickers/shop-coins.png",
+    "pyaar": "/assets/stickers/react-heart.png",
+    "love": "/assets/stickers/react-heart.png",
+    "wow": "/assets/stickers/react-surprise.png",
+    "shock": "/assets/stickers/react-surprise.png",
+    "surprise": "/assets/stickers/react-surprise.png",
+    "look": "/assets/stickers/react-eyes.png",
+    "dekho": "/assets/stickers/react-eyes.png",
+    "clap": "/assets/stickers/react-applause.png",
+    "applause": "/assets/stickers/react-applause.png",
+    "smile": "/assets/stickers/react-smile.png",
+    "happy": "/assets/stickers/react-smile.png",
+    "danger": "/assets/stickers/react-alert.png",
+    "warning": "/assets/stickers/react-alert.png",
+    "sale": "/assets/stickers/shop-tag.png",
+    "offer": "/assets/stickers/shop-tag.png",
+    "discount": "/assets/stickers/shop-tag.png",
+    "price": "/assets/stickers/shop-tag.png",
+    "delivery": "/assets/stickers/shop-box.png",
+    "parcel": "/assets/stickers/shop-box.png",
+    "order": "/assets/stickers/shop-box.png",
+    "date": "/assets/stickers/shop-calendar.png",
+    "calendar": "/assets/stickers/shop-calendar.png",
+    "shopping": "/assets/stickers/shop-cart.png",
+    "party": "/assets/stickers/trend-confetti.png",
+    "celebration": "/assets/stickers/trend-confetti.png",
+    "announcement": "/assets/stickers/trend-megaphone.png",
+    "launch": "/assets/stickers/trend-rocket.png",
+    "growth": "/assets/stickers/trend-rocket.png",
+    "best": "/assets/stickers/trend-crown.png",
+    "king": "/assets/stickers/trend-crown.png",
+    "music": "/assets/stickers/voice-music-note.png",
+    "song": "/assets/stickers/voice-music-note.png",
+    "headphones": "/assets/stickers/voice-headphones.png",
+    "magic": "/assets/stickers/voice-magic-wand.png",
+    "chat": "/assets/stickers/react-chat.png",
+    "message": "/assets/stickers/react-chat.png",
+    "comment": "/assets/stickers/react-chat.png",
 }
 
 
@@ -80,11 +120,22 @@ def get_sticker_path(filename_or_slug: str) -> Optional[Path]:
     return None
 
 
+def _tokens(text: str) -> List[str]:
+    return [t for t in re.split(r"[^a-z0-9]+", text.lower()) if t]
+
+
 def find_static_fallback(keyword: str) -> Optional[str]:
-    """Find a matching pre-bundled static sticker as a fallback."""
-    kw_lower = keyword.lower().strip()
-    for k, path in STATIC_FALLBACK_MAP.items():
-        if k in kw_lower or kw_lower in k:
+    """Find a matching pre-bundled static sticker as a fallback.
+
+    Matches whole words only ("photoshoot" must not hit "hot"); a keyword
+    matches when any of its words equals a fallback key or a manifest name word.
+    """
+    kw_tokens = _tokens(keyword)
+    if not kw_tokens:
+        return None
+    for tok in kw_tokens:
+        path = STATIC_FALLBACK_MAP.get(tok)
+        if path:
             return path
 
     if TIMELINE_STUDIO_MANIFEST.exists():
@@ -92,9 +143,9 @@ def find_static_fallback(keyword: str) -> Optional[str]:
             with open(TIMELINE_STUDIO_MANIFEST, "r", encoding="utf-8") as f:
                 items = json.load(f)
             for item in items:
-                name = item.get("nameEn", "").lower()
-                item_id = item.get("id", "").lower()
-                if kw_lower in name or kw_lower in item_id:
+                names = set(_tokens(item.get("nameEn", ""))) | set(_tokens(item.get("id", "")))
+                names -= {"trend", "react", "shop", "voice"}  # category prefixes in ids
+                if names & set(kw_tokens):
                     return item.get("src")
         except Exception as e:
             logger.warning(f"Error reading stickers manifest: {e}")
@@ -165,9 +216,16 @@ def clean_background(img: Image.Image) -> Image.Image:
     return rgba_img
 
 
-def fetch_and_make_sticker(keyword: str, timeout: float = 4.0) -> Optional[Dict[str, Any]]:
+def fetch_and_make_sticker(
+    keyword: str,
+    timeout: float = 4.0,
+    search_query: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
     """
     Search, strip background, and save transparent sticker PNG into ~/.splic/stickers/<slug>.png.
+
+    `keyword` names the sticker (and its cache slug); `search_query` is the
+    director's image-search phrasing (e.g. "pizza slice 3d icon") tried first.
     """
     slug = normalize_keyword(keyword)
     filename = f"{slug}.png"
@@ -194,6 +252,9 @@ def fetch_and_make_sticker(keyword: str, timeout: float = 4.0) -> Optional[Dict[
             f"{keyword} isolated transparent png sticker",
             f"{keyword} logo transparent png",
         ]
+        if search_query and search_query.strip():
+            q = search_query.strip()
+            search_queries = [q if "png" in q.lower() else f"{q} transparent png", f"{keyword} isolated transparent png sticker"]
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }

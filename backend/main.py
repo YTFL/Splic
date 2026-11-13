@@ -3,9 +3,11 @@ main.py — FastAPI Backend for Splic (Indic Video Auto-Editor)
 Integrated with TinyDB in user local storage (~/.splic/db.json) and transparent stickers (~/.splic/stickers/).
 """
 
+import json
 import logging
 import os
-from concurrent.futures import ThreadPoolExecutor, wait
+import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
@@ -30,7 +32,15 @@ from schemas import EditPlan
 from audio_utils import AudioDecodeError, prepare_audio, has_ffmpeg
 from silence_detector import detect_silences, _PYDUB_AVAILABLE
 from sarvam_client import transcribe_audio, direct_video_edit, is_sarvam_configured
-from plan_builder import build_edit_plan, heuristic_director, normalize_words
+from plan_builder import (
+    build_captions,
+    build_edit_plan,
+    heuristic_director,
+    normalize_sticker_requests,
+    normalize_words,
+    refine_words_with_silences,
+    split_director_output,
+)
 
 from db import (
     create_project,
@@ -46,9 +56,9 @@ from db import (
 from scraper import (
     fetch_and_make_sticker,
     get_sticker_path,
+    resolve_sticker_requests,
     HAS_REMBG,
 )
-from scraper.sticker_engine import find_static_fallback
 
 import composio_integration
 
@@ -184,6 +194,7 @@ async def health_check():
             "ffmpeg": has_ffmpeg(),
             "pydub": _PYDUB_AVAILABLE,
             "sarvam_key_configured": is_sarvam_configured(),
+            "director_model": os.getenv("SARVAM_LLM_MODEL", "glm5.3-flash"),
             "fallback_provider": os.getenv("FALLBACK_PROVIDER", "none"),
         },
         "composio": composio_integration.status_summary(),
@@ -333,6 +344,37 @@ async def list_all_cataloged_stickers():
     return {"total": len(get_all_stickers()), "stickers": get_all_stickers()}
 
 
+class StickerRequestsBody(BaseModel):
+    """JSON 1 (sticker_requests) as produced by the director, sent straight to the scraper."""
+
+    sticker_requests: List[Dict[str, Any]]
+    project_id: Optional[str] = None
+    allow_network: bool = True
+
+
+@app.post("/api/stickers/resolve")
+def resolve_stickers_json(req: StickerRequestsBody):
+    """Resolve a director sticker_requests JSON into PNG assets.
+
+    Body: {"sticker_requests": [{"ref": "s1", "concept": "money", "source": "library",
+           "library_id": "shop-coins"}, {"ref": "s2", "concept": "Swiggy", "source": "scrape",
+           "query": "Swiggy logo"}], "project_id": "optional"}
+    Returns the normalised requests with resolved / resolution / asset_url filled in.
+    """
+    requests = normalize_sticker_requests(req.sticker_requests, None)
+    assets = resolve_sticker_requests(
+        requests,
+        allow_network=req.allow_network and _sticker_fetch_enabled(),
+        on_scraped=lambda res: _index_sticker(res, req.project_id),
+    )
+    out = []
+    for r in requests:
+        asset = assets.get(r["ref"]) or {}
+        out.append({**r, "resolved": bool(asset), "resolution": asset.get("resolution", "unresolved"),
+                    "asset_url": asset.get("asset_url")})
+    return {"sticker_requests": out, "failed": [r["concept"] for r in out if not r["resolved"]]}
+
+
 @app.get("/api/projects/{project_id}/stickers")
 async def list_stickers_for_project(project_id: str):
     """List all stickers associated with a project in TinyDB."""
@@ -362,75 +404,39 @@ async def serve_sticker(filename: str):
 # Sarvam Auto-Edit Pipeline
 # ============================================================================
 
-_STICKER_TIMEOUT = 4.0          # per-sticker scrape budget (AGENTS.md Rule 6)
-_STICKER_BATCH_DEADLINE = 10.0  # wall-clock cap for all stickers together
+RUNS_DIR = SPLIC_DIR / "runs"
 
 
 def _sticker_fetch_enabled() -> bool:
     return os.getenv("STICKER_FETCH", "true").strip().lower() in ("1", "true", "yes", "on")
 
 
-def _offline_sticker(keyword: str, slug: str) -> Optional[Dict[str, Any]]:
-    """Resolve a sticker from disk cache or bundled static icons only (no network)."""
-    cached = get_sticker_path(slug)
-    if cached:
-        return {"asset_url": f"/api/stickers/{cached.name}", "fallback": False}
-    static = find_static_fallback(keyword)
-    if static:
-        return {"asset_url": static, "fallback": True}
-    return None
+def _index_sticker(res: Dict[str, Any], project_id: Optional[str]) -> None:
+    """Record a scraped / cached sticker PNG in TinyDB."""
+    record_sticker(
+        keyword=res["keyword"],
+        slug=res["slug"],
+        filename=res["filename"],
+        save_path=res["save_path"],
+        asset_url=res["asset_url"],
+        size_bytes=res.get("size_bytes", 0),
+        project_id=project_id,
+    )
 
 
-def _synthesize_stickers(
-    stickers: List[Dict[str, Any]],
-    project_id: Optional[str],
-    allow_network: bool,
-    warnings: List[str],
-) -> List[Dict[str, Any]]:
-    """Ensure every sticker points at a real PNG; skip the ones that cannot be resolved."""
-    if not stickers:
-        return []
-
-    results: Dict[int, Optional[Dict[str, Any]]] = {}
-    if allow_network:
-        pool = ThreadPoolExecutor(max_workers=min(4, len(stickers)))
-        futures = {
-            pool.submit(fetch_and_make_sticker, s["keyword"], _STICKER_TIMEOUT): i
-            for i, s in enumerate(stickers)
-        }
-        done, _pending = wait(futures, timeout=_STICKER_BATCH_DEADLINE)
-        for fut in done:
-            try:
-                results[futures[fut]] = fut.result()
-            except Exception as exc:  # the scraper must never crash the pipeline
-                logger.warning("Sticker synthesis failed: %s", exc)
-        pool.shutdown(wait=False, cancel_futures=True)
-
-    out = []
-    skipped = []
-    for i, s in enumerate(stickers):
-        res = results.get(i) or _offline_sticker(s["keyword"], s["slug"])
-        if not res or not res.get("asset_url"):
-            skipped.append(s["keyword"])
-            continue
-        s = dict(s, asset_url=res["asset_url"])
-        if not res.get("fallback") and res.get("save_path"):
-            try:
-                record_sticker(
-                    keyword=res["keyword"],
-                    slug=res["slug"],
-                    filename=res["filename"],
-                    save_path=res["save_path"],
-                    asset_url=res["asset_url"],
-                    size_bytes=res.get("size_bytes", 0),
-                    project_id=project_id,
-                )
-            except Exception as exc:
-                logger.warning("Could not index sticker '%s': %s", s["keyword"], exc)
-        out.append(s)
-    if skipped:
-        warnings.append("No sticker image available for: " + ", ".join(skipped))
-    return out
+def _save_run(project_id: Optional[str], files: Dict[str, Any], warnings: List[str]) -> Optional[str]:
+    """Persist the director's JSON documents under ~/.splic/runs/<run_id>/ for inspection / replay."""
+    run_id = f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{(project_id or 'adhoc')[:40]}-{uuid.uuid4().hex[:6]}"
+    run_id = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in run_id)
+    try:
+        run_dir = RUNS_DIR / run_id
+        run_dir.mkdir(parents=True, exist_ok=True)
+        for name, data in files.items():
+            (run_dir / name).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        return run_id
+    except Exception as exc:
+        warnings.append(f"Could not save run files: {exc}")
+        return None
 
 
 @app.post("/api/sarvam-auto-edit", response_model=EditPlan)
@@ -445,9 +451,15 @@ def sarvam_auto_edit(
     1. Decode upload -> 16 kHz mono WAV (bundled ffmpeg handles video containers)
     2. Local silence detection (zero API cost)
     3. Sarvam Saaras v4 STT (transliteration mode, word timestamps)
-    4. Sarvam-105B Video Director LLM (JSON mode) with Groq/Gemini/heuristic fallback
-    5. plan_builder: merge + sanitise everything onto one consistent source clock
-    6. Dynamic sticker synthesis (cache -> DuckDuckGo + rembg -> static icon -> skip)
+    4. Karaoke captions built from the STT word timestamps (the "script")
+    5. GLM-5.3-flash director on Sarvam (one JSON call) returns two documents:
+         sticker_requests -> sticker scraper / library     (JSON 1)
+         edit_plan        -> cuts, transitions, stickers + animations, sfx, zooms, effects (JSON 2)
+       with Groq/Gemini/heuristic fallback
+    6. Sticker resolution for JSON 1 (library -> cache -> DuckDuckGo + rembg -> bundled icon -> skip)
+    7. plan_builder: sanitise JSON 2 against the editor's real ids, attach resolved stickers,
+       compile sticker animations, keep everything on one source clock
+    8. Save sticker_requests.json + edit_plan.json under ~/.splic/runs/<run_id>/
 
     Returns a validated EditPlan. All timestamps are on the ORIGINAL source clock.
     Sync handler: FastAPI runs it in a worker thread, so blocking HTTP / ffmpeg
@@ -484,37 +496,56 @@ def sarvam_auto_edit(
         if not stt.get("words"):
             warnings.append("Speech-to-text returned no words; only dead-air cuts were generated")
 
+        # The script the director reads: STT captions before any cut.
+        # STT word timings are corrected against acoustic silences first.
+        words = refine_words_with_silences(normalize_words(stt["words"]), silence_cuts)
+        script_captions = build_captions(words, [], None)
+
         try:
             raw_plan = direct_video_edit(
-                stt["transcript"], stt["words"], silence_cuts, language_code, duration=duration,
+                stt["transcript"], words, silence_cuts, language_code,
+                duration=duration, captions=script_captions,
             )
             director = raw_plan.get("director")
         except RuntimeError as exc:
             logger.warning("Director unavailable, using heuristic director: %s", exc)
-            raw_plan = heuristic_director(normalize_words(stt["words"]))
+            raw_plan = heuristic_director(words)
             director = "heuristic"
-            warnings.append("Director LLM unavailable; used offline heuristics for stickers/SFX/zooms")
+            warnings.append(
+                f"Director LLM unavailable; used offline heuristics for stickers/SFX/zooms ({str(exc)[:300]})"
+            )
 
+        # JSON 1 -> sticker scraper
+        raw_requests, edit = split_director_output(raw_plan)
+        sticker_requests = normalize_sticker_requests(raw_requests, edit.get("stickers"))
+        sticker_assets = resolve_sticker_requests(
+            sticker_requests,
+            allow_network=fetch_stickers and _sticker_fetch_enabled(),
+            on_scraped=lambda res: _index_sticker(res, project_id),
+        )
+
+        # JSON 2 -> sanitised edit plan with resolved stickers
         detected_lang = stt.get("language_code")
         plan_dict = build_edit_plan(
             raw_plan,
             transcript=stt.get("transcript", ""),
-            words=stt.get("words"),
+            words=words,
             silence_cuts=silence_cuts,
             duration=duration,
             language_code=detected_lang if detected_lang and detected_lang != "unknown" else language_code,
             project_id=project_id,
             director=director,
             warnings=warnings,
-        )
-        plan_dict["stickers"] = _synthesize_stickers(
-            plan_dict["stickers"],
-            project_id,
-            allow_network=fetch_stickers and _sticker_fetch_enabled(),
-            warnings=plan_dict["warnings"],
+            sticker_requests=sticker_requests,
+            sticker_assets=sticker_assets,
         )
 
         plan = EditPlan.model_validate(plan_dict)
+        plan.run_id = _save_run(project_id, {
+            "sticker_requests.json": {"sticker_requests": [r.model_dump(mode="json") for r in plan.sticker_requests]},
+            "edit_plan.json": plan.model_dump(mode="json", exclude={"words", "transcript"}),
+            "director_raw.json": raw_plan,
+        }, plan.warnings)
 
         if project_id and get_project(project_id):
             update_project(project_id, {

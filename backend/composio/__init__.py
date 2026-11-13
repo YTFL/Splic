@@ -1,2 +1,0 @@
-"""Splic Composio Backend Package."""
-

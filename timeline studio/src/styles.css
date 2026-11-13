@@ -1,5 +1,6 @@
 @import "./davinci-theme.css";
 @import "./agentic-studio.css";
+@import "./thanos-snap.css";
 
 :root {
   color-scheme: dark;

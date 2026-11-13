@@ -1365,7 +1365,7 @@ export function drawPreviewFrame(context, visual, canvas, options) {
       context.fillRect(0, 0, width, height);
     }
     if (transitionId === "glitch") {
-      context.fillStyle = `rgba(53,234,217,${Math.sin(amount * Math.PI * 8) * 0.12})`;
+      context.fillStyle = `rgba(224, 86, 56,${Math.sin(amount * Math.PI * 8) * 0.12})`;
       context.fillRect(0, 0, width, height);
     }
   };

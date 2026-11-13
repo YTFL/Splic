@@ -167,7 +167,7 @@
 
 .timeline-marker-panel-add > button:hover {
   border-color: var(--desktop-hover-border, rgba(76, 238, 222, 0.34));
-  background: var(--desktop-hover-fill, rgba(53, 234, 217, 0.075));
+  background: var(--desktop-hover-fill, rgba(224, 86, 56, 0.075));
   color: #e1fffc;
 }
 

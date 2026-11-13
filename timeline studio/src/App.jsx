@@ -23,6 +23,8 @@ import { Topbar } from "./components/Topbar.jsx";
 import { HostServicePanel } from "./components/HostServicePanel.jsx";
 import { AssetDragPreview, ExportProgressOverlay } from "./components/EditorOverlays.jsx";
 import { EditorSidebar } from "./components/EditorSidebar.jsx";
+import { BottomNavBar } from "./components/BottomNavBar.jsx";
+import { ExportWorkspace } from "./components/ExportWorkspace.jsx";
 import { VisualReplacementDialog } from "./components/VisualReplacementDialog.jsx";
 import { TemplateInspector } from "./components/TemplateLibrary.jsx";
 import { FirstVisualGuide } from "./components/FirstVisualGuide.jsx";
@@ -241,6 +243,7 @@ export function App({ hostSession = null }) {
     ? (selectedTrack === "effects" ? "specialEffects" : "")
     : activeTool;
   const [exportError, setExportError] = useState(null);
+  const [workspacePage, setWorkspacePage] = useState("editor"); // "editor" | "smart" | "export"
   const [userAssets, setUserAssets] = useState([]);
   const [timelineMarkers, setTimelineMarkers] = useState([]);
   const [playheadRevealRequest, setPlayheadRevealRequest] = useState(null);
@@ -1918,7 +1921,7 @@ export function App({ hostSession = null }) {
   })() : null;
 
   return (
-    <main className={`app-shell ${isCompactViewport ? "is-compact-workspace" : ""} ${mobilePanel ? `mobile-panel-${mobilePanel}` : ""} ${isCompactViewport && mobileInspectorSection ? `mobile-section-${mobileInspectorSection}` : ""} ${isCompactViewport && mobileInspectorSection === "mask" && (selectedVisualOverlay || selectedVisualSegment)?.mask?.type && (selectedVisualOverlay || selectedVisualSegment).mask.type !== "none" ? "mobile-mask-active" : ""} ${mobilePanelClosing ? "is-mobile-panel-closing" : ""}`} lang={activeLanguage} onDragOver={(event) => {
+    <main className={`app-shell ${workspacePage === "export" ? "is-export-mode" : ""} ${isCompactViewport ? "is-compact-workspace" : ""} ${mobilePanel ? `mobile-panel-${mobilePanel}` : ""} ${isCompactViewport && mobileInspectorSection ? `mobile-section-${mobileInspectorSection}` : ""} ${isCompactViewport && mobileInspectorSection === "mask" && (selectedVisualOverlay || selectedVisualSegment)?.mask?.type && (selectedVisualOverlay || selectedVisualSegment).mask.type !== "none" ? "mobile-mask-active" : ""} ${mobilePanelClosing ? "is-mobile-panel-closing" : ""}`} lang={activeLanguage} onDragOver={(event) => {
       if (event.dataTransfer?.types?.includes("Files")) event.preventDefault();
     }} onDrop={async (event) => {
       const files = Array.from(event.dataTransfer?.files ?? []);
@@ -2045,8 +2048,26 @@ export function App({ hostSession = null }) {
       </div>
       <WebMcpAiStatus agent={webMcp} />
       <ProjectImportOverlay progress={projectImportProgress} language={activeLanguage} />
-      <section className={`editor-grid ${compactRail ? "is-compact-rail" : ""}`}>
-        <EditorSidebar model={{
+      {workspacePage === "export" ? (
+        <ExportWorkspace
+          timelineDuration={exportContentDuration}
+          exportSettings={exportSettings}
+          setExportSettings={setExportSettings}
+          onExportVideo={handleExportVideo}
+          exporting={exporting}
+          exportPercent={exportPercent}
+          exportPhase={exportPhase}
+          exportError={exportError}
+          onCancelExport={handleCancelExport}
+          ratioId={ratioId}
+          previewCanvasRef={previewCanvasRef}
+          previewVideoRef={previewVideoRef}
+          t={t}
+        />
+      ) : (
+        <>
+          <section className={`editor-grid ${compactRail ? "is-compact-rail" : ""}`}>
+            <EditorSidebar workspaceMode={workspacePage} model={{
           trackLocks, activeLanguage, activeTool, analyzeCurrentVisual, analyzeEffectVisual, audioBlob, audioDuration,
           builtInAssets, captionPosition, captionSegments, captionSize, captionStyle,
           captionStylePresetId, captionStylePresets,
@@ -2647,6 +2668,8 @@ export function App({ hostSession = null }) {
         musicDuration={musicDuration}
         startMusicMove={startMusicMove}
       />
+      </>
+      )}
 
       {mobilePanel && !(mobilePanel === "inspector" && isCompactViewport && mobileInspectorSection) ? (
         <header className="mobile-sheet-nav">
@@ -2741,6 +2764,16 @@ export function App({ hostSession = null }) {
         <LanguageIntro t={t} closing={introClosing} onChoose={chooseInterfaceLanguage} />
       ) : null}
       {toast ? <div className="toast">{toast}</div> : null}
+      <BottomNavBar
+        activePage={workspacePage}
+        onSelectPage={setWorkspacePage}
+        currentTime={currentTime}
+        duration={exportContentDuration}
+        ratioId={ratioId}
+        isPlaying={isPlaying}
+        onTogglePlay={handlePlayToggle}
+        t={t}
+      />
     </main>
   );
 }

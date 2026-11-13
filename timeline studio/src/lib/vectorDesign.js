@@ -11,7 +11,7 @@ const VECTOR_RENDER_BUCKETS = [1200, 1800, 2400, 3200, 4096, 5120, 6400, 8192];
 
 export const DEFAULT_VECTOR_DESIGN = Object.freeze({
   paletteEnabled: false,
-  primary: "#35ead9",
+  primary: "#e05638",
   secondary: "#6c7cff",
   accent: "#ff6b8a",
   opacity: 1,

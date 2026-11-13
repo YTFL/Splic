@@ -1,0 +1,1120 @@
+/* DaVinci Resolve Professional Studio Theme & Layout */
+
+:root {
+  --davinci-bg-darkest: #0c0e12;
+  --davinci-bg-base: #101216;
+  --davinci-bg-panel: #16181f;
+  --davinci-bg-elevated: #1e2129;
+  --davinci-bg-surface: #242832;
+  --davinci-border: rgba(255, 255, 255, 0.08);
+  --davinci-border-subtle: #242934;
+  --davinci-border-strong: #333a4a;
+  
+  /* DaVinci Signature Warm Burnt Orange / Amber Accents */
+  --davinci-accent: #e05638;
+  --davinci-accent-hover: #f06748;
+  --davinci-accent-active: #c94529;
+  --davinci-accent-glow: rgba(224, 86, 56, 0.22);
+  --davinci-accent-bg: rgba(224, 86, 56, 0.12);
+
+  --davinci-text-primary: #eceef2;
+  --davinci-text-secondary: #8c93a3;
+  --davinci-text-muted: #596173;
+}
+
+/* Base shell adjustments for bottom navigation */
+.app-shell {
+  --timeline-panel-height: 354px;
+  display: grid;
+  grid-template-rows: 48px minmax(320px, 1fr) var(--timeline-panel-height) 44px !important;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  min-width: 1120px;
+  background: var(--davinci-bg-darkest) !important;
+  overflow: hidden;
+}
+
+.app-shell.is-export-mode {
+  grid-template-rows: 48px 1fr 44px !important;
+}
+
+/* Adjust editor-grid without vertical tool rail */
+.editor-grid {
+  grid-template-columns: minmax(310px, 360px) minmax(520px, 1.4fr) minmax(300px, 0.86fr) !important;
+  gap: 6px;
+  padding: 6px;
+  background: var(--davinci-bg-darkest) !important;
+}
+
+.editor-grid.is-compact-rail {
+  grid-template-columns: minmax(290px, 340px) minmax(520px, 1.4fr) minmax(300px, 0.86fr) !important;
+}
+
+/* DaVinci Persistent Bottom Navigation Bar */
+.davinci-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--davinci-bg-base);
+  border-top: 1px solid var(--davinci-border-subtle);
+  user-select: none;
+  z-index: 100;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.davinci-bottom-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 260px;
+}
+
+.davinci-logo-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.davinci-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--davinci-accent);
+  box-shadow: 0 0 8px var(--davinci-accent-glow);
+}
+
+.davinci-app-name {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--davinci-text-primary);
+  text-transform: uppercase;
+}
+
+.davinci-format-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--davinci-bg-panel);
+  border: 1px solid var(--davinci-border);
+  color: var(--davinci-text-secondary);
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.davinci-divider {
+  color: var(--davinci-text-muted);
+}
+
+/* Center DaVinci Workspace Page Switcher */
+.davinci-page-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--davinci-border);
+}
+
+.davinci-page-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--davinci-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.davinci-page-tab:hover {
+  color: var(--davinci-text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.davinci-page-tab.is-active {
+  color: var(--davinci-text-primary);
+  background: var(--davinci-bg-elevated);
+  box-shadow: inset 0 0 0 1px var(--davinci-border-strong), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.davinci-tab-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.davinci-page-tab.is-active .davinci-tab-icon-wrap svg {
+  color: var(--davinci-accent);
+}
+
+.davinci-tab-badge {
+  position: absolute;
+  top: -6px;
+  right: -18px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--davinci-accent-bg);
+  border: 1px solid rgba(224, 86, 56, 0.3);
+  color: var(--davinci-accent);
+  text-transform: uppercase;
+}
+
+.davinci-tab-indicator {
+  position: absolute;
+  bottom: -3px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--davinci-accent);
+  box-shadow: 0 0 6px var(--davinci-accent);
+}
+
+/* Right Status Area */
+.davinci-bottom-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 260px;
+  justify-content: flex-end;
+}
+
+.davinci-mini-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid var(--davinci-border);
+  background: var(--davinci-bg-surface);
+  color: var(--davinci-text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.davinci-mini-transport:hover {
+  background: var(--davinci-accent-bg);
+  border-color: var(--davinci-accent);
+  color: var(--davinci-accent);
+}
+
+.davinci-timecode-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  background: #090a0d;
+  border: 1px solid var(--davinci-border-subtle);
+  color: #ff9179;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.davinci-tc-val {
+  color: #f7a391;
+}
+
+.davinci-tc-sep {
+  color: var(--davinci-text-muted);
+}
+
+.davinci-tc-total {
+  color: var(--davinci-text-secondary);
+}
+
+.davinci-audio-meter-peek {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: var(--davinci-bg-panel);
+  border: 1px solid var(--davinci-border);
+  color: var(--davinci-text-secondary);
+}
+
+.davinci-vu-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+  width: 14px;
+}
+
+.vu-bar {
+  flex: 1;
+  background: #27c963;
+  border-radius: 1px;
+  height: 3px;
+  transition: height 0.1s ease;
+}
+
+.vu-bar.vu-active-1 { height: 9px; }
+.vu-bar.vu-active-2 { height: 12px; }
+.vu-bar.vu-active-3 { height: 7px; }
+
+/* Side Nuances Panel in Editor Mode */
+.davinci-editor-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--davinci-bg-panel);
+  border: 1px solid var(--davinci-border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.davinci-side-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.davinci-nuances-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  background: var(--davinci-bg-darkest);
+  border-bottom: 1px solid var(--davinci-border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.davinci-nuances-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.davinci-nuance-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--davinci-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.davinci-nuance-btn:hover {
+  color: var(--davinci-text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.davinci-nuance-btn.is-active {
+  color: var(--davinci-text-primary);
+  background: var(--davinci-bg-elevated);
+  border: 1px solid var(--davinci-border-strong);
+}
+
+.davinci-nuance-btn.is-active svg {
+  color: var(--davinci-accent);
+}
+
+.davinci-pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--davinci-bg-panel);
+}
+
+.davinci-side-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--davinci-bg-darkest);
+  border-bottom: 1px solid var(--davinci-border-subtle);
+}
+
+.davinci-pane-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.davinci-accent-icon {
+  color: var(--davinci-accent);
+}
+
+.davinci-pane-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--davinci-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.davinci-pill-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--davinci-accent-bg);
+  border: 1px solid rgba(224, 86, 56, 0.28);
+  color: var(--davinci-accent);
+}
+
+/* Smart AI Workspace Styles */
+.smart-ai-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.smart-ai-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--davinci-bg-darkest);
+  border-bottom: 1px solid var(--davinci-border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.smart-ai-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.smart-ai-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--davinci-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.smart-ai-tab:hover {
+  color: var(--davinci-text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.smart-ai-tab.is-active {
+  color: var(--davinci-text-primary);
+  background: var(--davinci-bg-surface);
+  border: 1px solid var(--davinci-border-strong);
+}
+
+.smart-ai-tab.is-active svg {
+  color: var(--davinci-accent);
+}
+
+.smart-ai-tab.is-highlight {
+  border-left: 2px solid var(--davinci-accent);
+}
+
+.smart-ai-content {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.smart-hero-banner {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(224, 86, 56, 0.08), rgba(16, 18, 22, 0.6));
+  border: 1px solid rgba(224, 86, 56, 0.25);
+}
+
+.smart-hero-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+  background: var(--davinci-accent-bg);
+  color: var(--davinci-accent);
+  flex-shrink: 0;
+}
+
+.hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.hero-title-row h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--davinci-text-primary);
+}
+
+.sarvam-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ff9179;
+  background: rgba(224, 86, 56, 0.15);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.smart-hero-text p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--davinci-text-secondary);
+}
+
+.smart-config-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--davinci-bg-elevated);
+  border: 1px solid var(--davinci-border);
+}
+
+.smart-config-card h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--davinci-text-primary);
+}
+
+.card-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--davinci-text-secondary);
+  line-height: 1.4;
+}
+
+.smart-config-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.smart-config-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--davinci-text-secondary);
+}
+
+.smart-segmented-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.smart-segmented-pills .pill-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--davinci-border);
+  background: var(--davinci-bg-surface);
+  color: var(--davinci-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.smart-segmented-pills .pill-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--davinci-text-primary);
+}
+
+.smart-segmented-pills .pill-btn.is-active {
+  background: var(--davinci-accent-bg);
+  border-color: var(--davinci-accent);
+  color: var(--davinci-accent);
+}
+
+.smart-slider {
+  width: 100%;
+  accent-color: var(--davinci-accent);
+}
+
+.smart-feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--davinci-border-subtle);
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--davinci-text-secondary);
+}
+
+.feature-item svg {
+  color: var(--davinci-accent);
+  flex-shrink: 0;
+}
+
+.smart-trigger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--davinci-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px var(--davinci-accent-glow);
+  transition: all 0.18s ease;
+}
+
+.smart-trigger-btn:hover:not(:disabled) {
+  background: var(--davinci-accent-hover);
+  transform: translateY(-1px);
+}
+
+.smart-trigger-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.smart-secondary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--davinci-border-strong);
+  background: var(--davinci-bg-surface);
+  color: var(--davinci-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.smart-secondary-btn:hover {
+  background: var(--davinci-accent-bg);
+  border-color: var(--davinci-accent);
+  color: var(--davinci-accent);
+}
+
+.smart-success-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sticker-sample-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.sticker-sample-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 5px;
+  background: var(--davinci-bg-surface);
+  border: 1px solid var(--davinci-border);
+  color: var(--davinci-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Deliver & Export Workspace Styles */
+.davinci-export-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: var(--davinci-bg-darkest);
+  overflow: hidden;
+}
+
+.davinci-deliver-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: var(--davinci-bg-base);
+  border-bottom: 1px solid var(--davinci-border-subtle);
+}
+
+.deliver-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.deliver-header-left svg {
+  color: var(--davinci-accent);
+}
+
+.deliver-header-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--davinci-text-primary);
+}
+
+.deliver-header-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--davinci-border);
+  color: var(--davinci-text-secondary);
+}
+
+.deliver-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deliver-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  background: var(--davinci-bg-panel);
+  border: 1px solid var(--davinci-border);
+  color: var(--davinci-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.davinci-deliver-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 380px) 1fr minmax(320px, 380px);
+  gap: 8px;
+  padding: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.deliver-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--davinci-bg-panel);
+  border: 1px solid var(--davinci-border-subtle);
+  overflow-y: auto;
+}
+
+.deliver-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--davinci-text-primary);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--davinci-border-subtle);
+}
+
+.deliver-panel-title svg {
+  color: var(--davinci-accent);
+}
+
+.deliver-preset-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deliver-preset-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--davinci-bg-elevated);
+  border: 1px solid var(--davinci-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.deliver-preset-card:hover {
+  border-color: var(--davinci-border-strong);
+  background: var(--davinci-bg-surface);
+}
+
+.deliver-preset-card.is-selected {
+  border-color: var(--davinci-accent);
+  background: var(--davinci-accent-bg);
+}
+
+.preset-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.preset-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--davinci-text-primary);
+}
+
+.preset-rec-tag {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(224, 86, 56, 0.2);
+  color: var(--davinci-accent);
+  text-transform: uppercase;
+}
+
+.preset-card-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--davinci-text-secondary);
+}
+
+.preset-res {
+  color: var(--davinci-text-primary);
+  font-weight: 600;
+}
+
+.preset-selected-check {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  color: var(--davinci-accent);
+}
+
+.deliver-encoding-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.deliver-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--davinci-text-secondary);
+}
+
+.deliver-segmented-pill {
+  display: flex;
+  gap: 4px;
+}
+
+.seg-pill-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--davinci-border);
+  background: var(--davinci-bg-surface);
+  color: var(--davinci-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seg-pill-btn.is-active {
+  background: var(--davinci-accent-bg);
+  border-color: var(--davinci-accent);
+  color: var(--davinci-accent);
+}
+
+.deliver-checkbox {
+  accent-color: var(--davinci-accent);
+  cursor: pointer;
+}
+
+.deliver-render-cta {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.deliver-primary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--davinci-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px var(--davinci-accent-glow);
+  transition: all 0.18s ease;
+}
+
+.deliver-primary-btn:hover:not(:disabled) {
+  background: var(--davinci-accent-hover);
+}
+
+.deliver-preview-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border-radius: 6px;
+  background: #090a0d;
+  border: 1px solid var(--davinci-border-subtle);
+  position: relative;
+  overflow: hidden;
+}
+
+.deliver-preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--davinci-text-muted);
+}
+
+.deliver-preview-placeholder svg {
+  color: var(--davinci-accent);
+}
+
+.deliver-preview-caption {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--davinci-text-primary);
+}
+
+.deliver-preview-sub {
+  font-size: 11px;
+  color: var(--davinci-text-secondary);
+}
+
+.deliver-live-progress-box {
+  position: absolute;
+  bottom: 16px;
+  left: 20px;
+  right: 20px;
+  padding: 14px;
+  border-radius: 6px;
+  background: rgba(16, 18, 22, 0.95);
+  border: 1px solid var(--davinci-border-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-top-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--davinci-text-primary);
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--davinci-accent);
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+
+.deliver-cancel-btn {
+  align-self: flex-end;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--davinci-border);
+  background: transparent;
+  color: var(--davinci-text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* Social Media Tabs & Form */
+.social-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.social-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--davinci-border);
+  background: var(--davinci-bg-elevated);
+  color: var(--davinci-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.social-tab:hover {
+  color: var(--davinci-text-primary);
+  background: var(--davinci-bg-surface);
+}
+
+.social-tab.is-active {
+  background: var(--davinci-accent-bg);
+  border-color: var(--davinci-accent);
+  color: var(--davinci-accent);
+}
+
+.social-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.social-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.social-field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--davinci-text-secondary);
+}
+
+.social-field input,
+.social-field textarea,
+.social-field select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--davinci-border);
+  background: var(--davinci-bg-elevated);
+  color: var(--davinci-text-primary);
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.social-field input:focus,
+.social-field textarea:focus,
+.social-field select:focus {
+  outline: 1px solid var(--davinci-accent);
+  border-color: var(--davinci-accent);
+}
+
+.social-upload-cta {
+  margin-top: 6px;
+}
+
+.social-publish-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #f97316;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.social-publish-btn:hover:not(:disabled) {
+  background: #ea580c;
+}
+
+.social-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.spin-icon {
+  animation: davinci-spin 1s linear infinite;
+}
+
+@keyframes davinci-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+

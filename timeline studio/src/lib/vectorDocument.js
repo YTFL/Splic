@@ -154,7 +154,7 @@ function createPartRecord(element, index) {
     }),
     index,
     count: Math.max(1, shapes.length),
-    color: /^#[0-9a-f]{6}$/i.test(colorValue) ? colorValue.toLowerCase() : "#35ead9",
+    color: /^#[0-9a-f]{6}$/i.test(colorValue) ? colorValue.toLowerCase() : "#e05638",
     strokeWidth: clamp(strokeTarget?.getAttribute("stroke-width") || 4, 1, 120),
     opacity: clamp(element.getAttribute("opacity") || 1, 0, 1),
     translateX: toNumber(element.getAttribute("data-vector-translate-x"), 0),

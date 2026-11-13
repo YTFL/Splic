@@ -1,19 +1,19 @@
 {
   "id": "/",
-  "name": "Timeline Studio",
-  "short_name": "Timeline",
-  "description": "A local-first browser AI video editor for voiceovers, automatic captions, talking avatars, multi-track editing, and MP4 or WebM export.",
+  "name": "Splic Studio",
+  "short_name": "Splic",
+  "description": "Autonomous, human-in-the-loop short-form video editor powered by Sarvam AI for Indic creators.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "browser"],
   "orientation": "landscape",
-  "background_color": "#090d13",
-  "theme_color": "#101720",
+  "background_color": "#090a0d",
+  "theme_color": "#0d0f12",
   "categories": ["productivity", "photo", "video"],
   "icons": [
     {
-      "src": "/icons/timeline-studio-icon.svg",
+      "src": "/icons/splic-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

@@ -35,18 +35,11 @@ import { NewProjectModal } from "./components/NewProjectModal.jsx";
 import { SettingsModal } from "./components/SettingsModal.jsx";
 import { VisualReplacementDialog } from "./components/VisualReplacementDialog.jsx";
 import { TemplateInspector } from "./components/TemplateLibrary.jsx";
-import { FirstVisualGuide } from "./components/FirstVisualGuide.jsx";
 import { MiganRepairDialog } from "./components/MiganRepairDialog.jsx";
 import { DetailRestorationDialog } from "./components/DetailRestorationDialog.jsx";
 import { SmartDenoiseDialog } from "./components/SmartDenoiseDialog.jsx";
 import { WebMcpReview, WebMcpAiStatus } from "./components/WebMcpReview.jsx";
 import ProjectImportOverlay from "./components/ProjectImportOverlay.jsx";
-import {
-  canShowFirstVisualGuide,
-  FIRST_VISUAL_GUIDE_MOBILE_QUERY,
-  hasSeenFirstVisualGuide,
-  markFirstVisualGuideSeen,
-} from "./lib/firstVisualGuide.js";
 import { useExportElapsed } from "./hooks/useExportElapsed.js";
 import { usePreviewFrameSize } from "./hooks/usePreviewFrameSize.js";
 import { useEditorCatalog } from "./hooks/useEditorCatalog.js";
@@ -174,8 +167,6 @@ export function App({ hostSession = null }) {
   const [stickerTimelineDrag, setStickerTimelineDrag] = useState(null);
   const [previewVisualFocus, setPreviewVisualFocus] = useState("");
   const [previewFrameReference, setPreviewFrameReference] = useState(null);
-  const [showFirstVisualGuide, setShowFirstVisualGuide] = useState(false);
-  const firstVisualGuideShownRef = useRef(false);
   const timelineImportRestoreRef = useRef(false);
   const changeMobilePanel = (nextPanel) => {
     if (mobilePanelTimerRef.current) window.clearTimeout(mobilePanelTimerRef.current);
@@ -455,14 +446,7 @@ export function App({ hostSession = null }) {
   };
   const shouldShowLanguageIntro = !uiLanguage;
   const requestFirstVisualGuide = () => {
-    const isMobile = window.matchMedia?.(FIRST_VISUAL_GUIDE_MOBILE_QUERY).matches ?? false;
-    if (!canShowFirstVisualGuide({
-      isMobile,
-      hasSeen: hasSeenFirstVisualGuide(),
-      shownThisSession: firstVisualGuideShownRef.current,
-    })) return;
-    firstVisualGuideShownRef.current = true;
-    setShowFirstVisualGuide(true);
+    // Disabled: Obsolete onboarding guide container removed
   };
 
   const linkedSourceAudioSegments = useMemo(
@@ -2049,7 +2033,6 @@ export function App({ hostSession = null }) {
     currentTimeRef.current = result.previewTime;
     setCurrentTime(result.previewTime);
     setPlayheadRevealRequest(result.visualSegments[0].id);
-    setShowFirstVisualGuide(false);
     changeMobilePanel("");
   };
   const canReplaceVisual = (track, id) => {
@@ -2471,12 +2454,10 @@ export function App({ hostSession = null }) {
       <>
         <GetStartedSplash
           onGetStarted={() => {
-            setJourneyStage("projects");
-            setWorkspacePage("projects");
+            setJourneyStage("auth");
           }}
           onSignIn={() => {
-            setJourneyStage("projects");
-            setWorkspacePage("projects");
+            setJourneyStage("auth");
           }}
           onRunDemo={() => {
             setJourneyStage("projects");
@@ -3355,16 +3336,6 @@ export function App({ hostSession = null }) {
         canceling={exportPhase === t("exportCanceling")}
         t={t}
       />
-      {showFirstVisualGuide && !shouldShowLanguageIntro ? (
-        <FirstVisualGuide
-          language={activeLanguage}
-          onClose={() => setShowFirstVisualGuide(false)}
-          onComplete={() => {
-            markFirstVisualGuideSeen();
-            setShowFirstVisualGuide(false);
-          }}
-        />
-      ) : null}
       {shouldShowLanguageIntro ? (
         <LanguageIntro t={t} closing={introClosing} onChoose={chooseInterfaceLanguage} />
       ) : null}
@@ -3411,17 +3382,21 @@ export function App({ hostSession = null }) {
           setAutoEditPlan(null);
         }}
       />
+
       <BottomNavBar
         activePage={showAutoEditModal || isAutoEditRunning ? "smart" : workspacePage}
         onSelectPage={(page) => {
           if (page === "smart") {
             triggerAutoEdit();
-          } else if (page === "projects") {
-            setWorkspacePage("projects");
-            setJourneyStage("projects");
           } else {
-            setWorkspacePage(page);
-            setJourneyStage("editor");
+            setShowAutoEditModal(false);
+            if (page === "projects") {
+              setWorkspacePage("projects");
+              setJourneyStage("projects");
+            } else {
+              setWorkspacePage(page);
+              setJourneyStage("editor");
+            }
           }
         }}
         currentTime={currentTime}

@@ -4,10 +4,9 @@ import {
   ArrowRight,
   Globe,
   Video,
-  Sparkles,
   Check,
 } from "lucide-react";
-import { SplicLogo } from "./SplicLogo.jsx";
+import { SplicLogo, SplicInlaidEmblem } from "./SplicLogo.jsx";
 
 export function AuthModal({
   onLogin,
@@ -48,20 +47,16 @@ export function AuthModal({
         <div className="splic-auth-page-topbar-inner">
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <SplicLogo size={28} showText={true} />
-            <span className="splic-welcome-version-pill">
-              Creator Authentication Gateway
-            </span>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             {onClose && (
               <button
                 type="button"
-                className="splic-btn-secondary"
-                style={{ width: "auto", padding: "7px 16px", fontSize: "12px", display: "flex", alignItems: "center", gap: "8px" }}
+                className="splic-btn-ghost-nav"
                 onClick={onClose}
               >
-                <ArrowLeft size={14} strokeWidth={1.75} />
+                <ArrowLeft size={14} strokeWidth={1.5} />
                 <span>Back to Home</span>
               </button>
             )}
@@ -74,26 +69,17 @@ export function AuthModal({
         <div className="splic-auth-page-container">
           {/* Left Brand Showcase Column */}
           <div className="splic-auth-brand-col">
-            <div className="splic-welcome-badge">
-              <Sparkles size={13} strokeWidth={1.75} />
-              <span>Studio Workspace Sign-In</span>
-            </div>
-
             <h1 className="splic-auth-hero-title">
-              Sign In to Access Your <span>Projects</span>
+              Sign In to <span>Splic Studio</span>
             </h1>
 
             <p className="splic-auth-hero-subtitle">
-              Manage multi-track Indic video edits, link social media channels, and harness Sarvam AI transliteration directly in your browser.
+              Multi-track timeline editing, Romanized Indic captions, and high-performance video export in your browser.
             </p>
 
-            {/* Visual Logo Card */}
-            <div className="splic-auth-logo-preview">
-              <img
-                src="/assets/branding/splic-logo.jpg"
-                alt="Splic Studio"
-                className="splic-auth-logo-preview-img"
-              />
+            {/* Inlayed Animated Vector Logo — No black container */}
+            <div className="splic-auth-logo-inlay">
+              <SplicInlaidEmblem size={250} showText={false} />
             </div>
 
             {/* Feature Bullets */}
@@ -102,19 +88,19 @@ export function AuthModal({
                 <div className="splic-auth-feature-check">
                   <Check size={13} strokeWidth={2.5} />
                 </div>
-                <span>Saaras v4 Indic Speech-to-Text transliteration</span>
+                <span>Phonetic Romanized Indic subtitles & styling</span>
               </div>
               <div className="splic-auth-feature-row">
                 <div className="splic-auth-feature-check">
                   <Check size={13} strokeWidth={2.5} />
                 </div>
-                <span>Real-time rembg background removal for Indian stickers</span>
+                <span>Automatic ripple cuts and timeline pause removal</span>
               </div>
               <div className="splic-auth-feature-row">
                 <div className="splic-auth-feature-check">
                   <Check size={13} strokeWidth={2.5} />
                 </div>
-                <span>Direct 1-click publish to Instagram Reels & YouTube Shorts</span>
+                <span>Hardware-accelerated 9:16 export & social publishing</span>
               </div>
             </div>
           </div>

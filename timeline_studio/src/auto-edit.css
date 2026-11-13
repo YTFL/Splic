@@ -669,15 +669,18 @@ body.is-timeline-collapsing .silence-dead-air-gap {
 }
 
 /* ============================================================ */
-/* CINEMA REEL MORPH LOADING SCREEN (Matte Slate & Burnt Sienna) */
+/* CINEMA REEL MORPH LOADING SCREEN (90-95% Opacity, No Container) */
 /* ============================================================ */
 .cinema-morph-overlay {
   position: fixed;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(12, 14, 18, 0.92);
+  background: rgba(10, 12, 16, 0.93);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   z-index: 10005;
   animation: cinema-fade-in 0.25s ease-out forwards;
 }
@@ -687,20 +690,6 @@ body.is-timeline-collapsing .silence-dead-air-gap {
   to { opacity: 1; transform: scale(1); }
 }
 
-.cinema-morph-card {
-  position: relative;
-  width: 420px;
-  padding: 32px 28px;
-  border-radius: 12px;
-  background: #161922;
-  border: 1px solid #2b3140;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
 .cinema-morph-stage {
   position: relative;
   width: 120px;
@@ -708,7 +697,7 @@ body.is-timeline-collapsing .silence-dead-air-gap {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
 }
 
 /* 1. Clapperboard container (snaps shut then dissolves/morphs) */
@@ -790,7 +779,7 @@ body.is-timeline-collapsing .silence-dead-air-gap {
   font-size: 7px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #c85a3a;
+  color: #e53935;
 }
 
 .slate-title {
@@ -865,7 +854,7 @@ body.is-timeline-collapsing .silence-dead-air-gap {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #c85a3a;
+  background: #e53935;
   border: 2px solid #e2e8f0;
 }
 
@@ -880,6 +869,30 @@ body.is-timeline-collapsing .silence-dead-air-gap {
   border-bottom: 2px dashed rgba(220, 225, 235, 0.4);
   opacity: 0.7;
   transform: rotate(-22deg);
+}
+
+/* 3. Description in quotes & italics below the animation */
+.cinema-quote-description {
+  margin: 20px 0 0;
+  padding: 0 24px;
+  max-width: 500px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-style: italic;
+  font-size: 15px;
+  font-weight: 400;
+  color: #e2e8f0;
+  line-height: 1.6;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.cinema-quiet-elapsed {
+  margin-top: 10px;
+  font-size: 11.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  font-weight: 500;
 }
 
 /* 3. Processing HUD readout */

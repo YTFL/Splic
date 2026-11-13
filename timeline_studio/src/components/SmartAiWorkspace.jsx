@@ -86,7 +86,6 @@ export function SmartAiWorkspace({
             <div className="smart-hero-text">
               <div className="hero-title-row">
                 <h3>Auto-Cut</h3>
-                <span className="sarvam-badge">Powered by Sarvam AI</span>
               </div>
               <p>
                 1-Click autonomous video editor for Indic short-form creators. Automatically transcribes code-mixed speech (Hinglish/Tamil/Telugu), removes dead-air silences, burns Romanized phonetic captions, overlays Indian cultural stickers, and injects meme SFX.

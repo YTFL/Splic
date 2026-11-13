@@ -45,9 +45,8 @@ export function EditorSidebar({ model: d, workspaceMode = "editor" }) {
           <header className="davinci-side-pane-header">
             <div className="davinci-pane-title-group">
               <Zap size={16} strokeWidth={1.5} className="davinci-accent-icon" />
-              <h3 className="davinci-pane-title">Smart / AI Studio</h3>
+              <h3 className="davinci-pane-title">Auto-Cut Studio</h3>
             </div>
-            <span className="davinci-pill-badge">Sarvam AI Powered</span>
           </header>
           <div className="davinci-pane-body">
             <SmartAiWorkspace

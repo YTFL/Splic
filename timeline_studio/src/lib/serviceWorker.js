@@ -40,7 +40,7 @@ export async function waitForHostMediaController() {
   const registration = await registerModelCacheServiceWorker();
   const controller = navigator.serviceWorker?.controller;
   if (!registration || !controller || new URL(controller.scriptURL).pathname !== MODEL_CACHE_WORKER_URL) {
-    throw new Error("项目媒体服务尚未就绪，请重新打开页面。");
+    throw new Error("Project media service is not ready. Please reload the page.");
   }
   await new Promise((resolve, reject) => {
     const channel = new MessageChannel();
@@ -49,7 +49,7 @@ export async function waitForHostMediaController() {
       clearTimeout(timer); channel.port1.close(); channel.port2.close();
       if (error) reject(error); else resolve();
     };
-    const timer = setTimeout(() => finish(new Error("项目媒体服务需要更新，请重新打开页面。")), 3000);
+    const timer = setTimeout(() => finish(new Error("Project media service needs to update. Please reload the page.")), 3000);
     channel.port1.onmessage = ({ data }) => {
       if (data?.type === "TIMELINE_STUDIO_MEDIA_READY" && data.requestId === requestId) finish();
     };

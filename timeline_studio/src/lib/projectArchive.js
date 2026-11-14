@@ -13,7 +13,7 @@ export function resolveProjectVisualMedia(visualMedia, segment) {
 function readWithFileReader(file, mode) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(reader.error || new Error("无法读取工程文件"));
+    reader.onerror = () => reject(reader.error || new Error("Failed to read project file"));
     reader.onload = () => resolve(reader.result);
     if (mode === "text") reader.readAsText(file);
     else reader.readAsArrayBuffer(file);
@@ -73,7 +73,7 @@ async function blobForSource(source, blob) {
   if (blob instanceof Blob) return blob;
   if (!source) return null;
   const response = await fetch(source);
-  if (!response.ok) throw new Error("无法读取媒体素材");
+  if (!response.ok) throw new Error("Failed to read media asset");
   return response.blob();
 }
 
@@ -96,7 +96,7 @@ export async function createProjectArchive({ project, visualSegments = [], audio
       entry = { path, type: blob.type, size: blob.size };
       visualFiles.set(source, entry);
     }
-    media.visuals.push({ id: segment.id, name: segment.name || "素材", ...entry });
+    media.visuals.push({ id: segment.id, name: segment.name || "Asset", ...entry });
   }
 
   for (let index = 0; index < audioSegments.length; index += 1) {
@@ -108,7 +108,7 @@ export async function createProjectArchive({ project, visualSegments = [], audio
     const original = segment.processingOriginalBlob;
     const originalPath = original instanceof Blob ? `media/audio/original-${String(index + 1).padStart(3, "0")}.${extensionFor(original, "wav")}` : null;
     if (originalPath) files[originalPath] = original;
-    media.audioSegments.push({ id: segment.id, path, name: segment.name || "配音", type: blob.type, size: blob.size, ...(originalPath ? { originalPath, originalType: original.type } : {}) });
+    media.audioSegments.push({ id: segment.id, path, name: segment.name || "Voiceover", type: blob.type, size: blob.size, ...(originalPath ? { originalPath, originalType: original.type } : {}) });
   }
 
   for (const [key, track] of Object.entries({ audio, sourceAudio, music })) {

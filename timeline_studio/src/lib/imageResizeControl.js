@@ -16,8 +16,8 @@ export function createImageResizeControl(d) {
   return function startImageResize(event, segmentId = "", segmentIndex = -1, edge = "end") {
     if (event.button !== 0) return;
     event.preventDefault(); event.stopPropagation();
-    if (d.trackLocks.image) return void d.notify("图片轨已锁定，无法拉长片段");
-    if (!d.imageSrc || d.timelineDuration <= 0) return void d.notify("请先上传或选择图片/视频素材");
+    if (d.trackLocks.image) return void d.notify("Visual track is locked, cannot adjust clip");
+    if (!d.imageSrc || d.timelineDuration <= 0) return void d.notify("Please upload or select media first");
     d.setSelectedTrack("image");
     const segments = d.visualSegments.length ? d.visualSegments : [createVisualSegment(d.imageDuration || 4, d.getCurrentVisualAssetSnapshot())];
     const startDuration = Math.max(MIN_VISUAL_SEGMENT_SECONDS, d.imageDuration);
@@ -44,9 +44,9 @@ export function createImageResizeControl(d) {
     let finalDuration = originalDuration;
     d.setSelectedVisualSegmentId(resizeId);
     const snapPoints = [
-      d.audioBlob && d.audioDuration > 0 ? { time: Math.min(MAX_TIMELINE_DURATION_SECONDS, d.audioDuration), label: "配音结尾" } : null,
-      d.sourceAudioBlob && d.sourceAudioDuration > 0 ? { time: Math.min(MAX_TIMELINE_DURATION_SECONDS, d.sourceAudioStart + d.sourceAudioDuration), label: "原声结尾" } : null,
-      d.musicBlob && d.musicDuration > 0 ? { time: Math.min(MAX_TIMELINE_DURATION_SECONDS, (d.musicStart || 0) + d.musicDuration), label: "音乐结尾" } : null,
+      d.audioBlob && d.audioDuration > 0 ? { time: Math.min(MAX_TIMELINE_DURATION_SECONDS, d.audioDuration), label: "Voiceover end" } : null,
+      d.sourceAudioBlob && d.sourceAudioDuration > 0 ? { time: Math.min(MAX_TIMELINE_DURATION_SECONDS, d.sourceAudioStart + d.sourceAudioDuration), label: "Source audio end" } : null,
+      d.musicBlob && d.musicDuration > 0 ? { time: Math.min(MAX_TIMELINE_DURATION_SECONDS, (d.musicStart || 0) + d.musicDuration), label: "Music end" } : null,
       ...normalizeTimelineMarkers(d.timelineMarkers).flatMap((marker) => [
         { time: marker.time, track: "marker", id: marker.id, edge: "start" },
         ...(marker.type === "range" ? [{ time: marker.endTime, track: "marker", id: marker.id, edge: "end" }] : []),
@@ -141,8 +141,8 @@ export function createImageResizeControl(d) {
       if (!moved) return;
       if (!isStartEdge) d.rippleTimelineAfter?.(before + originalDuration, finalDuration - originalDuration);
       d.notify(isStartEdge
-        ? d.t?.("visualStartAdjusted", "画面片段起点已调整") || "画面片段起点已调整"
-        : activeLabel === "配音结尾" ? "图片已吸附到配音结尾" : activeLabel === "原声结尾" ? "图片已吸附到视频原声结尾" : activeLabel === "音乐结尾" ? "图片已吸附到音乐结尾" : "图片片段时长已调整");
+        ? d.t?.("visualStartAdjusted", "Visual clip start adjusted") || "Visual clip start adjusted"
+        : activeLabel === "Voiceover end" ? "Snapped to voiceover end" : activeLabel === "Source audio end" ? "Snapped to video audio end" : activeLabel === "Music end" ? "Snapped to music end" : "Visual clip duration adjusted");
     };
     const cancel = () => {
       settleTimelineDrag(autoScroller, {

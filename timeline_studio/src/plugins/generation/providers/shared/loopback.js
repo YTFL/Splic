@@ -6,11 +6,11 @@ export function normalizeLoopbackEndpoint(value, fallbackPort) {
   try {
     url = new URL(raw.includes("://") ? raw : `http://${raw}`);
   } catch {
-    throw new Error("请输入有效的本地服务地址。");
+    throw new Error("Please enter a valid local service address.");
   }
   const hostname = url.hostname.replace(/^\[|\]$/g, "");
   if (!LOOPBACK_HOSTS.has(hostname) || !["http:", "https:"].includes(url.protocol)) {
-    throw new Error("为保护本地生成服务，只允许连接 localhost、127.0.0.1 或 ::1。");
+    throw new Error("For security, only connections to localhost, 127.0.0.1, or ::1 are permitted.");
   }
   url.pathname = url.pathname.replace(/\/+$/, "");
   url.search = "";
@@ -24,7 +24,7 @@ export async function fetchLocalJson(url, options = {}) {
     response = await fetch(url, options);
   } catch (error) {
     if (error?.name === "AbortError") throw error;
-    throw new Error("无法访问本地服务。请确认服务已启动，并允许当前编辑器地址跨域访问（CORS）。", { cause: error });
+    throw new Error("Unable to reach local service. Please confirm the service is running and that CORS is enabled for the editor's origin.", { cause: error });
   }
   if (!response.ok) {
     let detail = "";
@@ -34,7 +34,7 @@ export async function fetchLocalJson(url, options = {}) {
     } catch {
       // Status is enough when the response body is not JSON.
     }
-    throw new Error(`本地服务返回 HTTP ${response.status}${detail ? `：${detail}` : ""}`);
+    throw new Error(`Local service returned HTTP ${response.status}${detail ? `: ${detail}` : ""}`);
   }
   return response.json();
 }

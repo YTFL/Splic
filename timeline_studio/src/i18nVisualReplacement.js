@@ -1,6 +1,6 @@
 const keys = ["title", "range", "start", "end", "fixed", "invalid", "done", "current", "upload", "scroll", "empty", "equation"];
 const rows = {
-  zh: ["替换片段", "取用区间", "起点", "终点", "替换后保留原片段时长", "请选择有效区间，匹配时长后的速度须为 0.25×–4×。", "已替换片段", "当前片段", "上传素材", "横向浏览素材", "暂无素材，请先上传图片或视频。", "固定片段时长 × 倍速 = 素材取用时长"],
+  zh: ["Replace clip", "Source range", "In point", "Out point", "Keeps the original clip duration", "Choose a valid range that fits the clip at 0.25×–4× speed.", "Clip replaced", "Current clip", "Upload media", "Scroll through media", "Upload an image or video to get started.", "Fixed clip duration × playback rate = selected source duration"],
   en: ["Replace clip", "Source range", "In point", "Out point", "Keeps the original clip duration", "Choose a valid range that fits the clip at 0.25×–4× speed.", "Clip replaced", "Current clip", "Upload media", "Scroll through media", "Upload an image or video to get started.", "Fixed clip duration × playback rate = selected source duration"],
   ja: ["クリップを置き換え", "使用範囲", "開始点", "終了点", "元のクリップの長さを維持", "0.25〜4倍速で収まる範囲を選択してください。", "クリップを置き換えました", "現在のクリップ", "素材をアップロード", "素材を横にスクロール", "画像または動画をアップロードしてください。", "固定クリップ長 × 再生速度 = 素材の使用時間"],
   ko: ["클립 교체", "사용 구간", "시작점", "끝점", "원래 클립 길이 유지", "0.25×–4× 속도로 길이를 맞출 수 있는 구간을 선택하세요.", "클립을 교체했습니다", "현재 클립", "미디어 업로드", "미디어 가로 스크롤", "이미지나 영상을 업로드하세요.", "고정 클립 길이 × 재생 속도 = 소스 사용 길이"],

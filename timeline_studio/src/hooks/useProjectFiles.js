@@ -27,7 +27,7 @@ export function useProjectFiles(deps) {
     const restored = await restoreProjectSnapshot(saved, projectId);
     restored.effectClips = normalizeEffectClips(restored.effectClips);
     if (typeof restored.script !== "string" || !Array.isArray(restored.visualSegments) ||
-        !Array.isArray(restored.audioSegments) || !Array.isArray(restored.userAssets)) throw new Error("项目缺少完整编辑状态。");
+        !Array.isArray(restored.audioSegments) || !Array.isArray(restored.userAssets)) throw new Error("Project is missing complete edit state.");
     // Active audio needs bytes for the existing audio controls; unused library media stays lazy.
     const loaded = new Map();
     const audio = (item, field = "blob") => {
@@ -56,7 +56,7 @@ export function useProjectFiles(deps) {
       const original = restored.sourceVoiceColorOriginal;
       if (!deps.sourceVoiceColorOriginalRef || typeof original !== "object" || Array.isArray(original) ||
           typeof original.name !== "string" || !Number.isFinite(original.duration) || original.duration < 0) {
-        throw new Error("项目中的原始音色备份无效。");
+        throw new Error("The original voice profile backup in the project is invalid.");
       }
       original.blob = await audio(original);
       original.peaks = [];
@@ -67,7 +67,7 @@ export function useProjectFiles(deps) {
     for (const [key, value] of Object.entries(restored)) {
       if (["commandState", "projectMedia", "audioBlob", "audioUrl", "audioDuration", "imageBlob", "sourceVoiceColorOriginal"].includes(key)) continue;
       const setter = deps[`set${key[0].toUpperCase()}${key.slice(1)}`];
-      if (typeof setter !== "function") throw new Error(`无法恢复编辑字段：${key}`);
+      if (typeof setter !== "function") throw new Error(`Unable to restore edit field: ${key}`);
       assignments.push([setter, value]);
     }
     return { captured: captureProjectState(restored), apply() {
@@ -118,16 +118,16 @@ export function useProjectFiles(deps) {
     if (importingRef.current) return;
     deps.setShowFileMenu(false);
     try {
-      deps.notify("正在打包工程与媒体素材…");
+      deps.notify("Packing project and media assets…");
       const archive = await createCurrentArchive();
-      downloadBlob(archive, "AI-配音项目.timeline");
-      deps.notify("工程包已导出（含媒体素材）");
-    } catch (error) { deps.notify(error instanceof Error ? `工程导出失败：${error.message}` : "工程导出失败"); }
+      downloadBlob(archive, "project.timeline");
+      deps.notify("Project package exported (including media assets)");
+    } catch (error) { deps.notify(error instanceof Error ? `Project export failed: ${error.message}` : "Project export failed"); }
   }, [deps, createCurrentArchive]);
 
   const handleNewProject = useCallback((options = {}) => {
     if (importingRef.current) return;
-    if (!options.confirmed && !window.confirm("新建工程将清空当前时间线，是否继续？")) return;
+    if (!options.confirmed && !window.confirm("Creating a new project will clear the current timeline. Continue?")) return;
     commandStateRef.current = { schemaVersion: 1, revision: 0, appliedOperationIds: [] };
     deps.setScript(DEFAULT_SCRIPT); deps.setCaptionSegments(createCaptionSegments(DEFAULT_SCRIPT));
     deps.setSelectedSegmentId(""); deps.clearImageTrack(""); deps.clearAudioTrack("");
@@ -138,7 +138,7 @@ export function useProjectFiles(deps) {
     deps.setSelectedStickerSegmentId(""); deps.clearAllVisionState(); deps.setCurrentTime(0);
     deps.setTimelineHorizon(DEFAULT_TIMELINE_DURATION_SECONDS); deps.setTimelineZoom(1);
     if (options.complete) { deps.setUserAssets([]); deps.resetHistory(); }
-    deps.setShowFileMenu(false); deps.notify(options.complete ? hostText(deps.language, options.closed ? "closed" : "created") : "已新建空白工程");
+    deps.setShowFileMenu(false); deps.notify(options.complete ? hostText(deps.language, options.closed ? "closed" : "created") : "Created new blank project");
   }, [deps]);
 
   const handleImportProject = useCallback(async (file) => {
@@ -333,7 +333,7 @@ export function useProjectFiles(deps) {
       committed = true;
       // Dismiss loading in the same commit as the complete project, before
       // newly mounted clips start their background filmstrip refinement.
-      deps.notify(archive.legacy ? "旧版工程已导入；请重新添加未嵌入的本地媒体，然后导出为 .timeline 工程包" : "工程包已导入，媒体素材已恢复");
+      deps.notify(archive.legacy ? "Legacy project imported; please re-add unembedded local media, then export as a .timeline package" : "Project package imported, media assets restored");
     } catch (error) {
       console.error("Project import failed", error);
       deps.notify((PROJECT_IMPORT_COPY[deps.language] || PROJECT_IMPORT_COPY.en).error);

@@ -1,5 +1,5 @@
 const copy = {
-  zh: ["音效", "搜索音效", "拖到切点，或添加到播放头", "试听", "停止试听", "添加到播放头", "已添加音效", "无法播放此音效", ["转场", "撞击", "快门", "点击"], ["轻扫", "上扬扫音", "低频撞击", "干脆重拍", "胶片快门", "数码快门", "轻触", "提示音"]],
+  zh: ["Sound FX", "Search sound effects", "Drag to a cut or add at the playhead", "Audition", "Stop audition", "Add at playhead", "Sound effect added", "Could not play this sound effect", ["Transition", "Impact", "Shutter", "Click"], ["Soft sweep", "Rising whoosh", "Bass hit", "Punch hit", "Film shutter", "Digital shutter", "Soft tap", "Confirm chime"]],
   en: ["Sound FX", "Search sound effects", "Drag to a cut or add at the playhead", "Audition", "Stop audition", "Add at playhead", "Sound effect added", "Could not play this sound effect", ["Transition", "Impact", "Shutter", "Click"], ["Soft sweep", "Rising whoosh", "Bass hit", "Punch hit", "Film shutter", "Digital shutter", "Soft tap", "Confirm chime"]],
   ja: ["効果音", "効果音を検索", "カットにドラッグ、または再生ヘッドに追加", "試聴", "試聴を停止", "再生ヘッドに追加", "効果音を追加しました", "効果音を再生できませんでした", ["切り替え", "衝撃", "シャッター", "クリック"], ["柔らかな風切り音", "上昇する風切り音", "低音の衝撃", "鋭い打音", "フィルムのシャッター", "デジタルシャッター", "軽いタップ", "確認音"]],
   ko: ["효과음", "효과음 검색", "컷으로 끌거나 재생 헤드에 추가", "미리 듣기", "미리 듣기 중지", "재생 헤드에 추가", "효과음을 추가했습니다", "효과음을 재생할 수 없습니다", ["전환", "타격", "셔터", "클릭"], ["부드러운 스윕", "상승하는 바람 소리", "저음 타격", "짧은 강타", "필름 셔터", "디지털 셔터", "가벼운 터치", "확인음"]],
@@ -22,7 +22,7 @@ export function getSoundEffectsCopy(language) {
 export const SOUND_EFFECT_CATEGORIES = ["all", "instrument", "voice", "foley", "transition", "impact", "interface"];
 
 const categoryLabels = {
-  zh: ["全部", "乐器", "人声", "日常", "转场", "撞击", "界面"],
+  zh: ["All", "Instruments", "Voices", "Everyday", "Transitions", "Impacts", "Interface"],
   en: ["All", "Instruments", "Voices", "Everyday", "Transitions", "Impacts", "Interface"],
   ja: ["すべて", "楽器", "声", "生活音", "切り替え", "衝撃", "操作音"],
   ko: ["전체", "악기", "사람 목소리", "생활 소리", "전환", "타격", "조작음"],
@@ -50,14 +50,14 @@ const recordedKeys = [
 
 const recordedLabels = {
   zh: [
-    "钢琴", "尼龙弦吉他", "钢弦吉他",
-    "准备", "出发", "答对", "答错", "恭喜", "升级", "时间到", "你赢了",
-    "呼吸", "笑声", "咳嗽", "倒吸气", "口哨", "拍手",
-    "开门", "关门", "门吱呀声", "翻页", "合上书", "衣料摩擦", "硬币", "门闩", "金属锅",
-    "洗牌", "展开扑克牌", "滑动扑克牌", "掷骰子", "摇骰子",
-    "木地板脚步", "水泥地脚步", "草地脚步", "雪地脚步", "地毯脚步",
-    "敲木头", "玻璃碰撞", "金属碰撞", "碟子碰撞", "钟声", "闷响",
-    "按钮点击", "确认音", "错误音", "界面打开", "界面关闭", "开关切换", "滴答", "数字故障声",
+    "Upright piano", "Nylon guitar", "Steel-string guitar",
+    "Ready", "Go", "Correct", "Wrong", "Congratulations", "Level up", "Time over", "You win",
+    "Breathing", "Laughter", "Cough", "Gasp", "Whistle", "Hand clap",
+    "Door opening", "Door closing", "Door creak", "Page turn", "Book closing", "Cloth rustle", "Coins", "Metal latch", "Metal pot",
+    "Card shuffle", "Card fan", "Card slide", "Dice roll", "Dice shake",
+    "Wood footsteps", "Concrete footsteps", "Grass footsteps", "Snow footsteps", "Carpet footsteps",
+    "Wood hit", "Glass impact", "Metal impact", "Plate impact", "Bell strike", "Soft thud",
+    "Button click", "Confirmation", "Error tone", "Interface opening", "Interface closing", "Switch toggle", "Tick", "Digital glitch",
   ],
   en: [
     "Upright piano", "Nylon guitar", "Steel-string guitar",

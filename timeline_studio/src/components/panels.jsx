@@ -302,7 +302,7 @@ export function MediaPanel({
             <input value={libraryQuery} onChange={(event) => setLibraryQuery(event.target.value)} placeholder={searchLabel} aria-label={searchLabel} />
           </form>
           {libraryType === "vector" ? (
-            <div className="vector-category-row" role="group" aria-label={t("vectorCategories", "矢量素材分类")}>
+            <div className="vector-category-row" role="group" aria-label={t("vectorCategories", "Vector categories")}>
               {VECTOR_CATEGORIES.map((category) => (
                 <button
                   type="button"
@@ -396,32 +396,15 @@ export function MediaPanel({
 
 const AI_VECTOR_COPY = {
   zh: {
-    cardTitle: "AI 设计",
-    cardHint: "Gemini Nano · 浏览器本地生成",
-    cardMeta: "描述需求，生成可编辑 SVG",
-    kicker: "本地 AI 矢量设计",
-    title: "用 Gemini Nano 设计矢量图",
-    intro: "描述你需要的图形。提示词与生成过程都留在浏览器中。",
-    prompt: "设计需求",
-    placeholder: "例如：青绿色科技感纸飞机图标，线条简洁，透明背景",
-    checking: "正在检测浏览器与模型…",
-    detecting: "正在识别设计需求的输入语言",
-    translating: "正在将设计需求翻译成英文",
-    translationDownloading: "正在下载本地翻译语言包",
-    translationUnsupported: "当前浏览器无法将此界面语言翻译成英文",
-    ready: "模型已就绪，可以本地生成",
-    downloadable: "支持本地生成，首次使用会准备英文翻译包和 Gemini Nano 模型",
-    downloading: "正在下载并准备模型",
-    generating: "Gemini Nano 正在设计 SVG",
-    validating: "正在解析并安全校验矢量图",
-    unsupported: "当前浏览器不支持内置 Gemini Nano",
-    unsupportedHint: "请使用支持 Prompt API 的桌面版 Chrome 或 Edge，并确认设备满足本地模型要求。",
-    localNote: "首次模型下载需要网络，之后可从浏览器本地使用。",
-    generate: "生成矢量图",
-    downloadGenerate: "下载模型并生成",
-    cancel: "取消",
-    close: "关闭",
-    failed: "这次没有生成可用的 SVG，请修改描述后重试。",
+    cardTitle: "AI design", cardHint: "Gemini Nano · On-device", cardMeta: "Describe it, get editable SVG",
+    kicker: "Local AI vector design", title: "Design a vector with Gemini Nano", intro: "Describe the graphic you need. Your prompt and generation stay in the browser.",
+    prompt: "Design request", placeholder: "e.g. A clean teal paper-plane icon with a transparent background",
+    checking: "Checking browser and model…", detecting: "Detecting the design request language", ready: "Model ready for local generation", downloadable: "Local generation is supported; English translation and Gemini Nano resources are prepared on first use",
+    translating: "Translating the design request into English", translationDownloading: "Downloading the local translation language pack", translationUnsupported: "This browser cannot translate the selected interface language into English",
+    downloading: "Downloading and preparing the model", generating: "Gemini Nano is designing the SVG", validating: "Parsing and safely validating the vector",
+    unsupported: "Built-in Gemini Nano is not supported in this browser", unsupportedHint: "Use a Prompt API-capable desktop Chrome or Edge browser on a supported device.",
+    localNote: "The first model download needs a network connection. Later runs use the browser-local model.", generate: "Generate vector",
+    downloadGenerate: "Download model & generate", cancel: "Cancel", close: "Close", failed: "No usable SVG was generated. Adjust the description and try again.",
   },
   en: {
     cardTitle: "AI design", cardHint: "Gemini Nano · On-device", cardMeta: "Describe it, get editable SVG",
@@ -758,7 +741,7 @@ function LibraryTypeTabs({ t, activeType, onSelect, soundLabel }) {
 }
 
 export const AI_MUSIC_COPY = {
-  zh: { title: "AI 音乐", hint: "本地音乐生成", description: "音乐描述", descriptionPlaceholder: "例如：雨夜咖啡店里安静忧郁的爵士钢琴", style: "风格", mood: "氛围", instrument: "主乐器", duration: "时长", bpm: "速度", generate: "生成音乐", cancel: "取消", first: "模型仅首次下载。", modelSetup: "模型准备", modelReady: "模型已就绪", musicGeneration: "音乐生成", waitingToGenerate: "等待生成", checking: "检查缓存", download: "并行下载", repairing: "并行下载", cache: "加载缓存", initializing: "初始化模型", translating: "翻译描述", conditioning: "理解描述", generating: "正在生成", decoding: "合成音频", complete: "已添加到 My assets", english: "高级：模型提示词" },
+  zh: { title: "AI music", hint: "Local music", description: "Describe your music", descriptionPlaceholder: "e.g. melancholic jazz piano in a rainy café", style: "Style", mood: "Mood", instrument: "Lead", duration: "Length", bpm: "Tempo", generate: "Generate music", cancel: "Cancel", first: "The model downloads once.", modelSetup: "Model setup", modelReady: "Model ready", musicGeneration: "Music generation", waitingToGenerate: "Waiting", checking: "Checking cache", download: "Parallel download", repairing: "Parallel download", cache: "Loading cache", initializing: "Initializing model", translating: "Translating", conditioning: "Reading prompt", generating: "Generating", decoding: "Decoding audio", complete: "Added to My assets", english: "Advanced: model prompt" },
   en: { title: "AI music", hint: "Local music", description: "Describe your music", descriptionPlaceholder: "e.g. melancholic jazz piano in a rainy café", style: "Style", mood: "Mood", instrument: "Lead", duration: "Length", bpm: "Tempo", generate: "Generate music", cancel: "Cancel", first: "The model downloads once.", modelSetup: "Model setup", modelReady: "Model ready", musicGeneration: "Music generation", waitingToGenerate: "Waiting", checking: "Checking cache", download: "Parallel download", repairing: "Parallel download", cache: "Loading cache", initializing: "Initializing model", translating: "Translating", conditioning: "Reading prompt", generating: "Generating", decoding: "Decoding audio", complete: "Added to My assets", english: "Advanced: model prompt" },
   ja: { title: "AI音楽", hint: "ローカル音楽生成", description: "作りたい音楽を説明", descriptionPlaceholder: "例：雨のカフェで流れる切ないジャズピアノ", style: "スタイル", mood: "雰囲気", instrument: "主な楽器", duration: "長さ", bpm: "テンポ", generate: "音楽を生成", cancel: "キャンセル", first: "モデルは初回のみダウンロードされます。", modelSetup: "モデル準備", modelReady: "モデル準備完了", musicGeneration: "音楽生成", waitingToGenerate: "待機中", checking: "キャッシュを確認中", download: "並列ダウンロード", repairing: "並列ダウンロード", cache: "キャッシュを読み込み中", initializing: "モデルを初期化中", translating: "説明を翻訳中", conditioning: "説明を解析中", generating: "生成中", decoding: "音声を合成中", complete: "マイ素材に追加しました", english: "詳細：モデル用プロンプト" },
   ko: { title: "AI 음악", hint: "로컬 음악 생성", description: "원하는 음악 설명", descriptionPlaceholder: "예: 비 오는 카페의 아련한 재즈 피아노", style: "스타일", mood: "분위기", instrument: "주요 악기", duration: "길이", bpm: "템포", generate: "음악 생성", cancel: "취소", first: "모델은 처음 한 번만 다운로드됩니다.", modelSetup: "모델 준비", modelReady: "모델 준비 완료", musicGeneration: "음악 생성", waitingToGenerate: "대기 중", checking: "캐시 확인 중", download: "병렬 다운로드", repairing: "병렬 다운로드", cache: "캐시 불러오는 중", initializing: "모델 초기화 중", translating: "설명 번역 중", conditioning: "설명 분석 중", generating: "생성 중", decoding: "오디오 합성 중", complete: "내 에셋에 추가됨", english: "고급: 모델 프롬프트" },
@@ -786,7 +769,7 @@ function AiMusicLibraryCard({ language, onClick }) {
   );
 }
 const AI_OPTION_LABELS = {
-  zh: { cinematic: "电影感", lofi: "Lo-fi", ambient: "氛围", electronic: "电子", orchestral: "管弦", uplifting: "振奋", calm: "平静", dreamy: "梦幻", dramatic: "戏剧性", dark: "暗黑", piano: "钢琴", guitar: "木吉他", synth: "合成器", strings: "弦乐", drums: "鼓组" },
+  zh: { cinematic: "Cinematic", lofi: "Lo-fi", ambient: "Ambient", electronic: "Electronic", orchestral: "Orchestral", uplifting: "Uplifting", calm: "Calm", dreamy: "Dreamy", dramatic: "Dramatic", dark: "Dark", piano: "Piano", guitar: "Guitar", synth: "Synthesizer", strings: "Strings", drums: "Drums" },
   ja: { cinematic: "シネマティック", lofi: "Lo-fi", ambient: "アンビエント", electronic: "エレクトロニック", orchestral: "オーケストラ", uplifting: "高揚感", calm: "穏やか", dreamy: "夢幻的", dramatic: "ドラマチック", dark: "ダーク", piano: "ピアノ", guitar: "ギター", synth: "シンセ", strings: "弦楽器", drums: "ドラム" },
   ko: { cinematic: "시네마틱", lofi: "Lo-fi", ambient: "앰비언트", electronic: "일렉트로닉", orchestral: "오케스트라", uplifting: "활기찬", calm: "차분한", dreamy: "몽환적인", dramatic: "드라마틱", dark: "어두운", piano: "피아노", guitar: "기타", synth: "신시사이저", strings: "현악기", drums: "드럼" },
   es: { cinematic: "Cinemático", lofi: "Lo-fi", ambient: "Ambiental", electronic: "Electrónico", orchestral: "Orquestal", uplifting: "Inspirador", calm: "Tranquilo", dreamy: "Soñador", dramatic: "Dramático", dark: "Oscuro", piano: "Piano", guitar: "Guitarra", synth: "Sintetizador", strings: "Cuerdas", drums: "Batería" },
@@ -938,10 +921,10 @@ function AssetPreviewDialog({ asset, t, onClose }) {
       <section className="asset-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="asset-preview-title">
         <header>
           <div>
-            <span>{t("assetPreview", "素材预览")}</span>
+            <span>{t("assetPreview", "Asset Preview")}</span>
             <strong id="asset-preview-title">{assetDisplayName}</strong>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("closeAssetPreview", "关闭预览")}>
+          <button type="button" onClick={onClose} aria-label={t("closeAssetPreview", "Close Preview")}>
             <X size={20} />
           </button>
         </header>
@@ -975,11 +958,11 @@ function AssetPreviewDialog({ asset, t, onClose }) {
                   <i style={{ "--audio-preview-progress": `${Math.round(audioPreviewProgress * 100)}%` }}>
                     <b>{Math.round(audioPreviewProgress * 100)}%</b>
                   </i>
-                  <span>{t("audioPreviewLoading", "正在加载音乐预览…")}</span>
+                  <span>{t("audioPreviewLoading", "Loading music preview...")}</span>
                 </div>
               ) : null}
               {audioPreviewStatus === "error" ? (
-                <div className="asset-preview-audio-error" role="alert">{t("audioPreviewFailed", "音乐预览加载失败，请稍后重试")}</div>
+                <div className="asset-preview-audio-error" role="alert">{t("audioPreviewFailed", "Failed to load music preview. Please try again.")}</div>
               ) : null}
               {audioPreviewSrc ? <audio
                 className={audioPreviewStatus === "ready" ? "is-ready" : "is-waiting"}
@@ -1002,7 +985,7 @@ function AssetPreviewDialog({ asset, t, onClose }) {
             {assetMeta ? <span>{assetMeta}</span> : <span />}
             {asset.blob ? (
               <button type="button" onClick={() => downloadMediaBlob(asset.blob, asset.name || "asset")}>
-                <DownloadSimple size={14} />{t("download", "下载")}
+                <DownloadSimple size={14} />{t("download", "Download")}
               </button>
             ) : null}
           </footer>
@@ -1062,7 +1045,7 @@ function AssetRow({ asset, selected, t, downloadState }) {
             : asset.type === "video"
               ? t("assetVideo")
               : asset.kind === "vector"
-                ? t("libraryVector", "矢量")
+                ? t("libraryVector", "Vector")
                 : t("assetImage")}
         </span>
         {downloadState?.status === "loading" ? (
@@ -1072,7 +1055,7 @@ function AssetRow({ asset, selected, t, downloadState }) {
         ) : downloadState?.status === "ready" ? <i className="asset-ready-dot" title={t("libraryAssetReady")} /> : null}
         <span className="asset-preview-hover" aria-hidden="true">
           <PlayCircle size={30} weight="fill" />
-          <em>{t("assetPreview", "素材预览")}</em>
+          <em>{t("assetPreview", "Asset Preview")}</em>
         </span>
       </div>
       <div>
@@ -2284,7 +2267,7 @@ function StickerPanel({
   const [activeCategory, setActiveCategory] = useState("all");
   const [visibleCount, setVisibleCount] = useState(STICKER_PAGE_SIZE);
   const loadMoreRef = useRef(null);
-  const emptySticker = options.find((option) => option.id === "none") ?? { id: "none", name: "无贴纸" };
+  const emptySticker = options.find((option) => option.id === "none") ?? { id: "none", name: "No Sticker" };
   const stickerOptions = useMemo(() => options.filter((option) => option.id !== "none"), [options]);
   const filteredStickers = useMemo(
     () =>
@@ -2355,7 +2338,7 @@ function StickerPanel({
           const dragAsset = {
             ...option,
             type: "sticker",
-            meta: "贴纸",
+            meta: "Sticker",
           };
 
           return (
@@ -2543,7 +2526,7 @@ export function VoiceSynthesisPanel({
             <span className="avatar"><Waveform size={17} weight="bold" /></span>
             <span>
               <strong>{profile.name}</strong>
-              <em>{t("cloneVoiceMultilingual", "多语言 · 克隆音色")}</em>
+              <em>{t("cloneVoiceMultilingual", "Multilingual · Cloned Voice")}</em>
             </span>
           </button>
         ))}
@@ -2568,7 +2551,7 @@ export function VoiceSynthesisPanel({
       </div>
 
       <div className="model-row">
-        <span title={selectedVoice.detail}>{selectedVoiceProfile ? `${t("cloneBaseVoice", "基础语言声音")} · ${selectedVoice.name}` : selectedVoice.detail}</span>
+        <span title={selectedVoice.detail}>{selectedVoiceProfile ? `${t("cloneBaseVoice", "Base Language Voice")} · ${selectedVoice.name}` : selectedVoice.detail}</span>
         <button
           type="button"
           onClick={() => selectedVoiceProfile
@@ -2583,10 +2566,10 @@ export function VoiceSynthesisPanel({
 
       <div className="voice-sample-preview">
         <div>
-          <strong>{t("voiceSampleTitle", "音色样音")}</strong>
+          <strong>{t("voiceSampleTitle", "Voice Sample")}</strong>
           <span>{selectedVoiceProfile
-            ? `${selectedVoiceProfile.name} · ${t("cloneLanguageFlow", "先合成所选语言，再转换为此音色")}`
-            : `${selectedVoice.name} · ${t("voiceSampleHint", "切换音色后试听对应的预生成样音")}`}</span>
+            ? `${selectedVoiceProfile.name} · ${t("cloneLanguageFlow", "Synthesizes selected language, then converts to this voice profile")}`
+            : `${selectedVoice.name} · ${t("voiceSampleHint", "Listen to sample preview for selected voice")}`}</span>
         </div>
         <audio
           ref={voiceSampleRef}
@@ -2612,7 +2595,7 @@ export function VoiceSynthesisPanel({
           <span>{Math.round(volume * 100)}%</span>
         </div>
         <input id="volume" type="range" min="0" max="4" step="0.05" value={volume} onChange={(event) => setVolume(Number(event.target.value))} />
-        {volume > 1 ? <small className="voice-gain-hint">{t("voiceGainLimiterHint", "高增益已启用限幅保护")}</small> : null}
+        {volume > 1 ? <small className="voice-gain-hint">{t("voiceGainLimiterHint", "High gain limiter protection enabled")}</small> : null}
       </div>
 
       {status === "generating" ? (
@@ -2640,7 +2623,7 @@ export function VoiceSynthesisPanel({
       </div>
       {audioBlob && audioUrl ? (
         <div className="generated-voice-result" aria-live="polite">
-          <div><Check size={18} weight="bold" /><span><strong>{t("voiceAddedToTimeline", "已加入配音时间线")}</strong><em>{t("voicePreviewHint", "试听本次已生成的时间线配音")}</em></span></div>
+          <div><Check size={18} weight="bold" /><span><strong>{t("voiceAddedToTimeline", "Added to voiceover timeline")}</strong><em>{t("voicePreviewHint", "Preview generated voiceover")}</em></span></div>
           <audio controls preload="metadata" src={audioUrl} />
         </div>
       ) : null}
@@ -2693,10 +2676,10 @@ export function MyVoicesPanel({
   }, [recordedVoices]);
   const runCloneTest = async () => {
     if (!draft?.blob || !authorized || cloneState === "running") return;
-    setCloneState("running"); setCloneProgress(3); setClonePhase(t("cloneChecking", "检查参考声音"));
+    setCloneState("running"); setCloneProgress(3); setClonePhase(t("cloneChecking", "Checking reference audio"));
     try {
       const nextEmbedding = await extractVoiceEmbedding(draft.blob, (event) => {
-        setCloneProgress(Math.min(48, Math.round((event.progress || 0) * 0.55))); setClonePhase(event.phase || t("cloneEncoding", "提取音色"));
+        setCloneProgress(Math.min(48, Math.round((event.progress || 0) * 0.55))); setClonePhase(event.phase || t("cloneEncoding", "Extracting voice profile"));
       });
       const { blob: baseBlob } = await synthesizeBaseVoice({
         voice: selectedVoice, text: getVoiceCloneTestSentence(selectedVoice), speed: 1, notify, t,
@@ -2704,22 +2687,22 @@ export function MyVoicesPanel({
         onProgress: (progress) => setCloneProgress(48 + Math.round(Math.min(100, progress) * 0.18)),
       });
       const converted = await convertVoiceBlob(baseBlob, nextEmbedding, {
-        onProgress: (event) => { setCloneProgress(66 + Math.round((event.progress || 0) * 0.34)); setClonePhase(event.phase || t("cloneConverting", "生成克隆试听")); },
+        onProgress: (event) => { setCloneProgress(66 + Math.round((event.progress || 0) * 0.34)); setClonePhase(event.phase || t("cloneConverting", "Generating voice preview")); },
       });
       setEmbedding(nextEmbedding); setTestBlob(converted); setCloneProgress(100); setCloneState("ready");
     } catch (error) {
-      console.error(error); setCloneState("error"); setClonePhase(error instanceof Error ? error.message : t("cloneFailed", "克隆试听失败"));
+      console.error(error); setCloneState("error"); setClonePhase(error instanceof Error ? error.message : t("cloneFailed", "Voice clone failed"));
     }
   };
   const saveClone = async () => {
     if (!draft || !embedding || !testBlob || cloneState !== "ready") return;
     const now = new Date().toISOString();
-    const profile = { id: crypto.randomUUID(), name: draft.name.replace(/\.[^.]+$/, "") || t("myCloneVoice", "我的克隆声音"),
+    const profile = { id: crypto.randomUUID(), name: draft.name.replace(/\.[^.]+$/, "") || t("myCloneVoice", "My Cloned Voice"),
       sourceKind: draft.sourceKind, referenceBlob: draft.blob, testBlob, embedding: Float32Array.from(embedding),
       embeddingVersion: OPENVOICE_EMBEDDING_VERSION,
       favorite: false, authorized: true, createdAt: now, updatedAt: now };
     await addVoiceProfile(profile); setSelectedVoiceProfileId(profile.id); setDraft(null); setTestBlob(null); setEmbedding(null); setAuthorized(false); setCloneState("idle");
-    notify(t("cloneSaved", "克隆声音已保存到“克隆声音”"));
+    notify(t("cloneSaved", "Voice clone saved to Cloned Voices"));
   };
 
   return (
@@ -2730,8 +2713,8 @@ export function MyVoicesPanel({
       <div className="voice-source-grid">
       <div className={`record-card ${isRecording ? "is-recording" : ""}`}>
         <div>
-          <strong>{t("recordReferenceVoice", "录制参考声音")}</strong>
-          <span>{isRecording ? `${t("recording")} · ${formatClock(recordingElapsed)}` : t("recordReferenceHint", "录制自己的声音，完成后直接进入克隆试听。")}</span>
+          <strong>{t("recordReferenceVoice", "Record Reference Voice")}</strong>
+          <span>{isRecording ? `${t("recording")} · ${formatClock(recordingElapsed)}` : t("recordReferenceHint", "Record your voice, then preview clone directly.")}</span>
         </div>
         <button
           type="button"
@@ -2744,21 +2727,21 @@ export function MyVoicesPanel({
       </div>
 
       <button className="record-card upload-voice-card" type="button" onClick={() => fileInputRef.current?.click()}>
-        <div><strong>{t("uploadVoice", "上传声音")}</strong><span>{t("uploadVoiceHint", "选择清晰的单人语音作为参考")}</span></div>
+        <div><strong>{t("uploadVoice", "Upload Voice")}</strong><span>{t("uploadVoiceHint", "Select clear single-speaker audio as reference")}</span></div>
         <CloudArrowUp size={22} weight="bold" />
       </button>
       </div>
 
       {draft ? (
         <section className="clone-enrollment-card">
-          <header><div><strong>{t("cloneTestTitle", "克隆试听")}</strong><span>{draft.name}</span></div><button type="button" onClick={() => setDraft(null)}><X size={15} /></button></header>
-          <div className="clone-test-language"><span>{t("cloneTestLanguage", "测试语言")}</span><strong>{selectedVoice.language}</strong><em>{getVoiceCloneTestSentence(selectedVoice)}</em></div>
+          <header><div><strong>{t("cloneTestTitle", "Voice Clone Preview")}</strong><span>{draft.name}</span></div><button type="button" onClick={() => setDraft(null)}><X size={15} /></button></header>
+          <div className="clone-test-language"><span>{t("cloneTestLanguage", "Test Language")}</span><strong>{selectedVoice.language}</strong><em>{getVoiceCloneTestSentence(selectedVoice)}</em></div>
           <audio controls preload="metadata" src={referenceUrl} />
-          <label className="clone-consent"><input type="checkbox" checked={authorized} onChange={(event) => setAuthorized(event.target.checked)} /><span>{t("cloneConsent", "我确认已获得该声音的授权，并仅用于合法、非误导用途。")}</span></label>
-          {cloneState === "running" ? <div className="voice-generation-loading clone-generation-loading" role="status" aria-live="polite"><i className="voice-generation-spinner" aria-hidden="true" /><div><strong>{clonePhase}</strong><span>{t("cloneLocalHint", "声音只在当前浏览器中处理")}</span></div><em>{cloneProgress}%</em><div className="progress-track"><span style={{ width: `${cloneProgress}%` }} /></div></div> : null}
+          <label className="clone-consent"><input type="checkbox" checked={authorized} onChange={(event) => setAuthorized(event.target.checked)} /><span>{t("cloneConsent", "I confirm I have permission to clone this voice for lawful use.")}</span></label>
+          {cloneState === "running" ? <div className="voice-generation-loading clone-generation-loading" role="status" aria-live="polite"><i className="voice-generation-spinner" aria-hidden="true" /><div><strong>{clonePhase}</strong><span>{t("cloneLocalHint", "Audio processed locally in browser")}</span></div><em>{cloneProgress}%</em><div className="progress-track"><span style={{ width: `${cloneProgress}%` }} /></div></div> : null}
           {cloneState === "error" ? <div className="clone-inline-error">{clonePhase}</div> : null}
-          {testUrl ? <div className="clone-ab-preview"><span>{t("cloneListenBeforeSave", "请先试听克隆结果，确认满意后再保存")}</span><audio controls preload="metadata" src={testUrl} /></div> : null}
-          <div className="clone-actions"><button type="button" disabled={!authorized || cloneState === "running"} onClick={runCloneTest}>{testBlob ? t("cloneRetest", "重新测试") : t("cloneTest", "测试克隆")}</button><button type="button" className="is-primary" disabled={!testBlob || cloneState !== "ready"} onClick={saveClone}>{t("saveToMyVoices", "保存到我的声音")}</button></div>
+          {testUrl ? <div className="clone-ab-preview"><span>{t("cloneListenBeforeSave", "Listen to the preview before saving")}</span><audio controls preload="metadata" src={testUrl} /></div> : null}
+          <div className="clone-actions"><button type="button" disabled={!authorized || cloneState === "running"} onClick={runCloneTest}>{testBlob ? t("cloneRetest", "Retest") : t("cloneTest", "Test Clone")}</button><button type="button" className="is-primary" disabled={!testBlob || cloneState !== "ready"} onClick={saveClone}>{t("saveToMyVoices", "Save to My Voices")}</button></div>
         </section>
       ) : null}
 
@@ -2774,7 +2757,7 @@ export function MyVoicesPanel({
                 </span>
               </div>
               <button type="button" onClick={() => chooseReference(recording.blob, recording.name, "recording")}>
-                {t("useAsReference", "作为参考")}
+                {t("useAsReference", "Use as Reference")}
               </button>
               <button
                 type="button"
@@ -2787,19 +2770,19 @@ export function MyVoicesPanel({
         </>
       ) : null}
 
-      <div className="panel-subtitle">{t("savedCloneVoices", "已保存的克隆声音")}</div>
+      <div className="panel-subtitle">{t("savedCloneVoices", "Saved Cloned Voices")}</div>
       {voiceProfiles.length ? voiceProfiles.map((profile) => (
           <div className={`history-item clone-profile-item ${selectedVoiceProfileId === profile.id ? "is-selected" : ""}`} key={profile.id}>
             <div className="clone-profile-copy">
-              <strong>{profile.name}</strong><span>{profile.sourceKind === "recording" ? t("recordVoice", "录制声音") : t("uploadVoice", "上传声音")}</span>
+              <strong>{profile.name}</strong><span>{profile.sourceKind === "recording" ? t("recordVoice", "Recorded Voice") : t("uploadVoice", "Uploaded Voice")}</span>
             </div>
             <div className="clone-profile-actions">
-              <button type="button" onClick={() => { setSelectedVoiceProfileId(profile.id); notify(t("cloneSelected", "已选择克隆音色")); }}>{t("use")}</button>
+              <button type="button" onClick={() => { setSelectedVoiceProfileId(profile.id); notify(t("cloneSelected", "Cloned voice selected")); }}>{t("use")}</button>
               <button type="button" onClick={() => toggleVoiceProfileFavorite(profile.id)}>{profile.favorite ? t("saved") : t("favorite")}</button>
               <button type="button" onClick={() => removeVoiceProfile(profile.id)}>{t("delete")}</button>
             </div>
           </div>
-        )) : <div className="empty-state">{t("noCloneVoices", "上传或录制参考声音，通过试听后会显示在这里。")}</div>}
+        )) : <div className="empty-state">{t("noCloneVoices", "Upload or record reference speech to create a clone.")}</div>}
     </div>
   );
 }
@@ -2809,10 +2792,10 @@ export function FavoriteVoicesPanel({ favoriteVoiceIds, setFavoriteVoiceIds, sel
   const builtIns = VOICES.filter((voice) => favoriteVoiceIds.includes(voice.id));
   const clones = voiceProfiles.filter((profile) => profile.favorite);
   return <div className="history-panel">
-    <div className="panel-subtitle">{t("builtInVoices", "内置声音")}</div>
-    {builtIns.map((voice) => <div className={`history-item ${selectedVoiceId === voice.id && !selectedVoiceProfileId ? "is-selected" : ""}`} key={voice.id}><div><strong>{voice.name}</strong><span>{voice.language} · {voice.detail}</span></div><button type="button" onClick={() => { setSelectedVoiceId(voice.id); setSelectedVoiceProfileId(""); notify(t("voiceSelected", "已切换声音")); }}>{t("use")}</button><button type="button" onClick={() => setFavoriteVoiceIds((ids) => ids.filter((id) => id !== voice.id))}>{t("remove")}</button></div>)}
-    <div className="panel-subtitle">{t("cloneVoices", "克隆声音")}</div>
-    {clones.map((profile) => <div className={`history-item ${selectedVoiceProfileId === profile.id ? "is-selected" : ""}`} key={profile.id}><div><strong>{profile.name}</strong><span>{t("browserLocalVoice", "保存在当前浏览器")}</span></div><button type="button" onClick={() => setSelectedVoiceProfileId(profile.id)}>{t("use")}</button><button type="button" onClick={() => toggleVoiceProfileFavorite(profile.id)}>{t("remove")}</button></div>)}
+    <div className="panel-subtitle">{t("builtInVoices", "Built-in Voices")}</div>
+    {builtIns.map((voice) => <div className={`history-item ${selectedVoiceId === voice.id && !selectedVoiceProfileId ? "is-selected" : ""}`} key={voice.id}><div><strong>{voice.name}</strong><span>{voice.language} · {voice.detail}</span></div><button type="button" onClick={() => { setSelectedVoiceId(voice.id); setSelectedVoiceProfileId(""); notify(t("voiceSelected", "Voice selected")); }}>{t("use")}</button><button type="button" onClick={() => setFavoriteVoiceIds((ids) => ids.filter((id) => id !== voice.id))}>{t("remove")}</button></div>)}
+    <div className="panel-subtitle">{t("cloneVoices", "Cloned Voices")}</div>
+    {clones.map((profile) => <div className={`history-item ${selectedVoiceProfileId === profile.id ? "is-selected" : ""}`} key={profile.id}><div><strong>{profile.name}</strong><span>{t("browserLocalVoice", "Saved in browser")}</span></div><button type="button" onClick={() => setSelectedVoiceProfileId(profile.id)}>{t("use")}</button><button type="button" onClick={() => toggleVoiceProfileFavorite(profile.id)}>{t("remove")}</button></div>)}
     {!builtIns.length && !clones.length ? <div className="empty-state">{t("noFavoriteVoices")}</div> : null}
   </div>;
 }

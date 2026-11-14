@@ -23,7 +23,7 @@ export function createAssetLibraryActions(deps) {
       return;
     }
     deps.replaceVisualTimeline(asset, deps.getVisualDurationForAsset(asset));
-    deps.notify(`${asset.type === "video" ? "视频" : "图片"}素材已应用到预览和时间线`);
+    deps.notify(`${asset.type === "video" ? "Video" : "Image"} asset applied to preview and timeline`);
   }
 
   function deleteUserAsset(asset) {
@@ -35,16 +35,16 @@ export function createAssetLibraryActions(deps) {
       URL.revokeObjectURL(asset.src); deps.imageUrlRefs.current.delete(asset.src);
     }
     if (asset.type === "audio" && ((asset.blob && asset.blob === deps.musicBlob) || isProjectMediaBlob(asset, deps.musicBlob))) {
-      deps.clearMusicTrack("背景音乐素材已删除，时间线已同步清空");
+      deps.clearMusicTrack("Background music deleted; timeline cleared");
       return;
     }
     const isActiveVisual = asset.type !== "audio" && (asset.src === deps.imageSrc ||
       deps.visualSegments.some((segment) => segment.assetId === asset.id || segment.src === asset.src));
-    if (!isActiveVisual) return void deps.notify("素材已删除");
+    if (!isActiveVisual) return void deps.notify("Asset deleted");
     const segments = deps.visualSegments.filter((segment) => segment.assetId !== asset.id && segment.src !== asset.src);
     if (asset.type === "video" && deps.sourceAudioBlob && asset.src === deps.imageSrc) deps.clearSourceAudioTrack(null);
-    if (segments.length) deps.commitVisualSegments(segments, "素材已删除，对应视觉片段已移除");
-    else deps.clearImageTrack("视觉素材已删除，时间线已同步清空");
+    if (segments.length) deps.commitVisualSegments(segments, "Asset deleted, corresponding visual clip removed");
+    else deps.clearImageTrack("Visual asset deleted, timeline cleared");
   }
   return { deleteUserAsset, selectAsset };
 }

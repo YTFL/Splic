@@ -1,6 +1,6 @@
 const keys = ["Title","Description","Enable","Ready","Position","Drag","Horizontal","Vertical","Strength","Color","Warm","Neutral","Cool","Range","Softness","Advanced","Compare","Original","Reset","AnalyzeHint","QualityHint"];
 const rows = {
- zh: ["视频打光","根据场景深度调整局部光照。","启用打光","深度已就绪","灯位","拖动调整灯位","水平","垂直","强度","光色","暖色","中性","冷色","范围","柔和度","高级设置","按住查看原图","正在查看原图","重置","先分析场景深度，再调整打光。","更改分析质量后，需要重新分析。"],
+ zh: ["Video relighting","Adjust local lighting using scene depth.","Enable lighting","Depth ready","Light position","Drag to position the light","Horizontal","Vertical","Intensity","Light color","Warm","Neutral","Cool","Range","Softness","Advanced","Hold to view original","Viewing original","Reset","Analyze scene depth before adjusting lighting.","Changing analysis quality requires a new analysis."],
  en: ["Video relighting","Adjust local lighting using scene depth.","Enable lighting","Depth ready","Light position","Drag to position the light","Horizontal","Vertical","Intensity","Light color","Warm","Neutral","Cool","Range","Softness","Advanced","Hold to view original","Viewing original","Reset","Analyze scene depth before adjusting lighting.","Changing analysis quality requires a new analysis."],
  ja: ["動画ライティング","シーンの深度で局所照明を調整。","照明を有効化","深度準備完了","ライト位置","ドラッグでライトを移動","水平","垂直","強度","光の色","暖色","中性","寒色","範囲","柔らかさ","詳細設定","長押しで元画像","元画像を表示中","リセット","照明の調整前にシーンの深度を解析してください。","解析品質を変えると再解析が必要です。"],
  ko: ["영상 조명","장면 깊이로 부분 조명을 조절합니다.","조명 사용","깊이 준비 완료","조명 위치","드래그하여 조명 이동","수평","수직","강도","조명 색","따뜻함","중립","차가움","범위","부드러움","고급 설정","누르고 원본 보기","원본 보는 중","초기화","조명을 조절하기 전에 장면 깊이를 분석하세요.","분석 품질을 바꾸면 다시 분석해야 합니다."],
@@ -16,5 +16,5 @@ const rows = {
 };
 export const RELIGHTING_COPY = Object.fromEntries(Object.entries(rows).map(([language, row]) => [language, Object.fromEntries(keys.map((key, index) => [`relight${key}`, row[index]]))]));
 
-const distances = { zh:"灯光距离", en:"Light distance", ja:"ライトの距離", ko:"조명 거리", es:"Distancia de luz", fr:"Distance de lumière", de:"Lichtabstand", pt:"Distância da luz", th:"ระยะห่างแสง", vi:"Khoảng cách đèn", ru:"Расстояние до света", it:"Distanza luce", id:"Jarak cahaya" };
+const distances = { zh:"Light distance", en:"Light distance", ja:"ライトの距離", ko:"조명 거리", es:"Distancia de luz", fr:"Distance de lumière", de:"Lichtabstand", pt:"Distância da luz", th:"ระยะห่างแสง", vi:"Khoảng cách đèn", ru:"Расстояние до света", it:"Distanza luce", id:"Jarak cahaya" };
 Object.entries(distances).forEach(([language, text]) => { RELIGHTING_COPY[language].relightDistance = text; });

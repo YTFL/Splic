@@ -110,7 +110,7 @@ export function createVisualTimelineActions(d) {
 
   function appendVisualAssetToTimeline(asset, options = {}) {
     if (d.trackLocks.image) {
-      d.notify("图片轨已锁定，无法添加素材");
+      d.notify("Image track is locked, cannot add asset");
       return null;
     }
     const sourceSegments = d.visualSegments.length
@@ -121,7 +121,7 @@ export function createVisualTimelineActions(d) {
     const totalDuration = getVisualSegmentsTotal(sourceSegments);
     const availableDuration = MAX_TIMELINE_DURATION_SECONDS - totalDuration;
     if (availableDuration < MIN_VISUAL_SEGMENT_SECONDS) {
-      d.notify("视觉轨道已经达到 30 分钟上限");
+      d.notify("Visual track has reached the 30-minute limit");
       return null;
     }
     const segmentDuration = Math.min(getVisualDurationForAsset(asset), availableDuration);
@@ -137,7 +137,7 @@ export function createVisualTimelineActions(d) {
     setCurrentVisualAsset(asset);
     commitVisualSegments(
       nextSegments,
-      options.message ?? `${asset.type === "video" ? "视频" : "图片"}素材已${insertIndex < sourceSegments.length ? "插入" : "追加"}到图片轨`,
+      options.message ?? `${asset.type === "video" ? "Video" : "Image"} asset ${insertIndex < sourceSegments.length ? "inserted into" : "appended to"} timeline`,
       insertIndex,
     );
     d.rippleTimelineAfter?.(insertionTime, nextSegment.duration);
@@ -194,7 +194,7 @@ export function createVisualTimelineActions(d) {
     }
   }
 
-  function clearImageTrack(message = "图片素材已从时间线移除", deletedIds = []) {
+  function clearImageTrack(message = "Visual asset removed from timeline", deletedIds = []) {
     if (deletedIds.length) reconcileOwnedContent([], deletedIds);
     const remainingDuration = Math.max(
       d.audioBlob ? d.audioDuration : 0,

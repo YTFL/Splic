@@ -22,7 +22,7 @@ export function useAvatarGeneration(d) {
       const joyVasaModelBaseUrls = getJoyVasaProjectModelBaseUrls(d.uiLanguage);
       const livePortraitModelBaseUrls = getLivePortraitProjectModelBaseUrls(d.uiLanguage);
       const portrait = d.previewVisualSegment?.blob instanceof Blob ? d.previewVisualSegment.blob : await fetch(d.previewVisualSrc).then((response) => {
-        if (!response.ok) throw new Error(`读取肖像失败（HTTP ${response.status}）`); return response.blob();
+        if (!response.ok) throw new Error(`Failed to read portrait (HTTP ${response.status})`); return response.blob();
       });
       const env = (typeof import.meta !== "undefined" && import.meta.env) || (typeof process !== "undefined" && process.env) || {};
       const testDuration = env.DEV ? Number(env.VITE_AVATAR_TEST_DURATION || 0) : 0;

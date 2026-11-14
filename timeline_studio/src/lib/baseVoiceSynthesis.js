@@ -4,7 +4,7 @@ import { predictMmsVoice } from "./mmsVoiceRuntime.js";
 import { clearPiperCacheIfStorageTight, isStorageQuotaError, prepareTextForVoice } from "./ttsText.js";
 
 const TEST_SENTENCES = Object.freeze({
-  中文: "你好，这是一段中文克隆音色测试。",
+  Chinese: "Hello, this is a cloned voice test.",
   English: "Hello, this is an English cloned voice test.",
   Deutsch: "Hallo, dies ist ein deutscher Test der geklonten Stimme.",
   Español: "Hola, esta es una prueba en español de la voz clonada.",
@@ -36,7 +36,7 @@ async function runBaseVoiceSynthesis({ voice, text, speed = 1, onProgress, onSta
     const builtInPinyinVoice = isBuiltInPinyinVoice(voice.id);
     const tts = builtInPinyinVoice ? null : await import("@diffusionstudio/vits-web");
     if (tts && await clearPiperCacheIfStorageTight(tts, voice.id)) notify?.(t?.("ttsNoticePiperCacheCleared") || "ttsNoticePiperCacheCleared");
-    onStatus?.(voice.language === "中文" ? "ttsStatusLoadingChineseModel" : "ttsStatusPreparingModel");
+    onStatus?.(voice.language === "Chinese" ? "ttsStatusLoadingChineseModel" : "ttsStatusPreparingModel");
     const progress = (event) => {
       if (event?.phase === "initializing") onStatus?.("ttsStatusInitializingModel");
       if (event?.phase === "generating" || event?.backend) onStatus?.(event.backend === "webgpu" ? "ttsStatusGeneratingWebGpu" : "ttsStatusGeneratingWasm");

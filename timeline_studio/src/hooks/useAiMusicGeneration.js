@@ -51,9 +51,7 @@ export function useAiMusicGeneration({ activeLanguage, imageUrlRefs, setActiveTo
           progress: 0,
           phase: "",
           error: cacheWriteFailed
-            ? (String(activeLanguage).toLowerCase().startsWith("zh")
-              ? `模型下载或本地缓存失败（${String(data.message).split(": ").at(-1)}），请重试。`
-              : `Model download or local caching failed (${String(data.message).split(": ").at(-1)}). Try again.`)
+            ? `Model download or local caching failed (${String(data.message).split(": ").at(-1)}). Try again.`
             : data.message,
         });
         return;

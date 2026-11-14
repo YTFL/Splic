@@ -35,7 +35,7 @@ export function useVoiceProfiles({ favoriteVoiceIds, setFavoriteVoiceIds, notify
   }, []);
   const removeVoiceProfile = useCallback(async (profileId) => {
     await deleteVoiceProfile(profileId); setVoiceProfiles((items) => items.filter((item) => item.id !== profileId));
-    setSelectedVoiceProfileId((current) => current === profileId ? "" : current); notify(t("cloneVoiceDeleted", "声音档案已删除"));
+    setSelectedVoiceProfileId((current) => current === profileId ? "" : current); notify(t("cloneVoiceDeleted", "Voice profile deleted"));
   }, [notify, t]);
   const toggleVoiceProfileFavorite = useCallback(async (profileId) => {
     const current = voiceProfiles.find((item) => item.id === profileId); if (!current) return;

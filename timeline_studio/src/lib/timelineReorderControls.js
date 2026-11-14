@@ -39,12 +39,12 @@ export function createTimelineReorderControls(d) {
       const source = d.visualSegments.length ? d.visualSegments : d.renderedVisualSegments;
       if (source.length < 2) return;
       const next = reorderTimelineItems(source, fromIndex, toIndex);
-      d.commitVisualSegments(next, "已调整视觉片段顺序", toIndex); return;
+      d.commitVisualSegments(next, "Reordered visual clips", toIndex); return;
     }
   };
   const startTimelineClipDrag = (event, track, segmentId, index) => {
     if (event.button !== 0 || event.target.closest(".image-resize-handle, .caption-resize-handle")) return;
-    if (d.trackLocks[track]) return void d.notify(track === "image" ? "图片轨已锁定，无法拖动片段" : "字幕轨已锁定，无法拖动片段");
+    if (d.trackLocks[track]) return void d.notify(track === "image" ? "Image track is locked, cannot drag clips" : "Subtitle track is locked, cannot drag clips");
     if (track === "image") { d.setSelectedTrack("image"); d.setSelectedVisualSegmentId(segmentId); }
     else { d.setSelectedTrack("caption"); d.setSelectedSegmentId(segmentId); }
     const materializedCaptions = track === "caption" ? materializeCaptionTimings(d.captionSegments, d.captionTargetDuration) : [];
@@ -126,7 +126,7 @@ export function createTimelineReorderControls(d) {
             ], d.visualSegments);
             if (linkedAudio) d.setAudioSegments(items => items.map(item => item.id === linkedAudio.id ? group.at(-1) : item));
             const replacements = new Map(group.slice(0, movedCaptions.length).map(item => [item.id, item]));
-            d.commitCaptionSegments(materializedCaptions.map(item => replacements.get(item.id) || item), "已移动字幕片段", index);
+            d.commitCaptionSegments(materializedCaptions.map(item => replacements.get(item.id) || item), "Moved subtitle clip", index);
           },
         });
         d.timelineClipDragRef.current = null;
@@ -279,16 +279,16 @@ export function createTimelineReorderControls(d) {
       d.suppressTimelineClipClickRef.current = segmentId;
       setTimeout(() => { if (d.suppressTimelineClipClickRef.current === segmentId) d.suppressTimelineClipClickRef.current = ""; }, 120);
       if (track === "image" && state.mode === "overlay" && draggedVisual) {
-        if (!state.overlayDropAllowed) return void d.notify("目标画中画轨的这个时间段已有片段");
+        if (!state.overlayDropAllowed) return void d.notify("Target picture-in-picture track already has a clip at this time");
         const remaining = d.visualSegments.filter((segment) => segment.id !== segmentId);
-        if (!remaining.length) return void d.notify("至少保留一个主画面后才能转为画中画");
+        if (!remaining.length) return void d.notify("Keep at least one main visual clip before moving to picture-in-picture");
         const targetLane = Math.max(0, Number(state.overlayLane) || 0);
         const overlay = createVisualOverlaySegment(
           { ...draggedVisual, id: draggedVisual.assetId || draggedVisual.id },
           state.overlayStart,
           { duration: draggedVisual.duration, layer: targetLane + 1, lane: targetLane },
         );
-        d.commitVisualSegments(remaining, "画面片段已移至画中画轨道");
+        d.commitVisualSegments(remaining, "Visual clip moved to picture-in-picture track");
         d.setVisualOverlaySegments((items) => compactVisualOverlayLanes([...items, overlay]));
         d.setSelectedVisualSegmentId("");
         d.setSelectedVisualOverlayId(overlay.id);
@@ -304,7 +304,7 @@ export function createTimelineReorderControls(d) {
   const startCaptionResize = (event, segmentId, index, edge) => {
     if (event.button !== 0) return;
     event.preventDefault(); event.stopPropagation();
-    if (d.trackLocks.caption) return void d.notify("字幕轨已锁定，无法调整片段时长");
+    if (d.trackLocks.caption) return void d.notify("Subtitle track is locked, cannot adjust clip duration");
     const materialized = materializeCaptionTimings(d.captionSegments, d.captionTargetDuration);
     const caption = materialized[index];
     if (!caption || caption.id !== segmentId) return;
@@ -373,7 +373,7 @@ export function createTimelineReorderControls(d) {
         settle: () => {
           d.setTimelineClipDrag(null);
           d.setSnapGuide?.(null);
-          d.commitCaptionSegments(state.previewSegments, "已调整字幕片段时长", index);
+          d.commitCaptionSegments(state.previewSegments, "Adjusted subtitle clip duration", index);
         },
       });
       d.timelineClipDragRef.current = null;

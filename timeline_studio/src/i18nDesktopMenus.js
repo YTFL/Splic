@@ -26,7 +26,7 @@ const keys = [
   "desktopMenuBar",
 ];
 const rows = {
-  zh: "编辑|片段|视图|帮助|导入素材|全选可编辑片段|复制片段|删除片段|在播放头处切分|修剪编辑点工具|滑移工具|滑动工具|变速…|分离音频|重新链接字幕与音频|解除字幕与音频链接|放大时间线|缩小时间线|适应整个时间线|全屏预览|使用指南|键盘快捷键|问题反馈|关于 Timeline Studio|编辑器主菜单",
+  zh: "Edit|Clip|View|Help|Import media|Select all editable clips|Duplicate clip|Delete clip|Split at playhead|Trim edit-point tool|Slip tool|Slide tool|Speed…|Separate audio|Relink captions and audio|Unlink captions and audio|Zoom in timeline|Zoom out timeline|Fit entire timeline|Fullscreen preview|User guide|Keyboard shortcuts|Report an issue|About Timeline Studio|Editor main menu",
   en: "Edit|Clip|View|Help|Import media|Select all editable clips|Duplicate clip|Delete clip|Split at playhead|Trim edit-point tool|Slip tool|Slide tool|Speed…|Separate audio|Relink captions and audio|Unlink captions and audio|Zoom in timeline|Zoom out timeline|Fit entire timeline|Fullscreen preview|User guide|Keyboard shortcuts|Report an issue|About Timeline Studio|Editor main menu",
   ja: "編集|クリップ|表示|ヘルプ|メディアを読み込む|編集可能なクリップをすべて選択|クリップを複製|クリップを削除|再生ヘッドで分割|編集点トリムツール|スリップツール|スライドツール|速度…|音声を分離|字幕と音声を再リンク|字幕と音声のリンクを解除|タイムラインを拡大|タイムラインを縮小|タイムライン全体を表示|全画面プレビュー|使い方ガイド|キーボードショートカット|問題を報告|Timeline Studio について|エディターのメインメニュー",
   ko: "편집|클립|보기|도움말|미디어 가져오기|편집 가능한 클립 모두 선택|클립 복제|클립 삭제|재생 헤드에서 분할|편집점 트리밍 도구|슬립 도구|슬라이드 도구|속도…|오디오 분리|자막과 오디오 다시 연결|자막과 오디오 연결 해제|타임라인 확대|타임라인 축소|전체 타임라인 맞추기|전체 화면 미리보기|사용 가이드|키보드 단축키|문제 신고|Timeline Studio 정보|편집기 기본 메뉴",

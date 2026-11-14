@@ -20,7 +20,7 @@ function progress(value, phaseKey, phaseParams = {}) {
 }
 
 function modelUrl(file, baseUrl) {
-  if (!baseUrl) throw new Error("JoyVASA 浏览器模型包尚未配置托管地址");
+  if (!baseUrl) throw new Error("JoyVASA browser model package host URL is not configured");
   return new URL(file, new URL(baseUrl, self.location.origin)).href;
 }
 
@@ -34,7 +34,7 @@ async function fetchModelFile(file, baseUrls) {
     const { response } = await fetchFirstAvailableModel(urls);
     return response;
   } catch (error) {
-    throw new Error(`${file} 下载失败（${error?.message || String(error)}）`, { cause: error });
+    throw new Error(`${file} download failed (${error?.message || String(error)})`, { cause: error });
   }
 }
 
@@ -80,7 +80,7 @@ async function fetchArtifact(key, baseUrl, start, span) {
 }
 
 async function createSession(key, bytes) {
-  if (!self.navigator?.gpu) throw new Error(`当前浏览器没有可用的 WebGPU，无法运行 JoyVASA ${key}`);
+  if (!self.navigator?.gpu) throw new Error(`No WebGPU available in this browser; cannot run JoyVASA ${key}`);
   return ort.InferenceSession.create(bytes, {
     executionProviders: [{ name: "webgpu", preferredLayout: "NHWC" }],
     graphOptimizationLevel: "all",

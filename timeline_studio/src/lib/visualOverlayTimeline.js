@@ -84,7 +84,7 @@ export function createVisualOverlaySegment(asset, start = 0, options = {}) {
   return {
     id: options.id || `overlay-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     assetId: asset?.id || "",
-    name: asset?.name || "画中画",
+    name: asset?.name || "Picture-in-picture",
     nameKey: asset?.nameKey || "",
     type: asset?.type === "video" ? "video" : "image",
     kind: asset?.kind || "",

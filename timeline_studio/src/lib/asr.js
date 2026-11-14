@@ -7,11 +7,7 @@ const LANGUAGE_DETECTION_SECONDS = 20;
 const CHINESE_VISIBLE_CHAR_THRESHOLD = 8;
 const CJK_PATTERN = /[\u3400-\u9fff]/;
 
-const CHINESE_ASR_CONTEXT_REPLACEMENTS = [
-  [/侯[父付负](?=主[母姆幕]|夫人|公子|小姐|世子|嫡|庶|门|中|里|内|上下)/g, "侯府"],
-  [/候府(?=主[母姆幕]|夫人|公子|小姐|世子|嫡|庶|门|中|里|内|上下)/g, "侯府"],
-  [/(侯府)主[姆幕](?=$|[，。！？!?、\s])/g, "$1主母"],
-];
+const CHINESE_ASR_CONTEXT_REPLACEMENTS = [];
 
 const UI_LANGUAGE_TO_WHISPER_LANGUAGE = {
   zh: "zh",
@@ -30,7 +26,7 @@ const UI_LANGUAGE_TO_WHISPER_LANGUAGE = {
 };
 
 const WHISPER_LANGUAGE_NAMES = {
-  zh: "中文",
+  zh: "Chinese",
   en: "English",
   ja: "日本語",
   ko: "한국어",
@@ -57,7 +53,7 @@ const throwIfAborted = (signal) => {
 function getAudioContext(sampleRate = ASR_SAMPLE_RATE) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) {
-    throw new Error("当前浏览器不支持 AudioContext，无法识别音频。");
+    throw new Error("AudioContext is not supported in this browser; cannot transcribe audio.");
   }
 
   return new AudioContextClass({ sampleRate });
@@ -195,7 +191,7 @@ function createModelLoadProgressCallback(onProgress) {
     reportedProgress = nextProgress;
     onProgress?.({
       progress: nextProgress,
-      phase: `下载或读取 ${AUTOMATIC_CAPTION_MODEL_LABEL} ONNX`,
+      phase: `Downloading or loading ${AUTOMATIC_CAPTION_MODEL_LABEL} ONNX`,
     });
   };
 }
@@ -218,7 +214,7 @@ async function detectWhisperLanguage(transcriber, audio, preferredLanguage, onPr
   }
 
   try {
-    onProgress?.({ progress: 70, phase: "识别音频语言" });
+    onProgress?.({ progress: 70, phase: "Detecting audio language" });
     const sample = getLanguageDetectionSample(audio);
     const features = await transcriber.processor(sample);
     const output = await transcriber.model.generate({
@@ -315,12 +311,12 @@ function getAsrWorker() {
     }
 
     if (message.type === "error") {
-      request.reject(new Error(message.error || "自动字幕生成失败"));
+      request.reject(new Error(message.error || "Automatic caption generation failed"));
     }
   });
 
   asrWorker.addEventListener("error", (event) => {
-    const error = new Error(event.message || "自动字幕 Worker 运行失败");
+    const error = new Error(event.message || "Automatic caption worker execution failed");
     asrWorker?.terminate();
     asrWorker = null;
     rejectWorkerRequests(error);
@@ -332,12 +328,12 @@ function getAsrWorker() {
 function transcribeAudioInWorker(audio, { onProgress, preferredLanguage, signal, requireWorker = false, localModelRoot }) {
   throwIfAborted(signal);
   if (shouldSkipAsrWorker && !requireWorker) {
-    return Promise.reject(new Error("本轮已停用自动字幕 Worker。"));
+    return Promise.reject(new Error("Automatic caption worker disabled for this session."));
   }
 
   const worker = getAsrWorker();
   if (!worker) {
-    return Promise.reject(new Error("当前浏览器不支持 Worker 自动字幕。"));
+    return Promise.reject(new Error("This browser does not support worker automatic captions."));
   }
 
   const requestId = makeId("asr");
@@ -378,7 +374,7 @@ async function transcribeAudioOnMainThread(audio, { onProgress, preferredLanguag
   const languageLabel = WHISPER_LANGUAGE_NAMES[languageResult.language] ?? languageResult.language.toUpperCase();
   onProgress?.({
     progress: 74,
-    phase: `${languageResult.detected ? "检测为" : "按"} ${languageLabel} 转写字幕`,
+    phase: `Transcribing captions as ${languageLabel}`,
   });
   const transcriptionOptions = {
     chunk_length_s: 30,
@@ -446,11 +442,11 @@ async function runTranscription(
   { onProgress, preferredLanguage = "zh", timelineOffset = 0, grouping = "phrases", signal, requireWorker = false } = {},
 ) {
   throwIfAborted(signal);
-  onProgress?.({ progress: 5, phase: "解码原声音频" });
+  onProgress?.({ progress: 5, phase: "Decoding audio" });
   const { audio, duration } = await decodeAudioForAsr(blob);
   throwIfAborted(signal);
   if (!audio.length || !duration) {
-    throw new Error("没有检测到可识别的音频。");
+    throw new Error("No recognizable audio detected.");
   }
 
   let result;
@@ -461,7 +457,7 @@ async function runTranscription(
     throwIfAborted(signal);
     if (error?.name === "AbortError" || requireWorker) throw error;
     console.warn("ASR worker failed, falling back to main thread.", error);
-    onProgress?.({ progress: 8, phase: "Worker 不可用，切换主线程自动字幕" });
+    onProgress?.({ progress: 8, phase: "Worker unavailable, falling back to main-thread captions" });
     result = await transcribeAudioOnMainThread(audio, { onProgress, preferredLanguage });
   }
   throwIfAborted(signal);
@@ -473,13 +469,13 @@ async function runTranscription(
     console.warn("ASR worker returned a suspicious transcript, retrying on the WASM main thread.", result.output);
     shouldSkipAsrWorker = true;
     resetAsrWorker();
-    onProgress?.({ progress: 78, phase: "Worker 结果异常，切换稳定 WASM 重新识别" });
+    onProgress?.({ progress: 78, phase: "Worker returned invalid result, retrying with WASM" });
     result = await transcribeAudioOnMainThread(audio, { onProgress, preferredLanguage });
   }
   throwIfAborted(signal);
 
   if (isSuspiciousTranscript(result.output, result.language, preferredLanguage)) {
-    throw new Error("自动字幕结果像是识别错语言了，请刷新后重新生成一次。");
+    throw new Error("Language mismatch detected in captions, please refresh and retry.");
   }
 
   const segments = captionSegmentsFromWords(result.output?.chunks, duration, {
@@ -487,10 +483,10 @@ async function runTranscription(
     normalizeText: (text) => normalizeAsrText(text, result.language),
   });
   if (!segments.length) {
-    throw new Error("没有识别到可用字幕。");
+    throw new Error("No usable speech detected for captions.");
   }
 
-  onProgress?.({ progress: 96, phase: "写入字幕轨道" });
+  onProgress?.({ progress: 96, phase: "Writing captions to track" });
   return {
     segments,
     text: segments.map((segment) => segment.text).join("\n"),
@@ -513,7 +509,7 @@ export async function transcribeAudioToCaptionSegments(blob, options = {}) {
 // Material analysis owns decoding and source coordinates, including empty speech results.
 export async function transcribeSourcePcm(audio, { signal, onProgress, preferredLanguage, localModelRoot }) {
   if (transcriptionActive) throw Object.assign(new Error("EDITOR_BUSY"), { code: "EDITOR_BUSY" });
-  if (!(audio instanceof Float32Array) || !audio.length || !localModelRoot) throw new Error("本地分析输入尚未准备好。");
+  if (!(audio instanceof Float32Array) || !audio.length || !localModelRoot) throw new Error("Local analysis input not ready.");
   transcriptionActive = true;
   try {
     return await transcribeAudioInWorker(audio, { signal, onProgress, preferredLanguage, localModelRoot, requireWorker: true });

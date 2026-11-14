@@ -43,7 +43,7 @@ function postProgress(requestId, progress, phase) {
 async function getSession(requestId) {
   if (!sessionPromise) {
     sessionPromise = (async () => {
-      postProgress(requestId, 8, "加载 NanoDet-Plus 实物检测模型");
+      postProgress(requestId, 8, "Loading NanoDet-Plus object detection model");
       const { response } = await fetchFirstAvailableModel(mirroredModelFileUrls({
         repository: MODEL_REPOSITORY,
         revision: MODEL_REVISION,
@@ -53,7 +53,7 @@ async function getSession(requestId) {
       if (bytes.byteLength !== MODEL_BYTES) {
         throw new Error(`NANODET_MODEL_SIZE_MISMATCH:${bytes.byteLength}:${MODEL_BYTES}`);
       }
-      postProgress(requestId, 36, "初始化 NanoDet-Plus ONNX");
+      postProgress(requestId, 36, "Initializing NanoDet-Plus ONNX");
       executionProvider = "wasm";
       return ort.InferenceSession.create(bytes, {
         executionProviders: ["wasm"],
@@ -174,7 +174,7 @@ async function preprocess(blob) {
 async function detect(requestId, blob, scoreThreshold) {
   const startedAt = performance.now();
   const session = await getSession(requestId);
-  postProgress(requestId, 52, "NanoDet-Plus 正在识别实物");
+  postProgress(requestId, 52, "NanoDet-Plus detecting objects");
   const { tensor, sourceSize } = await preprocess(blob);
   const inferenceStartedAt = performance.now();
   const outputMap = await session.run({ data: tensor });

@@ -63,7 +63,7 @@ export function useTimelineModel(d) {
     ? {
         ...sticker,
         type: "sticker",
-        meta: "贴纸",
+        meta: "Sticker",
         duration: DEFAULT_STICKER_SEGMENT_SECONDS,
       }
     : null;

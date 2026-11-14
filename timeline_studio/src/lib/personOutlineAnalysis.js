@@ -39,9 +39,9 @@ function createRequestId(prefix) {
 
 function createAbortError() {
   if (typeof DOMException !== "undefined") {
-    return new DOMException("人物描边分析已取消。", "AbortError");
+    return new DOMException("Person outline analysis has been cancelled.", "AbortError");
   }
-  const error = new Error("人物描边分析已取消。");
+  const error = new Error("Person outline analysis has been cancelled.");
   error.name = "AbortError";
   return error;
 }
@@ -81,7 +81,7 @@ function resetFlowWorker(error = null) {
 
 function getSlimSamWorker() {
   if (slimSamWorker) return slimSamWorker;
-  if (typeof Worker === "undefined") throw new Error("当前浏览器不支持 SlimSAM Worker。");
+  if (typeof Worker === "undefined") throw new Error("This browser does not support SlimSAM Worker.");
   slimSamWorker = new Worker(new URL("../workers/slimsam.worker.js", import.meta.url), { type: "module" });
   slimSamWorker.addEventListener("message", (event) => {
     const message = event.data;
@@ -103,24 +103,24 @@ function getSlimSamWorker() {
     }
     if (message.type === "error") {
       settleRequest(pendingSlimSamRequests, message.requestId, ({ reject }) => {
-        reject(new Error(message.error || "SlimSAM 人物分割失败。"));
+        reject(new Error(message.error || "SlimSAM person segmentation failed."));
       });
     }
   });
   slimSamWorker.addEventListener("error", (event) => {
-    resetSlimSamWorker(new Error(event.message || "SlimSAM Worker 运行失败。"));
+    resetSlimSamWorker(new Error(event.message || "SlimSAM Worker encountered an error."));
   });
   return slimSamWorker;
 }
 
 function getFlowWorker() {
   if (flowWorker && flowReadyPromise) return { worker: flowWorker, ready: flowReadyPromise };
-  if (typeof Worker === "undefined") throw new Error("当前浏览器不支持光流 Worker。");
+  if (typeof Worker === "undefined") throw new Error("This browser does not support optical flow Worker.");
   flowWorker = new Worker(new URL("../workers/person-flow.worker.js", import.meta.url));
   flowReadyPromise = new Promise((resolve, reject) => {
     const handleMessage = (event) => {
       if (event.data?.type === "ready") resolve(event.data);
-      if (event.data?.type === "fatal") reject(new Error(event.data.error || "OpenCV 光流初始化失败。"));
+      if (event.data?.type === "fatal") reject(new Error(event.data.error || "OpenCV optical flow initialization failed."));
     };
     flowWorker.addEventListener("message", handleMessage);
   });
@@ -136,12 +136,12 @@ function getFlowWorker() {
       }));
     } else if (message.type === "error") {
       settleRequest(pendingFlowRequests, message.requestId, ({ reject }) => {
-        reject(new Error(message.error || "人物光流传播失败。"));
+        reject(new Error(message.error || "Person optical flow propagation failed."));
       });
     }
   });
   flowWorker.addEventListener("error", (event) => {
-    resetFlowWorker(new Error(event.message || "人物光流 Worker 运行失败。"));
+    resetFlowWorker(new Error(event.message || "Person optical flow Worker encountered an error."));
   });
   return { worker: flowWorker, ready: flowReadyPromise };
 }
@@ -193,7 +193,7 @@ function waitForEvent(target, eventName, signal) {
       signal?.removeEventListener("abort", handleAbort);
     };
     const handleSuccess = () => { cleanup(); resolve(); };
-    const handleError = () => { cleanup(); reject(new Error("无法读取人物描边视频。")); };
+    const handleError = () => { cleanup(); reject(new Error("Unable to read person outline video.")); };
     const handleAbort = () => { cleanup(); reject(createAbortError()); };
     target.addEventListener(eventName, handleSuccess, { once: true });
     target.addEventListener("error", handleError, { once: true });
@@ -223,7 +223,7 @@ async function createSequentialFrameReader(src, sampleTimes, signal) {
     const blob = src instanceof Blob
       ? src
       : await fetch(String(src), { signal }).then((response) => {
-          if (!response.ok) throw new Error(`视频读取失败 (${response.status})`);
+          if (!response.ok) throw new Error(`Video read failed (${response.status})`);
           return response.blob();
         });
     throwIfAborted(signal);
@@ -233,7 +233,7 @@ async function createSequentialFrameReader(src, sampleTimes, signal) {
     });
     const track = await input.getPrimaryVideoTrack();
     if (!track || !(await track.canDecode())) {
-      throw new Error("当前视频编码不支持 WebCodecs 硬件解码");
+      throw new Error("Current video encoding does not support WebCodecs hardware decode");
     }
     const sink = new CanvasSink(track, {
       poolSize: 3,
@@ -254,14 +254,14 @@ async function createSequentialFrameReader(src, sampleTimes, signal) {
     };
   } catch (error) {
     input?.dispose();
-    console.warn("人物描边顺序硬解码不可用，回退精确 seek。", error);
+    console.warn("Sequential hardware decode for person outline unavailable; falling back to precise seek.", error);
     return null;
   }
 }
 
 function canvasToBlob(canvas, type = "image/png", quality = 0.92) {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("人物帧编码失败。")), type, quality);
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Person frame encoding failed.")), type, quality);
   });
 }
 
@@ -658,7 +658,7 @@ export async function analyzePersonOutlineVideo(options = {}) {
     onProgress,
     onSample,
   } = options;
-  if (!src) throw new TypeError("人物描边分析需要视频源。");
+  if (!src) throw new TypeError("Person outline analysis requires a video source.");
   throwIfAborted(signal);
 
   const warmupStartedAt = performance.now();
@@ -669,11 +669,11 @@ export async function analyzePersonOutlineVideo(options = {}) {
     onProgress: ({ phase }) => onProgress?.({ progress: 1, phase }),
   }).catch((error) => {
     if (error?.name === "AbortError") throw error;
-    console.warn("人物模型预热失败，将在首个锚点重试。", error);
+    console.warn("Person model warm-up failed; will retry at the first anchor.", error);
     return null;
   });
   const mediaPipeWarmup = getMediaPipePersonSegmenter().catch((error) => {
-    console.warn("MediaPipe 预热失败，将保留 MODNet/SlimSAM 路径。", error);
+    console.warn("MediaPipe warm-up failed; keeping MODNet/SlimSAM path.", error);
     return null;
   });
   const flowWarmup = Promise.resolve().then(() => getFlowWorker().ready);
@@ -714,7 +714,7 @@ export async function analyzePersonOutlineVideo(options = {}) {
   cutoutCanvas.width = targetSize.width;
   cutoutCanvas.height = targetSize.height;
   const cutoutContext = cutoutCanvas.getContext("2d", { alpha: true });
-  if (!context || !cutoutContext) throw new Error("无法创建人物描边分析画布。");
+  if (!context || !cutoutContext) throw new Error("Unable to create person outline analysis canvas.");
 
   const samples = [];
   let trackedDetectionBox = null;
@@ -744,7 +744,7 @@ export async function analyzePersonOutlineVideo(options = {}) {
   };
 
   try {
-    onProgress?.({ progress: 1, phase: "初始化人物抠像与 ROI 光流" });
+    onProgress?.({ progress: 1, phase: "Initializing person matting and ROI optical flow" });
     sequentialFrameReader = await createSequentialFrameReader(src, sampleTimes, signal);
     for (let index = 0; index < sampleTimes.length; index += 1) {
       throwIfAborted(signal);
@@ -821,7 +821,7 @@ export async function analyzePersonOutlineVideo(options = {}) {
         lastAnchorIndex = index;
         onProgress?.({
           progress: (index / sampleTimes.length) * 100,
-          phase: `完整人像锚点 ${Math.floor(index / anchorEvery) + 1}`,
+          phase: `Full portrait anchor ${Math.floor(index / anchorEvery) + 1}`,
         });
         const trackedBox = trackedMaskBox
           ? expandNormalizedBox(normalizeSubjectBox(trackedMaskBox, targetSize.width, targetSize.height))
@@ -842,7 +842,7 @@ export async function analyzePersonOutlineVideo(options = {}) {
             detections = [detectedSubject];
             onProgress?.({
               progress: (index / sampleTimes.length) * 100,
-              phase: `帧 ${index + 1}/${sampleTimes.length} · MediaPipe 快速刷新主体`,
+              phase: `Frame ${index + 1}/${sampleTimes.length} · MediaPipe quick subject refresh`,
             });
             const mediaPipeMask = await segmentMediaPipePersonRoi(
               canvas,
@@ -907,7 +907,7 @@ export async function analyzePersonOutlineVideo(options = {}) {
             signal,
             onProgress: ({ phase }) => onProgress?.({
               progress: (index / sampleTimes.length) * 100,
-              phase: `帧 ${index + 1}/${sampleTimes.length} · ${phase}`,
+              phase: `Frame ${index + 1}/${sampleTimes.length} · ${phase}`,
             }),
           });
           } else {
@@ -920,7 +920,7 @@ export async function analyzePersonOutlineVideo(options = {}) {
             signal,
             onProgress: ({ phase }) => onProgress?.({
               progress: (index / sampleTimes.length) * 100,
-              phase: `帧 ${index + 1}/${sampleTimes.length} · ${phase}`,
+              phase: `Frame ${index + 1}/${sampleTimes.length} · ${phase}`,
             }),
           });
           detections = (matteResult.detections || []).filter((item) => String(item.label).toLowerCase() === "person");
@@ -939,7 +939,7 @@ export async function analyzePersonOutlineVideo(options = {}) {
             try {
               onProgress?.({
                 progress: (index / sampleTimes.length) * 100,
-                phase: `帧 ${index + 1}/${sampleTimes.length} · MediaPipe 清理主体外溢`,
+                phase: `Frame ${index + 1}/${sampleTimes.length} · MediaPipe clean up subject overflow`,
               });
               const mediaPipeMask = await segmentMediaPipePersonRoi(
                 canvas,
@@ -999,7 +999,7 @@ export async function analyzePersonOutlineVideo(options = {}) {
               timings.slimSamFallbacks += 1;
               onProgress?.({
                 progress: (index / sampleTimes.length) * 100,
-                phase: `帧 ${index + 1}/${sampleTimes.length} · MODNet 不完整，尝试 SlimSAM`,
+                phase: `Frame ${index + 1}/${sampleTimes.length} · MODNet incomplete, trying SlimSAM`,
               });
               const segmented = await requestSlimSam({
                 blob: frameBlob,
@@ -1016,7 +1016,7 @@ export async function analyzePersonOutlineVideo(options = {}) {
                 signal,
                 onProgress: ({ phase }) => onProgress?.({
                   progress: (index / sampleTimes.length) * 100,
-                  phase: `帧 ${index + 1}/${sampleTimes.length} · ${phase}`,
+                  phase: `Frame ${index + 1}/${sampleTimes.length} · ${phase}`,
                 }),
               });
               firstModelInfo ??= segmented;
@@ -1117,12 +1117,12 @@ export async function analyzePersonOutlineVideo(options = {}) {
       timings.callbackMs += performance.now() - callbackStartedAt;
       onProgress?.({
         progress: ((index + 1) / sampleTimes.length) * 100,
-        phase: `逐帧描边 ${index + 1}/${sampleTimes.length} · ${subject ? "人物稳定" : "跳过不可靠帧"}`,
+        phase: `Frame outline ${index + 1}/${sampleTimes.length} · ${subject ? "Subject stable" : "Skipping unreliable frame"}`,
       });
     }
 
     if (!samples.some((sample) => sample.subject)) {
-      throw new Error("未找到完整且可稳定锁定的人物，请更换人物更清晰的片段。");
+      throw new Error("No complete and stably-lockable person found; please switch to a clip with a clearer subject.");
     }
     const firstSubjectSample = samples.find((sample) => sample.subject);
     const elapsedMs = performance.now() - startedAt;
@@ -1238,7 +1238,7 @@ async function analyzeObjectAnchor({
   let source = reuseTrackedSubject ? "magic-touch-track-refresh" : "magic-touch";
   const runMagicTouch = async () => {
     try {
-      onProgress?.({ progress: 58, phase: "MagicTouch 快速分割实物" });
+      onProgress?.({ progress: 58, phase: "MagicTouch quick object segmentation" });
       await segmenterWarmup;
       segmenter = await segmentObjectWithMagicTouch(canvas, point, {
         signal,
@@ -1254,12 +1254,12 @@ async function analyzeObjectAnchor({
       );
     } catch (error) {
       if (error?.name === "AbortError") throw error;
-      console.warn("MagicTouch 实物蒙版不可用，准备重新检测或使用 SlimSAM。", error);
+      console.warn("MagicTouch object mask unavailable; preparing to re-detect or use SlimSAM.", error);
     }
   };
   await runMagicTouch();
   if (!selected && reuseTrackedSubject) {
-    onProgress?.({ progress: 68, phase: "跟踪框刷新失败，NanoDet 重新识别实物" });
+    onProgress?.({ progress: 68, phase: "Tracking box refresh failed; NanoDet re-detecting objects" });
     detection = await detectObjectsWithNanoDet({
       blob: frameBlob,
       signal,
@@ -1274,7 +1274,7 @@ async function analyzeObjectAnchor({
     }
   }
   if (!selected) {
-    onProgress?.({ progress: 76, phase: "MagicTouch 质量不足，SlimSAM 精修实物" });
+    onProgress?.({ progress: 76, phase: "MagicTouch quality insufficient, SlimSAM refining object" });
     const segmented = await requestSlimSam({
       blob: frameBlob,
       box: detectedSubject.box,
@@ -1318,7 +1318,7 @@ export async function analyzeObjectOutlineImage(options = {}) {
     signal,
     onProgress,
   } = options;
-  if (!(blob instanceof Blob) || !blob.size) throw new TypeError("实物描边需要有效图片。");
+  if (!(blob instanceof Blob) || !blob.size) throw new TypeError("Object outline requires a valid image.");
   throwIfAborted(signal);
   const bitmap = await createImageBitmap(blob);
   const canvas = document.createElement("canvas");
@@ -1339,7 +1339,7 @@ export async function analyzeObjectOutlineImage(options = {}) {
     onProgress,
   });
   if (!anchor.alpha || !anchor.box || !anchor.subject) {
-    throw new Error("没有找到边界清晰的实物，请选择实物更突出、遮挡更少的画面。");
+    throw new Error("No clearly defined object found, please choose a frame with less occlusion.");
   }
   const rgba = context.getImageData(0, 0, targetSize.width, targetSize.height).data;
   const cutoutCanvas = document.createElement("canvas");
@@ -1358,7 +1358,7 @@ export async function analyzeObjectOutlineImage(options = {}) {
     score: anchor.subject.score,
     box: normalizeSubjectBox(anchor.box, targetSize.width, targetSize.height),
   };
-  onProgress?.({ progress: 100, phase: "实物 Alpha 已生成" });
+  onProgress?.({ progress: 100, phase: "Object alpha generated" });
   return {
     kind: "image",
     pipeline: "object-nanodet-magic-touch-slimsam",
@@ -1395,7 +1395,7 @@ export async function analyzeObjectOutlineVideo(options = {}) {
     onProgress,
     onSample,
   } = options;
-  if (!src) throw new TypeError("实物描边分析需要视频源。");
+  if (!src) throw new TypeError("Object outline analysis requires a video source.");
   throwIfAborted(signal);
   const flowWarmup = Promise.resolve().then(() => getFlowWorker().ready);
   const objectUrl = src instanceof Blob ? URL.createObjectURL(src) : "";
@@ -1446,7 +1446,7 @@ export async function analyzeObjectOutlineVideo(options = {}) {
     slimSamFallbacks: 0,
   };
   try {
-    onProgress?.({ progress: 1, phase: "准备 NanoDet、MagicTouch 与实物光流" });
+    onProgress?.({ progress: 1, phase: "Preparing NanoDet, MagicTouch, and optical flow" });
     await flowWarmup;
     sequentialFrameReader = await createSequentialFrameReader(src, sampleTimes, signal);
     for (let index = 0; index < sampleTimes.length; index += 1) {
@@ -1513,7 +1513,7 @@ export async function analyzeObjectOutlineVideo(options = {}) {
           signal,
           onProgress: ({ progress, phase }) => onProgress?.({
             progress: Math.max((index / sampleTimes.length) * 100, progress * 0.08),
-            phase: `帧 ${index + 1}/${sampleTimes.length} · ${phase}`,
+            phase: `Frame ${index + 1}/${sampleTimes.length} · ${phase}`,
           }),
         });
         detections = anchor.detections;
@@ -1592,13 +1592,13 @@ export async function analyzeObjectOutlineVideo(options = {}) {
         timings.callbackMs += performance.now() - callbackStartedAt;
         onProgress?.({
           progress: ((index + 1) / sampleTimes.length) * 100,
-          phase: `逐帧描边 ${index + 1}/${sampleTimes.length} · ${subject ? "实物稳定" : "跳过不可靠帧"}`,
+          phase: `Frame-by-frame outlining ${index + 1}/${sampleTimes.length} · ${subject ? "Object stable" : "Skipping unreliable frame"}`,
         });
       })();
     }
     await pendingSampleCommit;
     if (!samples.some((sample) => sample.subject)) {
-      throw new Error("没有找到可稳定锁定的实物，请选择主体更明显的片段。");
+      throw new Error("No stably tracked object found, please choose a clip with a clearer subject.");
     }
     const firstSubjectSample = samples.find((sample) => sample.subject);
     const elapsedMs = performance.now() - startedAt;
@@ -1656,8 +1656,8 @@ export async function analyzeObjectOutlineVideo(options = {}) {
 }
 
 export function disposePersonOutlineWorkers() {
-  resetSlimSamWorker(new Error("SlimSAM Worker 已释放。"));
-  resetFlowWorker(new Error("人物光流 Worker 已释放。"));
+  resetSlimSamWorker(new Error("SlimSAM Worker released."));
+  resetFlowWorker(new Error("Optical Flow Worker released."));
   void disposeMediaPipePersonSegmenter();
   void disposeObjectSegmentationModels();
 }

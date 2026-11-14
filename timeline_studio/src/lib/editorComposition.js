@@ -78,7 +78,7 @@ export async function prepareEditorComposition(d, { exportSettings, exportRange,
     && Math.max(0, Number(segment.start) || 0) + Math.max(0, Number(segment.duration) || 0) > exportRange.start
   ));
   if (visibleVoiceSegments.some((segment) => !(segment.blob instanceof Blob))) {
-    throw new Error("配音片段的音频媒体已丢失，请重新生成或重新添加后再导出。");
+    throw new Error("A voiceover clip's audio media is missing; please regenerate or re-add it before exporting.");
   }
   return {
     timelineMarkers: d.timelineMarkers,

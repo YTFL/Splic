@@ -1,12 +1,12 @@
 export const CLIP_EXPORT_COPY = {
   "zh": {
-    "exportClip": "导出片段",
-    "exportClipHint": "按此片段的时间范围导出合成画面，包含可见字幕、效果和声音；使用当前导出设置。",
-    "exportSelectedClips": "导出所选片段（{count}）",
-    "exportSelectedClipsHint": "按时间线顺序分别导出所选画面片段，每个片段一个文件，保留该时段的合成画面和声音。",
-    "exportSelectionMark": "选中片段 {number}",
-    "exportSelectedClipsProgress": "正在导出第 {current}/{total} 个片段",
-    "exportSelectedClipsDone": "已导出 {count} 个片段"
+    "exportClip": "Export clip",
+    "exportClipHint": "Export the composition over this clip’s time range, including visible captions, effects and audio, using current export settings.",
+    "exportSelectedClips": "Export selected clips ({count})",
+    "exportSelectedClipsHint": "Export selected visual clips in timeline order as separate files, including the composition and audio in each interval.",
+    "exportSelectionMark": "Selected clip {number}",
+    "exportSelectedClipsProgress": "Exporting clip {current}/{total}",
+    "exportSelectedClipsDone": "Exported {count} clips"
   },
   "en": {
     "exportClip": "Export clip",

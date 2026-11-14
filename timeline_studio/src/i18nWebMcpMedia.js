@@ -8,11 +8,11 @@ export const WEBMCP_MEDIA_COPY = {
     "toolPreviewDescription": "Preview supported visual and timed-clip edits, overlay transforms, caption text/style/position, project aspect ratio/fit, audio, markers, and asset insertion. Requires the current stateToken; returns a semantic review and previewId without applying changes."
   },
   "zh": {
-    "toolMediaSampleTitle": "采样渲染画面与声音",
-    "toolMediaSampleDescription": "凭当前 stateToken 渲染明确请求的时间线画面与短段混音，返回 JPEG 和 WAV 内容供审看，不移动播放头。Agent 将接收到这些媒体数据。",
-    "mediaSampleFailed": "媒体采样渲染失败，请重新读取当前工程后重试。",
-    "mediaSampleUnavailable": "当前工程或浏览器暂不支持媒体采样。",
-    "toolPreviewDescription": "预览支持的主画面与定时片段编辑、画中画变换、字幕文字／样式／位置、工程画幅与适配方式、音频、标记及素材插入。需提供当前 stateToken；返回语义修改审阅与 previewId，不应用修改。"
+    "toolMediaSampleTitle": "Sample rendered media",
+    "toolMediaSampleDescription": "Render explicitly requested timeline frames and a short audio mix using the current stateToken. Returns JPEG and WAV data for review without moving the playhead. The agent receives these media bytes.",
+    "mediaSampleFailed": "The media sample could not be rendered. Inspect the current project and retry.",
+    "mediaSampleUnavailable": "Media sampling is unavailable for this project or browser.",
+    "toolPreviewDescription": "Preview supported visual and timed-clip edits, overlay transforms, caption text/style/position, project aspect ratio/fit, audio, markers, and asset insertion. Requires the current stateToken; returns a semantic review and previewId without applying changes."
   },
   "ja": {
     "toolMediaSampleTitle": "描画済みメディアを取得",

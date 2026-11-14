@@ -20,7 +20,7 @@ function id(prefix) {
 }
 
 function abortError() {
-  const error = new Error("换脸生成已取消。");
+  const error = new Error("Face swap generation has been cancelled.");
   error.name = "AbortError";
   return error;
 }
@@ -417,7 +417,7 @@ function imageFromBlob(blob) {
 
 async function canvasBlob(canvas, type = "image/png", quality = 0.94) {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("换脸帧编码失败。")), type, quality);
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Face swap frame encoding failed.")), type, quality);
   });
 }
 
@@ -434,7 +434,7 @@ function requestWorker(worker, message, transfer, terminalTypes, signal, onProgr
       if (event.data.type === "progress") return void onProgress?.(event.data);
       if (event.data.type === "error") {
         cleanup();
-        reject(new Error(event.data.message || "换脸 Worker 失败。"));
+        reject(new Error(event.data.message || "Face swap Worker failed."));
       } else if (event.data.type === "canceled") {
         cleanup();
         reject(abortError());
@@ -445,7 +445,7 @@ function requestWorker(worker, message, transfer, terminalTypes, signal, onProgr
     };
     const handleError = (event) => {
       cleanup();
-      reject(new Error(event.message || "换脸 Worker 运行失败。"));
+      reject(new Error(event.message || "Face swap Worker encountered an error."));
     };
     const handleAbort = () => {
       worker.postMessage({ type: "cancel", requestId: message.requestId });
@@ -481,7 +481,7 @@ export async function prepareFaceSwapSource({ worker, blob, sourceKey, requestId
       })).filter(isCompleteFace);
     }
     const face = chooseFace(candidates, null, true);
-    if (!face) throw new Error("源图片中没有检测到清晰完整的人脸。");
+    if (!face) throw new Error("No clear and complete face was detected in the source image.");
     const aligned = alignedCanvas(bitmap, face.five, 112, SOURCE_TEMPLATE);
     const pixels = pixelsToTensor(
       aligned.canvas,
@@ -552,7 +552,7 @@ async function createFrameReader(blob, times, signal) {
     };
   } catch (error) {
     input?.dispose();
-    console.warn("换脸 WebCodecs 顺序解码不可用，回退视频 seek。", error);
+    console.warn("Face swap WebCodecs sequential decoding unavailable; falling back to video seek.", error);
     return null;
   }
 }
@@ -563,7 +563,7 @@ function getFlowWorker() {
   flowReadyPromise = new Promise((resolve, reject) => {
     const handle = (event) => {
       if (event.data?.type === "ready") resolve();
-      if (event.data?.type === "fatal") reject(new Error(event.data.message || "人脸光流初始化失败。"));
+      if (event.data?.type === "fatal") reject(new Error(event.data.message || "Face optical flow initialization failed."));
     };
     flowWorker.addEventListener("message", handle);
   });
@@ -575,7 +575,7 @@ function getFlowWorker() {
       pending.resolve(event.data);
     } else if (event.data.type === "error") {
       pendingFlow.delete(event.data.requestId);
-      pending.reject(new Error(event.data.message || "人脸光流失败。"));
+      pending.reject(new Error(event.data.message || "Face optical flow failed."));
     }
   });
   return { worker: flowWorker, ready: flowReadyPromise };
@@ -624,7 +624,7 @@ async function waitEvent(target, name, signal) {
       signal?.removeEventListener("abort", aborted);
     };
     const success = () => { cleanup(); resolve(); };
-    const failure = () => { cleanup(); reject(new Error("无法读取换脸目标视频。")); };
+    const failure = () => { cleanup(); reject(new Error("Unable to read the face swap target video.")); };
     const aborted = () => { cleanup(); reject(abortError()); };
     target.addEventListener(name, success, { once: true });
     target.addEventListener("error", failure, { once: true });
@@ -665,7 +665,7 @@ export async function generateFaceSwapMedia({
         requestId,
         signal,
       })).filter(isCompleteFace), null, true);
-      if (!face) throw new Error("当前图片中没有检测到可换脸的人脸。");
+      if (!face) throw new Error("No swappable face detected in the current image.");
       const swap = await swapFaceFrame({
         worker,
         frameCanvas: frame,
@@ -785,7 +785,7 @@ export async function generateFaceSwapMedia({
       await reader?.dispose();
       if (flowInitialized) await requestFlow("dispose", {}, signal).catch(() => {});
     }
-    if (!acceptedFrames) throw new Error("目标视频中没有稳定锁定到可换脸的人脸。");
+    if (!acceptedFrames) throw new Error("No face could be stably locked in the target video for swapping.");
     return {
       type: "video-frames",
       blobs,
@@ -809,6 +809,6 @@ export function disposeFaceSwapRuntime() {
   flowWorker?.terminate();
   flowWorker = null;
   flowReadyPromise = null;
-  pendingFlow.forEach(({ reject }) => reject(new Error("人脸光流运行时已关闭。")));
+  pendingFlow.forEach(({ reject }) => reject(new Error("Face optical flow runtime has been closed.")));
   pendingFlow.clear();
 }

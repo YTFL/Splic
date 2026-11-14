@@ -9,9 +9,9 @@ export function useMaterialAnalysis({ hostSession, getContext, isEditorBusy, lan
   latest.current = { getContext, isEditorBusy };
   const controller = useRef(null), pending = useRef(null), active = useRef(null);
   const [state, setState] = useState({ running: false, phase: "", error: "", tasks: [], pendingSave: null, pendingSaveKind: null });
-  const trusted = event => { if (!event?.isTrusted) throw new Error("请从素材分析面板直接操作。"); };
+  const trusted = event => { if (!event?.isTrusted) throw new Error("Please use the Material Analysis panel to perform this action."); };
   const context = async () => {
-    if (!hostSession || hostSession.getSnapshot().connection === "draining") throw new Error("本地服务正在退出。");
+    if (!hostSession || hostSession.getSnapshot().connection === "draining") throw new Error("The local service is shutting down.");
     return latest.current.getContext();
   };
   const request = async (path, body, key, options) => {
@@ -34,15 +34,15 @@ export function useMaterialAnalysis({ hostSession, getContext, isEditorBusy, lan
     pending.current = null;
     if (result.saveStatus !== "succeeded") {
       setState(old => ({ ...old, pendingSave: result.saveId, pendingSaveKind: "analysis" }));
-      throw Object.assign(new Error(result.error?.message || "分析保存尚未确认，请补登记后继续。"), { code: "ANALYSIS_SAVE_PENDING" });
+      throw Object.assign(new Error(result.error?.message || "Analysis save has not been confirmed; please complete the registration before continuing."), { code: "ANALYSIS_SAVE_PENDING" });
     }
     return result;
   };
   const run = async taskId => {
-    if (controller.current) throw new Error("已有素材分析正在执行。");
+    if (controller.current) throw new Error("A material analysis is already running.");
     const initial = await context();
     const abort = new AbortController(); controller.current = abort;
-    setState(old => ({ ...old, running: true, error: "", phase: "准备素材分析" }));
+    setState(old => ({ ...old, running: true, error: "", phase: "Preparing material analysis" }));
     let timer, heartbeatPending = false;
     try {
       let task = await request(`analysis-tasks/${encodeURIComponent(taskId)}`);
@@ -50,10 +50,10 @@ export function useMaterialAnalysis({ hostSession, getContext, isEditorBusy, lan
         if (selected.status !== "queued") continue;
         abort.signal.throwIfAborted();
         while (latest.current.isEditorBusy?.()) {
-          setState(old => ({ ...old, phase: "等待当前编辑或播放完成" }));
+          setState(old => ({ ...old, phase: "Waiting for current edit or playback to finish" }));
           await new Promise(resolve => setTimeout(resolve, 500)); abort.signal.throwIfAborted();
         }
-        if ((await context()).projectId !== initial.projectId) throw new Error("当前项目已切换，分析已停止。");
+        if ((await context()).projectId !== initial.projectId) throw new Error("The current project has switched; analysis has been stopped.");
         task = await request(`analysis-tasks/${encodeURIComponent(taskId)}`);
         await saveOperation(taskId, { action: "claim", stepId: selected.stepId, expectedRevision: task.revision });
         task = await request(`analysis-tasks/${encodeURIComponent(taskId)}`);
@@ -69,7 +69,7 @@ export function useMaterialAnalysis({ hostSession, getContext, isEditorBusy, lan
           } catch { abort.abort(); }
           finally { heartbeatPending = false; }
         }, 10_000);
-        const onProgress = progress => setState(old => ({ ...old, phase: progress.phase || "分析中" }));
+        const onProgress = progress => setState(old => ({ ...old, phase: progress.phase || "Analyzing" }));
         const checkpoint = async (range, output) => {
           abort.signal.throwIfAborted();
           await saveOperation(taskId, { action: "checkpoint", stepId: step.stepId, attemptId: step.attemptId, range, output });
@@ -101,9 +101,9 @@ export function useMaterialAnalysis({ hostSession, getContext, isEditorBusy, lan
         }
         await refresh();
       }
-      setState(old => ({ ...old, phase: "本轮分析已结束，请查看各素材结果" }));
+      setState(old => ({ ...old, phase: "This analysis round has finished; please review the results for each asset" }));
     } catch (error) {
-      setState(old => ({ ...old, error: abort.signal.aborted && !pending.current ? "分析已停止；已保存的区间仍可继续使用。" : error.message }));
+      setState(old => ({ ...old, error: abort.signal.aborted && !pending.current ? "Analysis stopped; saved segments remain available." : error.message }));
     } finally {
       clearInterval(timer); active.current = null; controller.current = null;
       setState(old => ({ ...old, running: false }));
@@ -131,15 +131,15 @@ export function useMaterialAnalysis({ hostSession, getContext, isEditorBusy, lan
     async source(asset) { const current = await context(); return projectMediaUrl(current.projectId, asset.mediaRef); },
     async start(event, selection) {
       trusted(event);
-      if (controller.current || pending.current || state.pendingSave) throw new Error("请先完成或补登记当前分析。");
+      if (controller.current || pending.current || state.pendingSave) throw new Error("Please complete or finish registering the current analysis first.");
       if (!window.confirm(materialText(language, "confirmAnalyze"))) return;
       const approval = await request("analysis-confirmations", selection);
       const result = await request("analysis-runs", { ...selection, confirmationId: approval.confirmationId }, crypto.randomUUID());
-      if (result.saveStatus !== "succeeded") { setState(old => ({ ...old, pendingSave: result.saveId, pendingSaveKind: "analysis" })); throw new Error("分析任务保存未完成。"); }
+      if (result.saveStatus !== "succeeded") { setState(old => ({ ...old, pendingSave: result.saveId, pendingSaveKind: "analysis" })); throw new Error("Analysis task save not complete."); }
       await refresh(); void run(result.taskId).catch(error => setState(old => ({ ...old, error: error.message })));
     },
     async continueTask(event, taskId, stepId) {
-      trusted(event); if (controller.current || pending.current || state.pendingSave) throw new Error("请先完成当前分析或补登记。");
+      trusted(event); if (controller.current || pending.current || state.pendingSave) throw new Error("Please complete the current analysis or finish registration first.");
       const task = await request(`analysis-tasks/${encodeURIComponent(taskId)}`);
       if (stepId) await saveOperation(taskId, { action: "retry", stepId, expectedRevision: task.revision });
       void run(taskId).catch(error => setState(old => ({ ...old, error: error.message })));
@@ -153,13 +153,13 @@ export function useMaterialAnalysis({ hostSession, getContext, isEditorBusy, lan
       trusted(event);
       const result = await request(`analyses/${encodeURIComponent(analysisId)}/revisions`, { expectedRevision, correction }, crypto.randomUUID(),
         { signal: AbortSignal.timeout(300_000) });
-      if (result.saveStatus !== "succeeded") { setState(old => ({ ...old, pendingSave: result.saveId, pendingSaveKind: "analysis" })); throw new Error("修订保存未完成，原结果仍保留。"); }
+      if (result.saveStatus !== "succeeded") { setState(old => ({ ...old, pendingSave: result.saveId, pendingSaveKind: "analysis" })); throw new Error("Revision save not complete; original result retained."); }
     },
     async correctSemantic(event, analysisId, expectedRevision, content) {
       trusted(event);
       const result = await request(`semantic-analyses/${encodeURIComponent(analysisId)}/revisions`, { expectedRevision, content }, crypto.randomUUID(),
         { signal: AbortSignal.timeout(300_000) });
-      if (result.saveStatus !== "succeeded") { setState(old => ({ ...old, pendingSave: result.saveId, pendingSaveKind: "semantic" })); throw new Error("语义修订保存未完成，原结果仍保留。"); }
+      if (result.saveStatus !== "succeeded") { setState(old => ({ ...old, pendingSave: result.saveId, pendingSaveKind: "semantic" })); throw new Error("Semantic revision save not complete; original result retained."); }
     },
     async retrySave(event) {
       trusted(event);
@@ -167,15 +167,15 @@ export function useMaterialAnalysis({ hostSession, getContext, isEditorBusy, lan
       let result;
       if (pending.current) {
         const operation = pending.current;
-        if (operation.projectId !== current.projectId) throw new Error("请先打开待保存分析所属的项目。");
+        if (operation.projectId !== current.projectId) throw new Error("Please open the project associated with the analysis to be saved.");
         result = await request(operation.path, operation.body, operation.key, { signal: AbortSignal.timeout(300_000) });
         pending.current = null;
       } else if (state.pendingSave) result = await request(`${state.pendingSaveKind === "semantic" ? "semantic" : "analysis"}-saves/${encodeURIComponent(state.pendingSave)}/retries`, {}, crypto.randomUUID(), { signal: AbortSignal.timeout(300_000) });
       if (result?.saveStatus !== "succeeded") {
         setState(old => ({ ...old, pendingSave: result?.saveId || old.pendingSave }));
-        throw new Error(result?.error?.message || "保存尚未确认。");
+        throw new Error(result?.error?.message || "Save has not been confirmed.");
       }
-      setState(old => ({ ...old, pendingSave: null, pendingSaveKind: null, error: "", phase: "补登记完成，可继续剩余分析" })); await refresh();
+      setState(old => ({ ...old, pendingSave: null, pendingSaveKind: null, error: "", phase: "Back-registration complete; remaining analysis can continue" })); await refresh();
     },
     async component(componentId = "whisper-small-q8") { return hostSession.request(`/api/v1/components/${componentId}`); },
     async prepareComponent(event, componentId = "whisper-small-q8") {

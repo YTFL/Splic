@@ -18,16 +18,16 @@ async function decodeWindow(track, start, end, signal) {
   const sink = new AudioBufferSink(track), length = end - start;
   const first = Math.max(0, await track.getFirstTimestamp()), last = await track.computeDuration();
   const from = Math.max(start, first), to = Math.min(end, last);
-  if (!Number.isFinite(first) || !Number.isFinite(last)) throw new Error("无法读取音轨时间范围。");
+  if (!Number.isFinite(first) || !Number.isFinite(last)) throw new Error("Unable to read audio track time range.");
   let buffer, covered = from;
   const consume = item => {
     if (!item) return;
     const audio = item.buffer, left = Math.max(from, item.timestamp), right = Math.min(to, item.timestamp + audio.duration);
     if (right <= left) return;
-    if (left > covered + 0.1) throw new Error("源音频解码存在未覆盖区间。");
+    if (left > covered + 0.1) throw new Error("Source audio decoding has uncovered gap.");
     covered = Math.max(covered, right);
     buffer ??= new AudioBuffer({ numberOfChannels: 1, length: Math.ceil(length * audio.sampleRate), sampleRate: audio.sampleRate });
-    if (buffer.sampleRate !== audio.sampleRate) throw new Error("音轨采样率在处理区间内发生变化。");
+    if (buffer.sampleRate !== audio.sampleRate) throw new Error("Audio track sample rate changed during processing.");
     const sourceOffset = Math.max(0, Math.round((left - item.timestamp) * audio.sampleRate));
     const targetOffset = Math.max(0, Math.round((left - start) * audio.sampleRate));
     const frames = Math.min(Math.round((right - left) * audio.sampleRate), audio.length - sourceOffset, buffer.length - targetOffset);
@@ -41,7 +41,7 @@ async function decodeWindow(track, start, end, signal) {
   if (to > from) {
     consume(await sink.getBuffer(from));
     for await (const item of sink.buffers(from, to)) { signal.throwIfAborted(); consume(item); }
-    if (!buffer || covered < to - 0.1) throw new Error("源音频解码未完成。");
+    if (!buffer || covered < to - 0.1) throw new Error("Source audio decoding incomplete.");
   }
   signal.throwIfAborted();
   const frameCount = Math.max(1, Math.round(length * 16000));
@@ -56,27 +56,27 @@ async function decodeWindow(track, start, end, signal) {
 export async function analyzeSourceSpeech(src, step, { signal, onProgress, checkpoint, localModelRoot }) {
   const segmentation = step.basis.settings.speechSegmentation;
   if (!segmentation || Object.entries(SILERO_SPEECH_SEGMENTATION).some(([key, value]) => segmentation[key] !== value)) {
-    throw new Error("语音分段依据已更新，请保留旧结果并重新发起分析。");
+    throw new Error("Speech segmentation basis updated. Retaining previous results; please re-run analysis.");
   }
   const source = await openAnalysisSource(src, signal);
   const outputs = step.checkpoints.map(item => item.output);
   const { sourceStartSeconds: start, sourceEndSeconds: end } = step.basis.range;
   try {
     const track = await source.input.getPrimaryAudioTrack();
-    if (!track) throw Object.assign(new Error("此素材没有音轨。"), { code: "NO_AUDIO_TRACK" });
-    if (!(await track.canDecode())) throw Object.assign(new Error("当前浏览器无法解码此音轨。"), { code: "AUDIO_DECODE_UNAVAILABLE" });
+    if (!track) throw Object.assign(new Error("This media asset has no audio track."), { code: "NO_AUDIO_TRACK" });
+    if (!(await track.canDecode())) throw Object.assign(new Error("Browser cannot decode this audio track."), { code: "AUDIO_DECODE_UNAVAILABLE" });
     const duration = await source.input.computeDuration();
-    if (end > duration + 0.001) throw new Error("分析区间超出源素材时长。");
+    if (end > duration + 0.001) throw new Error("Analysis interval exceeds source media duration.");
     // Bounded decoded PCM, with context overlap. Word midpoints have one owning window.
     for (let from = step.checkpoints.at(-1)?.range.sourceEndSeconds ?? start; from < end;) {
       signal.throwIfAborted();
       const to = Math.min(end, from + 60), decodeFrom = Math.max(start, from - 5), decodeTo = Math.min(end, to + 5);
-      onProgress?.({ phase: `解码源区间 ${from.toFixed(1)}–${to.toFixed(1)} 秒` });
+      onProgress?.({ phase: `Decoding source range ${from.toFixed(1)}–${to.toFixed(1)}s` });
       const pcm = await decodeWindow(track, decodeFrom, decodeTo, signal);
       const probabilities = await analyzeVideoPauses({ src, sourceStart: decodeFrom, duration: decodeTo - decodeFrom, playbackRate: 1 }, {
         signal, language: step.basis.settings.language,
         localModelUrl: "/local-components/silero/haixin/timeline-studio-voice-models/model.onnx",
-        onProgress: progress => onProgress?.({ phase: "检测源语音区间", progress: progress * 100 }),
+        onProgress: progress => onProgress?.({ phase: "Detecting speech intervals", progress: progress * 100 }),
       });
       const speech = findSpeechRanges(probabilities, decodeTo - decodeFrom);
       const intervals = [];
@@ -99,7 +99,7 @@ export async function analyzeSourceSpeech(src, step, { signal, onProgress, check
         const [left, right] = chunk.timestamp ?? [];
         // Preserve model point alignments; the stored raw-word contract permits equal endpoints.
         if (!Number.isFinite(left) || !Number.isFinite(right) || left < 0 || right < left) {
-          throw new Error("语音结果缺少有效词级源时间，未保存为完整分析。", {
+          throw new Error("Speech result missing valid word timestamps; not saved as complete analysis.", {
             cause: { timestamp: chunk.timestamp, text: chunk.text, decodedSeconds: audio.length / 16000, sourceOffset, language: result.language },
           });
         }
@@ -107,14 +107,14 @@ export async function analyzeSourceSpeech(src, step, { signal, onProgress, check
         if (midpoint < from || midpoint >= to) continue;
         const previousWord = words.at(-1);
         if (previousWord && sourceOffset + left < previousWord.sourceStartSeconds) {
-          throw new Error("语音结果的词级源时间倒退，未保存为完整分析。", {
+          throw new Error("Speech word source timestamp reversed; not saved as complete analysis.", {
             cause: { timestamp: chunk.timestamp, text: chunk.text, previousWord },
           });
         }
         // Transformers serializes word timestamps rounded to two decimal places.
         const decodedSeconds = audio.length / 16000;
         if (right > Number(decodedSeconds.toFixed(2))) {
-          throw new Error("语音结果的词时间超出源音频范围，未保存为完整分析。", {
+          throw new Error("Speech word timestamp exceeds source audio range; not saved as complete analysis.", {
             cause: { timestamp: chunk.timestamp, text: chunk.text, decodedSeconds: audio.length / 16000 },
           });
         }

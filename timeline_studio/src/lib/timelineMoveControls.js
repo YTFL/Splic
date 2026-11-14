@@ -23,7 +23,7 @@ export function createTimelineMoveControls(d) {
     const musicSegment = musicSegments.find((segment) => segment.id === segmentId) ?? musicSegments[0];
     const clipDuration = isSource ? linkedSourceSegment?.duration ?? d.sourceAudioDuration : musicSegment?.duration ?? d.musicDuration;
     const start = isSource ? linkedSourceSegment?.start ?? d.sourceAudioStart : musicSegment?.start ?? d.musicStart;
-    if (!(clipDuration > 0) || d.trackLocks[track]) return void d.notify(`${isSource ? "视频原声" : "音乐"}轨已锁定，无法移动`);
+    if (!(clipDuration > 0) || d.trackLocks[track]) return void d.notify(`${isSource ? "Source audio" : "Music"} track is locked, cannot move`);
     const rect = d.trackScrollRef.current?.getBoundingClientRect(); const duration = d.timelineDurationRef.current || 10;
     if (!rect) return;
     event.preventDefault(); event.stopPropagation(); d.setSelectedTrack(track);
@@ -86,7 +86,7 @@ export function createTimelineMoveControls(d) {
     const up = () => { cleanup(); if (moved) {
       d.suppressTimelineClipClickRef.current = track;
       setTimeout(() => { if (d.suppressTimelineClipClickRef.current === track) d.suppressTimelineClipClickRef.current = ""; }, 160);
-      d.notify(`${isSource ? "视频原声" : "音乐"}片段位置已调整`);
+      d.notify(`${isSource ? "Source audio" : "Music"} clip position adjusted`);
     } };
     addEventListener("pointermove", move, { passive: false }); addEventListener("pointerup", up); addEventListener("pointercancel", cancel);
   };
@@ -98,7 +98,7 @@ export function createTimelineMoveControls(d) {
       : null;
     const clipDuration = linkedSourceSegment?.duration ?? d.sourceAudioDuration;
     const start = linkedSourceSegment?.start ?? d.sourceAudioStart;
-    if (!(clipDuration > 0) || d.trackLocks.source) return void d.notify("视频原声轨已锁定，无法移动");
+    if (!(clipDuration > 0) || d.trackLocks.source) return void d.notify("Source audio track is locked, cannot move clip");
     const rect = d.trackScrollRef.current?.getBoundingClientRect();
     const sourceTrack = event.currentTarget?.closest?.(".source-track");
     const sourceTrackRect = sourceTrack?.getBoundingClientRect?.();
@@ -215,7 +215,7 @@ export function createTimelineMoveControls(d) {
       setTimeout(() => {
         if (d.suppressTimelineClipClickRef.current === "source") d.suppressTimelineClipClickRef.current = "";
       }, 160);
-      if (!movedToAudioLane) d.notify("视频原声片段位置已调整");
+      if (!movedToAudioLane) d.notify("Source audio clip position adjusted");
     };
     addEventListener("pointermove", move, { passive: false });
     addEventListener("pointerup", up);
@@ -227,7 +227,7 @@ export function createTimelineMoveControls(d) {
     if (isTimedSegmentLaneLocked(d.audioSegments, segment.id, d.trackLocks)) return void d.notify(d.t("audioTrackLockedMove"));
     const captions = d.captionSegments.filter((caption) => caption.audioSegmentId === segment.id);
     if (captions.length && d.trackLocks.caption) {
-      return void d.notify("关联字幕轨已锁定，无法移动这个配音片段");
+      return void d.notify("Linked caption track is locked, cannot move voiceover clip");
     }
     const rect = d.trackScrollRef.current?.getBoundingClientRect(); const duration = d.timelineDurationRef.current || 10;
     if (!rect) return;
@@ -345,7 +345,7 @@ export function createTimelineMoveControls(d) {
   const startStickerSegmentMove = (event, id = "", initialLane = 0) => {
     if (event.button !== 0) return;
     const segment = d.stickerSegments.find((item) => item.id === id); if (!segment) return;
-    if (d.trackLocks.sticker) return void d.notify("贴纸轨已锁定，无法移动贴纸");
+    if (d.trackLocks.sticker) return void d.notify("Sticker track is locked, cannot move sticker");
     const rect = d.trackScrollRef.current?.getBoundingClientRect();
     const duration = d.timelineDurationRef.current || Math.max(d.estimatedDuration, segment.start + segment.duration, 10);
     if (!rect || duration <= 0) return;
@@ -407,19 +407,19 @@ export function createTimelineMoveControls(d) {
         : item);
       cleanup(() => {
         d.setStickerTimelineDrag?.(null);
-        if (d.commitStickerSegments) d.commitStickerSegments(next, "已调整贴纸片段位置", segment.id);
+        if (d.commitStickerSegments) d.commitStickerSegments(next, "Sticker clip position adjusted", segment.id);
       });
       if (!moved) return;
       d.suppressTimelineClipClickRef.current = segment.id;
       setTimeout(() => { if (d.suppressTimelineClipClickRef.current === segment.id) d.suppressTimelineClipClickRef.current = ""; }, 160);
-      if (!d.commitStickerSegments) d.notify("贴纸片段位置已调整");
+      if (!d.commitStickerSegments) d.notify("Sticker clip position adjusted");
     };
     addEventListener("pointermove", move, { passive: false }); addEventListener("pointerup", up); addEventListener("pointercancel", cancel);
   };
   const startStickerSegmentResize = (event, id = "", edge = "end") => {
     if (event.button !== 0) return;
     const segment = d.stickerSegments.find((item) => item.id === id); if (!segment) return;
-    if (d.trackLocks.sticker) return void d.notify("贴纸轨已锁定，无法调整片段时长");
+    if (d.trackLocks.sticker) return void d.notify("Sticker track is locked, cannot adjust duration");
     const isMobileTouch = event.pointerType === "touch" && globalThis.window?.matchMedia?.("(max-width: 760px)").matches;
     if (!isMobileTouch) event.preventDefault();
     event.stopPropagation();
@@ -474,7 +474,7 @@ export function createTimelineMoveControls(d) {
     const up = () => {
       const next = d.stickerSegments.map((item) => item.id === segment.id ? { ...item, start: latestStart, duration: latestDuration } : item);
       cleanup(() => {
-        if (d.commitStickerSegments) d.commitStickerSegments(next, "已调整贴纸片段时长", segment.id);
+        if (d.commitStickerSegments) d.commitStickerSegments(next, "Sticker clip duration adjusted", segment.id);
         else applyRange(latestStart, latestDuration);
       });
       if (!moved) return;

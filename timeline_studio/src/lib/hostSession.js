@@ -95,7 +95,7 @@ export async function connectHostSession() {
   }
   if (!credential || typeof credential.bearer !== "string" ||
       !Number.isFinite(Date.parse(credential.expiresAt)) || Date.parse(credential.expiresAt) <= Date.now()) {
-    forget(); throw new Error("请从 Timeline Studio 启动器重新打开页面。当前链接无有效会话。 / Reopen from the Timeline Studio launcher.");
+    forget(); throw new Error("Please reopen the page from the Timeline Studio launcher. The current link has no valid session. / Reopen from the Timeline Studio launcher.");
   }
   await refresh();
 

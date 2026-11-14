@@ -11,9 +11,9 @@ function createRequestId() {
 
 function createAbortError() {
   if (typeof DOMException !== "undefined") {
-    return new DOMException("视觉分析已取消。", "AbortError");
+    return new DOMException("Visual analysis has been cancelled.", "AbortError");
   }
-  const error = new Error("视觉分析已取消。");
+  const error = new Error("Visual analysis has been cancelled.");
   error.name = "AbortError";
   return error;
 }
@@ -95,17 +95,17 @@ function getVisionWorker() {
 
     if (message.type === "error") {
       settleVisionRequest(message.requestId, ({ reject }) => {
-        reject(new Error(message.error || "视觉主体分析失败"));
+        reject(new Error(message.error || "Visual subject analysis failed"));
       });
     }
   });
 
   visionWorker.addEventListener("error", (event) => {
-    resetVisionWorker(new Error(event.message || "视觉分析 Worker 运行失败"));
+    resetVisionWorker(new Error(event.message || "Visual analysis worker encountered an error"));
   });
 
   visionWorker.addEventListener("messageerror", () => {
-    resetVisionWorker(new Error("视觉分析 Worker 返回了无法读取的数据"));
+    resetVisionWorker(new Error("Visual analysis worker returned unreadable data"));
   });
 
   return visionWorker;
@@ -156,10 +156,10 @@ export function analyzeVisualSubject(input, legacyOptions = {}) {
   } = options;
 
   if (!(blob instanceof Blob) || blob.size <= 0) {
-    return Promise.reject(new TypeError("analyzeVisualSubject 需要非空图片 Blob。"));
+    return Promise.reject(new TypeError("analyzeVisualSubject requires a non-empty image Blob."));
   }
   if (blob.type && !blob.type.startsWith("image/")) {
-    return Promise.reject(new TypeError("请先用 captureVisualFrame 把视频转换成图片 Blob。"));
+    return Promise.reject(new TypeError("Please use captureVisualFrame to convert the video to an image Blob first."));
   }
 
   try {
@@ -170,7 +170,7 @@ export function analyzeVisualSubject(input, legacyOptions = {}) {
 
   const worker = getVisionWorker();
   if (!worker) {
-    return Promise.reject(new Error("当前浏览器不支持 Worker 视觉分析。"));
+    return Promise.reject(new Error("This browser does not support Worker-based visual analysis."));
   }
 
   const requestId = createRequestId();
@@ -193,7 +193,7 @@ export function analyzeVisualSubject(input, legacyOptions = {}) {
     signal?.addEventListener("abort", handleAbort, { once: true });
 
     try {
-      onProgress?.({ progress: 0, phase: "准备视觉分析 Worker" });
+      onProgress?.({ progress: 0, phase: "Preparing visual analysis worker" });
       worker.postMessage({
         type: "analyze",
         requestId,
@@ -231,7 +231,7 @@ export function warmVisualSubjectModels(options = {}) {
 
   const worker = getVisionWorker();
   if (!worker) {
-    return Promise.reject(new Error("当前浏览器不支持 Worker 视觉分析。"));
+    return Promise.reject(new Error("This browser does not support Worker-based visual analysis."));
   }
 
   const requestId = createRequestId();
@@ -291,7 +291,7 @@ function waitForEvent(target, eventName, errorName = "error", signal = null) {
     };
     const handleError = () => {
       cleanup();
-      reject(new Error("无法读取视觉素材。"));
+      reject(new Error("Unable to read visual asset."));
     };
     const handleAbort = () => {
       cleanup();
@@ -375,7 +375,7 @@ function makeCaptureCanvas(width, height) {
   if (typeof OffscreenCanvas !== "undefined") {
     return new OffscreenCanvas(width, height);
   }
-  throw new Error("当前环境不支持 Canvas，无法截取视觉帧。");
+  throw new Error("This environment does not support Canvas; cannot capture visual frame.");
 }
 
 function canvasToBlob(canvas, type, quality) {
@@ -389,7 +389,7 @@ function canvasToBlob(canvas, type, quality) {
         if (blob) {
           resolve(blob);
         } else {
-          reject(new Error("视觉帧编码失败。"));
+          reject(new Error("Visual frame encoding failed."));
         }
       },
       type,
@@ -416,7 +416,7 @@ async function loadImageSource(source, signal) {
   }
 
   if (typeof Image === "undefined") {
-    throw new Error("当前环境无法解码图片。");
+    throw new Error("This environment cannot decode the image.");
   }
 
   const objectUrl = source instanceof Blob ? URL.createObjectURL(source) : "";
@@ -469,7 +469,7 @@ async function loadVideoSource(source, time, signal) {
   }
 
   if (typeof document === "undefined") {
-    throw new Error("当前环境无法解码视频。");
+    throw new Error("This environment cannot decode the video.");
   }
 
   const objectUrl = source instanceof Blob ? URL.createObjectURL(source) : "";
@@ -517,7 +517,7 @@ export async function captureVisualFrame(input, legacyOptions = {}) {
   } = options;
   const source = videoElement ?? src;
   if (!source) {
-    throw new TypeError("captureVisualFrame 需要 src 或 videoElement。");
+    throw new TypeError("captureVisualFrame requires a src or videoElement.");
   }
   throwIfAborted(signal);
 
@@ -535,14 +535,14 @@ export async function captureVisualFrame(input, legacyOptions = {}) {
     throwIfAborted(signal);
     const sourceSize = getVisualDimensions(loaded.visual);
     if (!sourceSize.width || !sourceSize.height) {
-      throw new Error("视觉素材尺寸无效。");
+      throw new Error("Visual asset dimensions are invalid.");
     }
 
     const targetSize = getCaptureDimensions(sourceSize, options);
     const canvas = makeCaptureCanvas(targetSize.width, targetSize.height);
     const context = canvas.getContext("2d", { alpha: true });
     if (!context) {
-      throw new Error("无法创建视觉帧画布。");
+      throw new Error("Unable to create visual frame canvas.");
     }
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
@@ -738,18 +738,18 @@ export async function analyzeVideoVisualTrack(options = {}) {
   } = options;
   const source = blob ?? requestedSource;
   if (!source) {
-    throw new TypeError("analyzeVideoVisualTrack 需要视频 src 或 Blob。");
+    throw new TypeError("analyzeVideoVisualTrack requires a video src or Blob.");
   }
 
   throwIfAborted(signal);
-  onProgress?.({ progress: 1, phase: "读取全视频元数据" });
+  onProgress?.({ progress: 1, phase: "Reading full video metadata" });
   const loaded = await loadVideoSource(source, 0, signal);
 
   try {
     const video = loaded.visual;
     const sourceSize = getVisualDimensions(video);
     if (!sourceSize.width || !sourceSize.height) {
-      throw new Error("视频尺寸无效，无法进行全片视觉分析。");
+      throw new Error("Video dimensions are invalid; cannot perform full-video visual analysis.");
     }
 
     const rawSourceDuration = Number(video.duration);
@@ -772,7 +772,7 @@ export async function analyzeVideoVisualTrack(options = {}) {
     const canvas = makeCaptureCanvas(targetSize.width, targetSize.height);
     const context = canvas.getContext("2d", { alpha: false });
     if (!context) {
-      throw new Error("无法创建全视频视觉分析画布。");
+      throw new Error("Unable to create full-video visual analysis canvas.");
     }
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
@@ -784,7 +784,7 @@ export async function analyzeVideoVisualTrack(options = {}) {
       const time = sampleTimes[index];
       onProgress?.({
         progress: Math.max(1, (index / sampleTimes.length) * 100),
-        phase: `截取全视频帧 ${index + 1}/${sampleTimes.length}`,
+        phase: `Capturing full-video frame ${index + 1}/${sampleTimes.length}`,
       });
       await seekVideo(video, time, signal);
       context.fillStyle = "#000000";
@@ -804,7 +804,7 @@ export async function analyzeVideoVisualTrack(options = {}) {
           const overall = ((index + progress / 100) / sampleTimes.length) * 100;
           onProgress?.({
             progress: overall,
-            phase: `全视频 ${index + 1}/${sampleTimes.length} · ${phase}`,
+            phase: `Full-video ${index + 1}/${sampleTimes.length} · ${phase}`,
           });
         },
       });
@@ -824,7 +824,7 @@ export async function analyzeVideoVisualTrack(options = {}) {
 
     const firstSubjectSample = samples.find((sample) => sample.subject) ?? samples[0] ?? null;
     const finalTime = Number(samples.at(-1)?.time) || 0;
-    onProgress?.({ progress: 100, phase: "全视频视觉轨道已生成" });
+    onProgress?.({ progress: 100, phase: "Full-video visual track generated" });
     return {
       kind: "video-timeline",
       duration,
@@ -860,5 +860,5 @@ export async function analyzeVideoVisualTrack(options = {}) {
 }
 
 export function disposeVisionWorker() {
-  resetVisionWorker(new Error("视觉分析 Worker 已释放"));
+  resetVisionWorker(new Error("Visual analysis Worker has been released"));
 }

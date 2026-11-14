@@ -1,6 +1,138 @@
-/* Status pill reuses .assembly-status-pill (auto-edit.css); this only adds the
-   sweep clock and keeps it above the editor without covering it. */
-.auto-cut-sweep-pill { z-index: 1200; pointer-events: none; }
+/* ============================================================ */
+/* REACTIVE AGENTIC AUTOMATION OVERLAY (Thanos Snap Engine)     */
+/* ============================================================ */
+
+.agentic-reactive-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1205;
+  overflow: hidden;
+}
+
+/* Micro-particle flight canvas (zero bloom, flat 2D) */
+.agentic-flight-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+/* Sidebar Tab Spotlight (Subtle non-neon indicator) */
+.agentic-tab-spotlight {
+  outline: 1.5px solid #e53935 !important;
+  background: rgba(229, 57, 53, 0.16) !important;
+  color: #ffffff !important;
+  transition: all 0.2s ease-out;
+}
+
+/* Agentic Ghost Cursor (Prominent 30px pointer) */
+.agentic-ghost-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1210;
+  will-change: transform;
+}
+
+.ghost-pointer-svg {
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.75));
+}
+
+.ghost-focus-ring {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid #e53935;
+  animation: ghostRingPulse 0.85s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ghostRingPulse {
+  0% { transform: scale(0.65); opacity: 0.95; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.ghost-action-tag {
+  position: absolute;
+  top: 22px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  background: #13161f;
+  border: 1px solid #2d3444;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.ghost-tag-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e53935;
+}
+
+/* Laser Splicing Blade at Playhead Seam */
+.agentic-laser-blade {
+  position: fixed;
+  width: 2.5px;
+  background: #e53935;
+  pointer-events: none;
+  z-index: 1206;
+  transform: translateX(-50%);
+  animation: laserBladeSnap 0.5s ease-out forwards;
+}
+
+@keyframes laserBladeSnap {
+  0% { opacity: 0; transform: translateX(-50%) scaleY(0.3); }
+  25% { opacity: 1; transform: translateX(-50%) scaleY(1.04); }
+  75% { opacity: 1; transform: translateX(-50%) scaleY(1); }
+  100% { opacity: 0; transform: translateX(-50%) scaleY(0.9); }
+}
+
+.laser-beam-line {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0.9;
+}
+
+.laser-spark {
+  position: absolute;
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: #e53935;
+}
+
+.laser-spark.spark-top { top: 12%; left: -4px; animation: sparkDrift 0.4s ease-out forwards; }
+.laser-spark.spark-mid { top: 50%; right: -4px; animation: sparkDrift 0.4s ease-out 0.05s forwards; }
+.laser-spark.spark-bot { bottom: 12%; left: -3px; animation: sparkDrift 0.4s ease-out 0.1s forwards; }
+
+@keyframes sparkDrift {
+  0% { transform: scale(1) translate(0, 0); opacity: 1; }
+  100% { transform: scale(0.2) translate(8px, -6px); opacity: 0; }
+}
+
+/* Status Pill */
+.auto-cut-sweep-pill {
+  z-index: 1215;
+  pointer-events: none;
+}
+
 .auto-cut-sweep-time {
   margin-left: 4px;
   padding-left: 8px;
@@ -11,23 +143,44 @@
   white-space: nowrap;
 }
 
-/* Clips arriving on the real timeline during the sweep: wipe in with a short
-   glow. Only opacity / clip-path / box-shadow / filter are animated, never
-   transform, so timeline positioning is untouched. */
-.auto-cut-arrive { animation: auto-cut-arrive 0.62s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
-@keyframes auto-cut-arrive {
-  0% { opacity: 0; clip-path: inset(0 100% 0 0); box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.9), 0 0 14px rgba(229, 57, 53, 0.6); filter: brightness(1.5); }
-  60% { opacity: 1; clip-path: inset(0 0 0 0); box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.7), 0 0 10px rgba(229, 57, 53, 0.4); filter: brightness(1.2); }
-  100% { opacity: 1; clip-path: inset(0 0 0 0); box-shadow: none; filter: none; }
+/* Clips arriving on the real timeline during sweep (Flat, crisp, zero neon glow) */
+.auto-cut-arrive {
+  animation: auto-cut-arrive 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* The sweep crossing a ripple cut: a short red pulse on the video track. */
-.auto-cut-seam-flash { animation: auto-cut-seam-flash 0.5s ease-out; }
+@keyframes auto-cut-arrive {
+  0% {
+    opacity: 0;
+    outline: 1.5px solid #e53935;
+    clip-path: inset(0 100% 0 0);
+  }
+  60% {
+    opacity: 1;
+    outline: 1.5px solid #e53935;
+    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    opacity: 1;
+    outline: 1px solid transparent;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* The sweep crossing a ripple cut: crisp boundary flash on video track */
+.auto-cut-seam-flash {
+  animation: auto-cut-seam-flash 0.48s ease-out;
+}
+
 @keyframes auto-cut-seam-flash {
-  0% { box-shadow: inset 0 0 0 2px rgba(229, 57, 53, 0.95), 0 0 16px rgba(229, 57, 53, 0.55); }
-  100% { box-shadow: inset 0 0 0 0 rgba(229, 57, 53, 0), 0 0 0 rgba(229, 57, 53, 0); }
+  0% { outline: 1.5px solid #e53935; }
+  100% { outline: 1.5px solid transparent; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auto-cut-arrive, .auto-cut-seam-flash { animation: none; }
+  .auto-cut-arrive,
+  .auto-cut-seam-flash,
+  .agentic-laser-blade,
+  .ghost-focus-ring {
+    animation: none !important;
+  }
 }

@@ -16,10 +16,11 @@ import httpx
 from fastapi import FastAPI, HTTPException, Query, Response, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel, ValidationError
 
 from config import (
+    IS_VERCEL,
     PORT,
     DB_PATH,
     SPLIC_DIR,
@@ -392,9 +393,22 @@ async def list_stickers_for_project(project_id: str):
 
 @app.get("/api/stickers/{filename}")
 @app.head("/api/stickers/{filename}", include_in_schema=False)
-async def serve_sticker(filename: str):
-    """Serve a transparent sticker PNG directly from ~/.splic/stickers/ with CORP headers."""
+def serve_sticker(filename: str):
+    """Serve a transparent sticker PNG directly from ~/.splic/stickers/ with CORP headers.
+
+    On serverless hosts (Vercel) the sticker cache lives in per-instance /tmp, so a
+    request can land on an instance that never scraped it. In that case the sticker
+    is regenerated from its slug once; the long CDN cache header then keeps later
+    requests off the function entirely.
+    """
     file_path = get_sticker_path(filename)
+    if not file_path and IS_VERCEL and _sticker_fetch_enabled():
+        slug = Path(filename).stem
+        healed = fetch_and_make_sticker(slug.replace("_", " "), timeout=4.0)
+        if healed and not healed.get("fallback"):
+            file_path = get_sticker_path(healed["filename"])
+        elif healed and healed.get("asset_url"):
+            return RedirectResponse(healed["asset_url"], status_code=307)
     if not file_path:
         raise HTTPException(status_code=404, detail=f"Sticker '{filename}' not found in user storage")
 
@@ -404,6 +418,8 @@ async def serve_sticker(filename: str):
         headers={
             "Cross-Origin-Resource-Policy": "cross-origin",
             "Access-Control-Allow-Origin": "*",
+            # Sticker files are keyed by keyword slug and never rewritten in place.
+            "Cache-Control": "public, max-age=86400, s-maxage=31536000, immutable",
         },
     )
 

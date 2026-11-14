@@ -95,11 +95,65 @@ async function loadClipBlob(clip) {
   return response.blob();
 }
 
+// Serverless hosts (Vercel Functions) reject request bodies over 4.5 MB, which almost
+// any video exceeds. The backend only needs the speech, so upload a mono Opus track
+// (~4 KB/s, so ~18 minutes fit) instead of the full video.
+const SPEECH_UPLOAD_BITRATE = 32_000;
+
+/** Extract the clip's audio as mono Opus/WebM on the source clock (t=0 = file start). */
+async function extractSpeechAudio(blob, signal) {
+  const { ALL_FORMATS, BlobSource, BufferTarget, Conversion, Input, Output, WebMOutputFormat, canEncodeAudio } = await import("mediabunny");
+  const audioOptions = { numberOfChannels: 1, sampleRate: 48_000, bitrate: SPEECH_UPLOAD_BITRATE };
+  if (!(await canEncodeAudio("opus", audioOptions))) return null;
+  const input = new Input({ source: new BlobSource(blob), formats: ALL_FORMATS });
+  let conversion;
+  let finished = false;
+  try {
+    if (!(await input.getPrimaryAudioTrack())) return null;
+    const target = new BufferTarget();
+    const output = new Output({ format: new WebMOutputFormat(), target });
+    conversion = await Conversion.init({
+      input, output, tracks: "primary", showWarnings: false,
+      // Keep EditPlan timestamps on the original source clock.
+      trim: { start: 0 },
+      video: { discard: true },
+      audio: { ...audioOptions, codec: "opus", forceTranscode: true },
+    });
+    if (!conversion.isValid) return null;
+    const abort = () => conversion.cancel().catch(() => {});
+    signal?.addEventListener("abort", abort, { once: true });
+    try {
+      await conversion.execute();
+    } finally {
+      signal?.removeEventListener("abort", abort);
+    }
+    finished = true;
+    return target.buffer ? new Blob([target.buffer], { type: "audio/webm" }) : null;
+  } finally {
+    if (!finished) await conversion?.cancel().catch(() => {});
+    input.dispose();
+  }
+}
+
+/** The smallest upload that still carries the clip's speech; falls back to the original media. */
+async function prepareAutoCutUpload(blob, name, signal) {
+  try {
+    const audio = await extractSpeechAudio(blob, signal);
+    if (audio?.size && audio.size < blob.size) {
+      return { blob: audio, name: `${String(name).replace(/\.[^./\\]+$/, "") || "timeline-audio"}.webm` };
+    }
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    console.warn("Auto-Cut: audio extraction failed, uploading the original media", error);
+  }
+  return { blob, name };
+}
+
 /** POST the clip's media to the backend and return the validated EditPlan JSON. */
 export async function requestAutoCutEditPlan(clip, { languageCode = "hi-IN", fetchStickers = true, projectId = "", signal } = {}) {
-  const blob = await loadClipBlob(clip);
+  const upload = await prepareAutoCutUpload(await loadClipBlob(clip), clip.name || "timeline-video.mp4", signal);
   const form = new FormData();
-  form.append("file", blob, clip.name || "timeline-video.mp4");
+  form.append("file", upload.blob, upload.name);
   form.append("language_code", languageCode);
   form.append("fetch_stickers", String(fetchStickers));
   if (projectId) form.append("project_id", projectId);
@@ -109,6 +163,9 @@ export async function requestAutoCutEditPlan(clip, { languageCode = "hi-IN", fet
   } catch (error) {
     if (error?.name === "AbortError") throw error;
     throw new Error("Auto-Cut backend is unreachable. Start it with: uvicorn main:app --port 8000", { cause: error });
+  }
+  if (response.status === 413) {
+    throw new Error("Auto-Cut upload is too large for the server (4.5 MB limit on serverless deployments). Trim the clip and try again.");
   }
   if (!response.ok) {
     let detail = response.statusText;

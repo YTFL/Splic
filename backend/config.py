@@ -1,6 +1,10 @@
 """
 config.py — Centralized configuration for user local storage paths and settings.
 Resolves ~/.splic/ for database and downloaded stickers (decoupled from the git repo).
+
+On Vercel (serverless) the deployment bundle is read-only and only /tmp is
+writable, so storage defaults to /tmp/splic there. That storage is per-instance
+and ephemeral: it survives warm invocations but not cold starts.
 """
 
 import os
@@ -9,8 +13,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Base user application storage directory (~/.splic or env override)
-DEFAULT_USER_DIR = Path.home() / ".splic"
+# Running inside a Vercel Function (Vercel sets VERCEL=1 at build and runtime).
+IS_VERCEL = bool(os.getenv("VERCEL"))
+
+# Base user application storage directory (~/.splic, /tmp/splic on Vercel, or env override)
+DEFAULT_USER_DIR = Path("/tmp/splic") if IS_VERCEL else Path.home() / ".splic"
 SPLIC_DIR = Path(os.getenv("SPLIC_DATA_DIR", str(DEFAULT_USER_DIR)))
 
 # Storage subpaths
@@ -30,5 +37,17 @@ BACKEND_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BACKEND_DIR.parent
 _STUDIO_DIR = PROJECT_ROOT / "timeline_studio" if (PROJECT_ROOT / "timeline_studio").exists() else PROJECT_ROOT / "timeline studio"
 TIMELINE_STUDIO_STICKERS_DIR = _STUDIO_DIR / "public" / "assets" / "stickers"
-TIMELINE_STUDIO_MANIFEST = TIMELINE_STUDIO_STICKERS_DIR / "stickers-manifest.json"
 TIMELINE_STUDIO_SFX_DIR = _STUDIO_DIR / "public" / "assets" / "sound-effects"
+
+# Snapshot of the studio's sticker manifest + SFX ids, committed inside backend/ so the
+# backend still knows the editor's catalogue when deployed without timeline_studio/
+# (the Vercel backend service bundles backend/ only). Refresh with:
+#   python backend/scripts/sync_studio_catalog.py
+STUDIO_CATALOG_SNAPSHOT_DIR = BACKEND_DIR / "studio_catalog"
+STUDIO_SFX_SNAPSHOT = STUDIO_CATALOG_SNAPSHOT_DIR / "sound-effects.json"
+
+_live_manifest = TIMELINE_STUDIO_STICKERS_DIR / "stickers-manifest.json"
+TIMELINE_STUDIO_MANIFEST = (
+    _live_manifest if _live_manifest.exists()
+    else STUDIO_CATALOG_SNAPSHOT_DIR / "stickers-manifest.json"
+)

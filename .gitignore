@@ -76,3 +76,4 @@ backend/.splic_test/
 
 # Copied from node_modules/@ffmpeg/ffmpeg by timeline_studio/next.config.mjs
 timeline_studio/public/vendor/ffmpeg/
+.vercel

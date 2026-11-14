@@ -1,0 +1,14 @@
+# Local-only files kept out of `vercel deploy` uploads (Git deploys already skip
+# everything in .gitignore).
+**/node_modules
+**/.next
+backend/.venv
+backend/.splic_test
+backend/**/__pycache__
+**/.pytest_cache
+.splic_data
+.freebuff
+.env
+.env.local
+**/.env
+**/.env.local

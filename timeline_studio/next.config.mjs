@@ -48,14 +48,18 @@ const nextConfig = {
     ];
   },
   async rewrites() {
+    // On Vercel, /api/* is routed to the FastAPI "backend" service by the root
+    // vercel.json before Next.js sees it, so the local proxy is dev/self-host only.
+    if (process.env.VERCEL) return [];
+    const backendUrl = (process.env.SPLIC_BACKEND_URL || "http://localhost:8000").replace(/\/+$/, "");
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:8000/api/:path*",
+        destination: `${backendUrl}/api/:path*`,
       },
       {
         source: "/dynamic_stickers/:path*",
-        destination: "http://localhost:8000/dynamic_stickers/:path*",
+        destination: `${backendUrl}/dynamic_stickers/:path*`,
       },
     ];
   },

@@ -799,5 +799,26 @@ class TestComposioServiceMounted(unittest.TestCase):
         self.assertEqual(self.client.get("/api/stickers/does-not-exist.png").status_code, 404)
 
 
+class TestStudioCatalogSnapshot(unittest.TestCase):
+    """The Vercel backend service bundles backend/ only, so it reads the editor's sticker
+    manifest and SFX ids from backend/studio_catalog/. Keep that snapshot in sync."""
+
+    ASSETS = BACKEND_DIR.parent / "timeline_studio" / "public" / "assets"
+    SNAPSHOT = BACKEND_DIR / "studio_catalog"
+    HINT = "Stale snapshot: run python backend/scripts/sync_studio_catalog.py"
+
+    def test_sticker_manifest_matches_studio(self):
+        import json
+        live = json.loads((self.ASSETS / "stickers" / "stickers-manifest.json").read_text(encoding="utf-8"))
+        snap = json.loads((self.SNAPSHOT / "stickers-manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, snap, self.HINT)
+
+    def test_sfx_ids_match_studio(self):
+        import json
+        live = sorted(p.stem for p in (self.ASSETS / "sound-effects").glob("*.mp3"))
+        snap = json.loads((self.SNAPSHOT / "sound-effects.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, snap, self.HINT)
+
+
 if __name__ == "__main__":
     unittest.main()

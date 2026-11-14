@@ -51,9 +51,21 @@ def find_ffmpeg() -> Optional[str]:
     try:
         import imageio_ffmpeg  # type: ignore
 
-        return imageio_ffmpeg.get_ffmpeg_exe()
+        return _ensure_executable(imageio_ffmpeg.get_ffmpeg_exe())
     except Exception:
         return None
+
+
+def _ensure_executable(path: str) -> str:
+    """Serverless bundles (Vercel) can drop the wheel's exec bit on a read-only
+    filesystem; run a 0755 copy from the writable temp dir in that case."""
+    if sys.platform == "win32" or os.access(path, os.X_OK):
+        return path
+    target = os.path.join(tempfile.gettempdir(), "splic-ffmpeg")
+    if not os.access(target, os.X_OK):
+        shutil.copyfile(path, target)
+        os.chmod(target, 0o755)
+    return target
 
 
 def has_ffmpeg() -> bool:

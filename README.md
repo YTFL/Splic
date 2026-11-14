@@ -42,6 +42,7 @@
   - [WebCodecs In-Browser MP4 Export](#webcodecs-in-browser-mp4-export)
   - [UI Design and Iconography Constraints](#ui-design-and-iconography-constraints)
 - [Repository Structure](#repository-structure)
+- [Deploying to Vercel](#deploying-to-vercel)
 - [Development, Testing and Verification](#development-testing-and-verification)
   - [Running Unit and Integration Tests](#running-unit-and-integration-tests)
   - [Pre-Commit / Pre-PR Verification Checklist](#pre-commit--pre-pr-verification-checklist)
@@ -481,6 +482,39 @@ Video compilation executes directly within the client's browser hardware via `@l
 ├── run.bat                        # Concurrency runner for Windows Command Prompt
 └── README.md                      # Primary project documentation
 ```
+
+---
+
+## Deploying to Vercel
+
+The repo deploys as **one Vercel project** using [Vercel Services](https://vercel.com/docs/services) (Beta, all plans). The root `vercel.json` defines two services on one domain:
+
+| Service | Root | Runtime | Receives |
+| :--- | :--- | :--- | :--- |
+| `web` | `timeline_studio/` | Next.js | everything except `/api/*` |
+| `backend` | `backend/` | FastAPI (`main:app`) as a Python Vercel Function, `maxDuration: 300` | `/api/*` (full path, prefix not stripped) |
+
+Because both services share one origin, stickers and API responses stay same-origin under COEP `require-corp`. No proxy is needed in production (the `localhost:8000` rewrite in `next.config.mjs` is disabled when `VERCEL` is set).
+
+### Steps
+
+1. Push the repo to GitHub, then on Vercel choose **Add New > Project** and import it. Leave **Root Directory** as the repository root (`./`). Vercel reads `vercel.json` and builds both services.
+2. Under **Settings > Environment Variables**, add:
+   - `SARVAM_API_KEY` (required; Auto-Cut returns 503 without it)
+   - optional: `FALLBACK_PROVIDER` (`groq` | `gemini` | `none`), `GROQ_API_KEY`, `GEMINI_API_KEY`, `SARVAM_LLM_MODEL`, `STICKER_FETCH`
+   - Composio/Firebase (`/api/v1`), if used: `COMPOSIO_API_KEY`, `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `FRONTEND_URL`, `OAUTH_REDIRECT_URL` (set these to your Vercel domain)
+   - `NEXT_PUBLIC_FIREBASE_*` for the frontend, if used
+3. Deploy. Check `https://<your-domain>/api/health`.
+
+CLI alternative: `npm i -g vercel`, then `vercel` (preview) or `vercel --prod` from the repo root. `.vercelignore` keeps `node_modules`, `.venv` and local env files out of the upload. `vercel dev` runs both services locally.
+
+### Serverless behaviour to know about
+
+- **Upload size:** Vercel Functions accept request bodies up to **4.5 MB**. Auto-Cut extracts the clip's audio in the browser (mono Opus, 32 kbps, about 18 minutes per 4.5 MB) and uploads only that. If the browser cannot encode Opus, it sends the original file, and anything over 4.5 MB fails with a 413.
+- **Duration:** a run (Sarvam STT + director LLM + sticker scraping) must finish within `maxDuration` (300 s, the Hobby maximum). On Pro you can raise `maxDuration` in `vercel.json` up to 800.
+- **Storage is ephemeral:** the backend writes TinyDB (`db.json`), scraped stickers and run logs to `/tmp/splic` on Vercel. That data lives only as long as the function instance, so projects saved through `/api/projects` do not persist across cold starts. Sticker PNGs are served with long CDN cache headers. If a request reaches an instance without the file, the backend scrapes the sticker again from its keyword. For persistent projects, move `backend/db` to a hosted database.
+- **Studio catalogue snapshot:** the backend bundle does not contain `timeline_studio/`, so it reads the sticker manifest and SFX ids from `backend/studio_catalog/`. After adding or removing bundled stickers or sound effects, run `python backend/scripts/sync_studio_catalog.py` (the test suite fails while the snapshot is stale).
+- **Python version:** `backend/.python-version` pins 3.12 (Vercel's default).
 
 ---
 

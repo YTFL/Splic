@@ -18,7 +18,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from config import STICKERS_DIR, TIMELINE_STUDIO_MANIFEST, TIMELINE_STUDIO_SFX_DIR
+from config import STICKERS_DIR, STUDIO_SFX_SNAPSHOT, TIMELINE_STUDIO_MANIFEST, TIMELINE_STUDIO_SFX_DIR
 
 logger = logging.getLogger("catalog")
 
@@ -84,12 +84,16 @@ def sfx_ids() -> List[str]:
     """All usable bundled SFX ids (file stems), discovered from disk once."""
     global _sfx_cache
     if _sfx_cache is None:
-        ids: List[str] = []
+        stems: List[str] = []
         if TIMELINE_STUDIO_SFX_DIR.exists():
-            ids = sorted(
-                p.stem for p in TIMELINE_STUDIO_SFX_DIR.glob("*.mp3")
-                if not p.stem.startswith(_SFX_EXCLUDE_PREFIXES)
-            )
+            stems = [p.stem for p in TIMELINE_STUDIO_SFX_DIR.glob("*.mp3")]
+        elif STUDIO_SFX_SNAPSHOT.exists():
+            # Deployed without timeline_studio/ (e.g. the Vercel backend service).
+            try:
+                stems = [str(s) for s in json.loads(STUDIO_SFX_SNAPSHOT.read_text(encoding="utf-8"))]
+            except Exception as exc:
+                logger.warning("Could not read SFX snapshot: %s", exc)
+        ids = sorted(s for s in stems if not s.startswith(_SFX_EXCLUDE_PREFIXES))
         _sfx_cache = ids or list(_SFX_FALLBACK_IDS)
     return _sfx_cache
 

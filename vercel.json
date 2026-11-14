@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "web": {
+      "root": "timeline_studio/",
+      "framework": "nextjs"
+    },
+    "backend": {
+      "root": "backend/",
+      "entrypoint": "main:app",
+      "functions": {
+        "main.py": {
+          "maxDuration": 300,
+          "excludeFiles": "{.venv/**,.splic_test/**,**/__pycache__/**,**/.pytest_cache/**,composio/tests/**,test_suite.py,sarvam_smoke.py,scripts/**}"
+        }
+      }
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "backend" } },
+    { "source": "/(.*)", "destination": { "service": "web" } }
+  ]
+}

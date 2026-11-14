@@ -78,6 +78,7 @@ export function EditorSidebar({ model: d, workspaceMode = "editor" }) {
                   key={id}
                   type="button"
                   role="tab"
+                  data-nuance-id={id}
                   aria-selected={isActive}
                   className={`davinci-nuance-btn ${isActive ? "is-active" : ""}`}
                   onClick={() => {

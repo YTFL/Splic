@@ -6,7 +6,8 @@ import { composeRepairWithWebCodecs } from "./repairVideoComposition.js";
 import { createRepairRangeEncoding } from "./repairRangeEncoding.js";
 import ffmpegCoreURL from "@ffmpeg/core?url";
 import ffmpegCoreWasmURL from "@ffmpeg/core/wasm?url";
-import ffmpegClassWorkerURL from "@ffmpeg/ffmpeg/worker?worker&url";
+// Copied from @ffmpeg/ffmpeg/dist/esm by next.config.mjs (see FFMPEG_WORKER_FILES).
+const FFMPEG_CLASS_WORKER_PATH = "/vendor/ffmpeg/worker.js";
 
 import { AUDIO_RECORDING_FORMATS, EXPORT_RECORDING_FORMATS, FILTER_OPTIONS } from "../config/editor.js";
 import { createExportAbortError, throwIfExportAborted, waitForExportTimeout } from "./exportCancellation.js";
@@ -2280,10 +2281,15 @@ async function getFfmpeg() {
     ffmpegLoadPromise = (async () => {
       const { FFmpeg } = await import("@ffmpeg/ffmpeg");
       const ffmpeg = new FFmpeg();
+      // FFmpeg resolves classWorkerURL against its own import.meta.url, which
+      // webpack rewrites to a file:// path, so every URL here must be absolute.
+      // The worker is served unbundled (next.config.mjs copies it to public/)
+      // so the browser resolves its relative imports and its import(coreURL).
+      const absolute = (url) => new URL(url, globalThis.location.href).href;
       await ffmpeg.load({
-        classWorkerURL: ffmpegClassWorkerURL,
-        coreURL: ffmpegCoreURL,
-        wasmURL: ffmpegCoreWasmURL,
+        classWorkerURL: absolute(FFMPEG_CLASS_WORKER_PATH),
+        coreURL: absolute(ffmpegCoreURL),
+        wasmURL: absolute(ffmpegCoreWasmURL),
       });
       return ffmpeg;
     })();

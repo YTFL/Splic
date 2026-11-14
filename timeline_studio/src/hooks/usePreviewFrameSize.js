@@ -6,8 +6,14 @@ export function isValidPreviewShellMeasurement(shell) {
 
 export function usePreviewFrameSize(shellRef, ratio, compactRail) {
   const [size, setSize] = useState({ width: 0, height: 0 });
+  // PreviewStage remounts when the workspace page changes, replacing the shell
+  // element while shellRef stays the same object. Track the element itself so
+  // the observer re-attaches to the live shell instead of a detached one.
+  const [shell, setShell] = useState(null);
   useEffect(() => {
-    const shell = shellRef.current;
+    if (shellRef.current !== shell) setShell(shellRef.current);
+  });
+  useEffect(() => {
     if (!shell) return undefined;
     const update = () => {
       // Moving PreviewStage into or out of its large-canvas portal briefly
@@ -24,6 +30,6 @@ export function usePreviewFrameSize(shellRef, ratio, compactRail) {
     update();
     if (window.ResizeObserver) { const observer = new ResizeObserver(update); observer.observe(shell); return () => observer.disconnect(); }
     addEventListener("resize", update); return () => removeEventListener("resize", update);
-  }, [compactRail, ratio.height, ratio.width, shellRef]);
+  }, [compactRail, ratio.height, ratio.width, shell]);
   return size;
 }

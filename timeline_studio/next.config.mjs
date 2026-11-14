@@ -1,7 +1,21 @@
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
+import { copyFileSync, mkdirSync } from "node:fs";
 
 const projectRoot = fileURLToPath(new URL(".", import.meta.url));
+
+// FFmpeg.wasm's worker is an ES module with relative imports (./const.js,
+// ./errors.js) and a runtime import(coreURL). Emitting it as a single webpack
+// asset breaks both, which silently dropped non-AAC (e.g. Opus) video audio
+// from exports. Serve the package's own files unbundled from public/ instead,
+// re-copied on every dev/build start so they always match the installed version.
+const FFMPEG_WORKER_FILES = ["worker.js", "const.js", "errors.js"];
+const ffmpegWorkerSource = resolve(projectRoot, "node_modules/@ffmpeg/ffmpeg/dist/esm");
+const ffmpegWorkerTarget = resolve(projectRoot, "public/vendor/ffmpeg");
+mkdirSync(ffmpegWorkerTarget, { recursive: true });
+for (const file of FFMPEG_WORKER_FILES) {
+  copyFileSync(resolve(ffmpegWorkerSource, file), resolve(ffmpegWorkerTarget, file));
+}
 
 const agentDiscoveryLinkHeader = [
   '</agent-guide.md>; rel="service-doc"; type="text/markdown"; title="Timeline Studio agent guide"',
@@ -82,7 +96,6 @@ const nextConfig = {
       ...config.resolve.alias,
       "@ffmpeg/core$": resolve(projectRoot, "node_modules/@ffmpeg/core/dist/esm/ffmpeg-core.js"),
       "@ffmpeg/core/wasm$": resolve(projectRoot, "node_modules/@ffmpeg/core/dist/esm/ffmpeg-core.wasm"),
-      "@ffmpeg/ffmpeg/worker$": resolve(projectRoot, "node_modules/@ffmpeg/ffmpeg/dist/esm/worker.js"),
       "onnxruntime-web/ort-wasm-simd-threaded.asyncify.mjs$": resolve(projectRoot, "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.mjs"),
       "onnxruntime-web/ort-wasm-simd-threaded.asyncify.wasm$": resolve(projectRoot, "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.wasm"),
       "onnxruntime-web/ort-wasm-simd-threaded.mjs$": resolve(projectRoot, "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs"),

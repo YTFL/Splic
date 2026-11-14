@@ -27,7 +27,7 @@ export const SUPPORTED_MEDIA_TYPES = ["image/", "video/", "audio/"];
 export const ASSET_DRAG_MIME = "application/x-ai-voiceover-asset";
 export const COMPACT_WORKSPACE_QUERY = "(max-width: 1279px)";
 
-export const DEFAULT_SCRIPT = "";
+export const DEFAULT_SCRIPT = "Aaj hum baat karenge top AI tools ke baare mein\nJo aapke workflow ko 10x fast kar denge";
 
 const LEGACY_VOICE_ID_ALIASES = {
   zh_m_yansheng: "zh_f_ruoxi",

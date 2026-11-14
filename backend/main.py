@@ -24,6 +24,7 @@ from config import (
     DB_PATH,
     SPLIC_DIR,
     STICKERS_DIR,
+    RUNS_DIR,
     TIMELINE_STUDIO_STICKERS_DIR,
     TIMELINE_STUDIO_SFX_DIR,
 )
@@ -61,6 +62,7 @@ from scraper import (
 )
 
 import composio_integration
+from project_info import index_runs, list_project_infos, project_summary, remove_project_runs, storage_paths
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("splic.main")
@@ -217,9 +219,13 @@ async def create_new_project(req: ProjectCreateRequest):
 
 
 @app.get("/api/projects")
-async def get_all_projects():
-    """List all projects stored in TinyDB."""
-    return {"projects": list_projects()}
+def get_all_projects():
+    """List stored projects with their info, read from local storage:
+    db.json (projects + sticker index), stickers/ (PNG files) and runs/ (Auto-Cut runs)."""
+    return {
+        "projects": list_project_infos(list_projects(), get_all_stickers()),
+        "storage": storage_paths(),
+    }
 
 
 @app.get("/api/projects/{project_id}")
@@ -228,7 +234,7 @@ async def get_single_project(project_id: str):
     doc = get_project(project_id)
     if not doc:
         raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
-    return doc
+    return {**doc, "summary": project_summary(doc, index_runs(), get_all_stickers())}
 
 
 @app.patch("/api/projects/{project_id}")
@@ -242,12 +248,14 @@ async def update_single_project(project_id: str, req: ProjectUpdateRequest):
 
 
 @app.delete("/api/projects/{project_id}")
-async def delete_single_project(project_id: str):
-    """Delete a project and its associated sticker references from TinyDB."""
+def delete_single_project(project_id: str):
+    """Delete a project: its db.json document, its sticker links, and its Auto-Cut
+    run folders under runs/. Scraped sticker PNGs stay (a shared cache)."""
     deleted = delete_project(project_id)
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
-    return {"status": "deleted", "project_id": project_id}
+    removed_runs = remove_project_runs(project_id)
+    return {"status": "deleted", "project_id": project_id, "removed_runs": removed_runs}
 
 
 # ============================================================================
@@ -403,9 +411,6 @@ async def serve_sticker(filename: str):
 # ============================================================================
 # Sarvam Auto-Edit Pipeline
 # ============================================================================
-
-RUNS_DIR = SPLIC_DIR / "runs"
-
 
 def _sticker_fetch_enabled() -> bool:
     return os.getenv("STICKER_FETCH", "true").strip().lower() in ("1", "true", "yes", "on")

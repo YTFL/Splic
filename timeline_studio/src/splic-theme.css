@@ -649,6 +649,96 @@
   font-weight: 600;
 }
 
+/* Delete control on project cards (two-step: Delete? then confirm). */
+.splic-project-delete-wrap {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.splic-project-card:hover .splic-project-delete-wrap,
+.splic-project-card:focus-within .splic-project-delete-wrap,
+.splic-project-card.is-confirming-delete .splic-project-delete-wrap,
+.splic-project-card.is-deleting .splic-project-delete-wrap { opacity: 1; }
+@media (hover: none) { .splic-project-delete-wrap { opacity: 1; } }
+.splic-project-delete-btn,
+.splic-project-delete-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(10, 11, 14, 0.85);
+  color: var(--splic-text-bright);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.splic-project-delete-btn:hover,
+.splic-project-card.is-confirming-delete .splic-project-delete-btn {
+  border-color: var(--splic-red-primary);
+  background: var(--splic-red-primary);
+  color: #ffffff;
+}
+.splic-project-delete-cancel:hover { border-color: rgba(255, 255, 255, 0.3); }
+.splic-project-delete-btn:disabled { cursor: progress; opacity: 0.85; }
+.splic-project-card.is-confirming-delete { border-color: rgba(229, 57, 53, 0.6); }
+.splic-project-card.is-deleting { opacity: 0.55; pointer-events: none; }
+
+/* Stored project info (from ~/.splic: db.json, stickers/, runs/) */
+.splic-project-name-row { gap: 8px; }
+.splic-project-status {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: 999px;
+  color: var(--splic-text-muted, #94a3b8);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.splic-project-status.is-auto_edited { border-color: rgba(34, 197, 94, 0.45); color: #86efac; }
+.splic-project-status.is-ready_for_export { border-color: rgba(229, 57, 53, 0.5); color: #fca5a5; }
+.splic-project-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--splic-text-muted, #94a3b8);
+  font-size: 11px;
+}
+.splic-project-info-row span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.splic-project-info-row span + span { flex: 0 0 auto; }
+.splic-projects-storage {
+  margin-top: 4px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px !important;
+  color: var(--splic-text-muted, #64748b) !important;
+}
+
+/* Stored-projects load / error / empty states */
+.splic-projects-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--splic-border-subtle);
+  border-radius: 8px;
+  color: var(--splic-text-muted, #94a3b8);
+  font-size: 12.5px;
+}
+.splic-projects-status.is-error { border-color: rgba(229, 57, 53, 0.45); color: #fca5a5; }
+.splic-projects-status .splic-dash-btn { margin-left: auto; }
+.splic-projects-spin { animation: splic-projects-spin 0.9s linear infinite; }
+@keyframes splic-projects-spin { to { transform: rotate(360deg); } }
+
 .splic-project-card-body {
   padding: 16px;
   display: flex;

@@ -27,6 +27,7 @@ import { BottomNavBar } from "./components/BottomNavBar.jsx";
 import { ExportWorkspace } from "./components/ExportWorkspace.jsx";
 import { AutoEditEngine } from "./components/AutoEditEngine.jsx";
 import { AutoCutSweep } from "./components/AutoCutSweep.jsx";
+import { createStoredProject, deleteStoredProject, fetchProjects } from "./lib/projectsApi.js";
 import { AutoEditModal } from "./components/AutoEditModal.jsx";
 import { normalizeEditPlan } from "./lib/editPlanEngine.js";
 import { GetStartedSplash } from "./components/GetStartedSplash.jsx";
@@ -282,52 +283,9 @@ export function App({ hostSession = null }) {
     fps: 30,
     updatedAt: Date.now(),
   });
-  const [existingProjects, setExistingProjects] = useState([
-    {
-      id: "proj-01",
-      name: "Hinglish Tech Breakdown Reel",
-      ratioId: "9:16",
-      platform: "Instagram Reel",
-      duration: 7.65,
-      updatedAt: Date.now() - 3600000 * 2,
-      thumbnail: "/assets/sample-portrait.png",
-      clipsCount: 2,
-      hasCaptions: true,
-    },
-    {
-      id: "proj-02",
-      name: "Bangalore Food Vlog Intro",
-      ratioId: "9:16",
-      platform: "YouTube Shorts",
-      duration: 12.4,
-      updatedAt: Date.now() - 3600000 * 24,
-      thumbnail: "/assets/smart/auto-edit-card-bg.webp",
-      clipsCount: 3,
-      hasCaptions: true,
-    },
-    {
-      id: "proj-03",
-      name: "Zomato UPI Promo Campaign",
-      ratioId: "1:1",
-      platform: "Square Post",
-      duration: 15.0,
-      updatedAt: Date.now() - 3600000 * 48,
-      thumbnail: "/assets/stickers/trend-flame.png",
-      clipsCount: 4,
-      hasCaptions: false,
-    },
-    {
-      id: "proj-04",
-      name: "Studio Gear Review Master",
-      ratioId: "16:9",
-      platform: "YouTube 16:9 HD",
-      duration: 32.5,
-      updatedAt: Date.now() - 3600000 * 72,
-      thumbnail: "/assets/effects/vfx/glitch.webp",
-      clipsCount: 6,
-      hasCaptions: true,
-    },
-  ]);
+  // Projects stored in the backend TinyDB (~/.splic/db.json), loaded on the Projects screen.
+  const [existingProjects, setExistingProjects] = useState([]);
+  const [projectsStatus, setProjectsStatus] = useState({ state: "idle", error: "" });
   const [connectedSocials, setConnectedSocials] = useState({
     instagram: { connected: true, handle: "@indic_creator_daily", name: "Instagram Reels" },
     youtube: { connected: true, handle: "Splic Tech Shorts", name: "YouTube Shorts & Video" },
@@ -1820,7 +1778,7 @@ export function App({ hostSession = null }) {
     // The processing screen shows while FastAPI + Sarvam work.
     const fetched = (async () => {
       report("uploading");
-      const plan = providedPlan || await requestAutoCutEditPlan(initialTarget.clip, { languageCode });
+      const plan = providedPlan || await requestAutoCutEditPlan(initialTarget.clip, { languageCode, projectId: currentProject?.id });
       if (!isBackendEditPlan(plan)) throw new Error("The backend response is not a valid EditPlan.");
       report("assets");
       return { plan, ...(await preloadAutoCutSfx(plan)) };
@@ -2262,8 +2220,27 @@ export function App({ hostSession = null }) {
     setIsPlaying(false);
   }, [setVisualSegments, setImageClipCount, setImageDuration, setImageSrc, setImageName, setCaptionSegments, setVisualOverlaySegments, setStickerSegments, setEffectClips, setMusicSegments, setMusicName, setMusicDuration, setIsPlaying]);
 
+  const loadStoredProjects = useCallback(async ({ signal } = {}) => {
+    setProjectsStatus((current) => ({ state: "loading", error: current.error }));
+    try {
+      const projects = await fetchProjects({ signal });
+      setExistingProjects(projects);
+      setProjectsStatus({ state: "ready", error: "" });
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+      setProjectsStatus({ state: "error", error: error?.message || "Could not reach the Splic backend" });
+    }
+  }, []);
+  useEffect(() => {
+    if (!isAuthenticated || workspacePage !== "projects") return undefined;
+    const controller = new AbortController();
+    void loadStoredProjects({ signal: controller.signal });
+    return () => controller.abort();
+  }, [isAuthenticated, workspacePage, loadStoredProjects]);
+
   const handleCreateNewProject = useCallback((newProj) => {
     setCurrentProject(newProj);
+    createStoredProject(newProj).catch((error) => notify(`Project not saved to storage: ${error.message}`));
     setExistingProjects((prev) => [
       {
         ...newProj,
@@ -2318,10 +2295,18 @@ export function App({ hostSession = null }) {
     notify("Signed out successfully.");
   }, [notify]);
 
-  const handleDeleteProject = useCallback((projectId) => {
-    setExistingProjects((prev) => prev.filter((p) => p.id !== projectId));
-    notify("Project removed");
-  }, [notify]);
+  const handleDeleteProject = useCallback(async (projectId) => {
+    const project = existingProjects.find((item) => item.id === projectId);
+    try {
+      await deleteStoredProject(projectId);
+      setExistingProjects((prev) => prev.filter((item) => item.id !== projectId));
+      notify(`Deleted project: "${project?.name || projectId}"`);
+      return true;
+    } catch (error) {
+      notify(error.message);
+      return false;
+    }
+  }, [existingProjects, notify]);
 
   const runAutoCutRef = useRef(runAutoCut);
   runAutoCutRef.current = runAutoCut;
@@ -2745,6 +2730,8 @@ export function App({ hostSession = null }) {
           onOpenSettings={() => setShowSettingsModal(true)}
           onOpenSplash={() => setJourneyStage("splash")}
           onDeleteProject={handleDeleteProject}
+          projectsStatus={projectsStatus}
+          onRetryProjects={() => loadStoredProjects()}
           user={currentUser}
           onLogout={handleLogout}
         />

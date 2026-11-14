@@ -15,8 +15,25 @@ import {
   Settings,
   User,
   LogOut,
+  RefreshCw,
+  Loader2,
+  AlertCircle,
+  X,
 } from "lucide-react";
 import { SplicLogo } from "./SplicLogo.jsx";
+import { getStoragePaths } from "../lib/projectsApi.js";
+
+const STATUS_LABELS = { draft: "Draft", auto_edited: "Auto-edited", in_progress: "In progress", ready_for_export: "Ready to export" };
+
+function projectCountsLine(project) {
+  const c = project.counts || {};
+  return [
+    c.captions ? `${c.captions} captions` : "",
+    c.stickers ? `${c.stickers} stickers` : "",
+    c.cuts ? `${c.cuts} cuts` : "",
+    c.sfx ? `${c.sfx} SFX` : "",
+  ].filter(Boolean).join(" · ");
+}
 
 export function ProjectsDashboard({
   projects = [],
@@ -25,10 +42,34 @@ export function ProjectsDashboard({
   onOpenSettings,
   onOpenSplash,
   onDeleteProject,
+  projectsStatus = { state: "ready", error: "" },
+  onRetryProjects,
   user,
   onLogout,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  // Two-step delete: the first click arms the card, the second deletes it.
+  const [confirmDeleteId, setConfirmDeleteId] = useState("");
+  const [deletingId, setDeletingId] = useState("");
+  const requestDelete = async (event, project) => {
+    event.stopPropagation();
+    if (!onDeleteProject || deletingId) return;
+    if (confirmDeleteId !== project.id) {
+      setConfirmDeleteId(project.id);
+      return;
+    }
+    setDeletingId(project.id);
+    try {
+      await onDeleteProject(project.id);
+    } finally {
+      setDeletingId("");
+      setConfirmDeleteId("");
+    }
+  };
+  const cancelDelete = (event) => {
+    event.stopPropagation();
+    setConfirmDeleteId("");
+  };
   const [filterRatio, setFilterRatio] = useState("all"); // "all" | "9:16" | "16:9" | "1:1"
 
   const filteredProjects = projects.filter((p) => {
@@ -117,6 +158,11 @@ export function ProjectsDashboard({
           <div className="splic-dashboard-title-group">
             <h1>Studio Projects</h1>
             <p>Manage, auto-cut, and export your short-form Indic video compositions</p>
+            {getStoragePaths()?.db_path ? (
+              <p className="splic-projects-storage" title={`Stickers: ${getStoragePaths().stickers_dir}\nRuns: ${getStoragePaths().runs_dir}`}>
+                Stored locally in {getStoragePaths().db_path}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -165,6 +211,31 @@ export function ProjectsDashboard({
           </div>
         </div>
 
+        {projectsStatus.state === "loading" && !projects.length ? (
+          <div className="splic-projects-status">
+            <Loader2 size={15} strokeWidth={1.5} className="splic-projects-spin" />
+            <span>Loading your stored projects...</span>
+          </div>
+        ) : null}
+        {projectsStatus.state === "error" ? (
+          <div className="splic-projects-status is-error" role="alert">
+            <AlertCircle size={15} strokeWidth={1.5} />
+            <span>Could not load stored projects. Is the backend running on port 8000? ({projectsStatus.error})</span>
+            {onRetryProjects ? (
+              <button type="button" className="splic-btn-secondary splic-dash-btn" onClick={onRetryProjects}>
+                <RefreshCw size={13} strokeWidth={1.5} />
+                <span>Retry</span>
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {projectsStatus.state === "ready" && !projects.length ? (
+          <div className="splic-projects-status">
+            <Film size={15} strokeWidth={1.5} />
+            <span>No stored projects yet. Create one to get started.</span>
+          </div>
+        ) : null}
+
         {/* Projects Grid */}
         <div className="splic-projects-grid">
           {/* Card 1: Add New Project Hero Card */}
@@ -182,10 +253,33 @@ export function ProjectsDashboard({
           {filteredProjects.map((project) => (
             <div
               key={project.id}
-              className="splic-project-card"
-              onClick={() => onOpenProject(project)}
+              className={`splic-project-card ${confirmDeleteId === project.id ? "is-confirming-delete" : ""} ${deletingId === project.id ? "is-deleting" : ""}`}
+              onClick={() => { if (!deletingId) onOpenProject(project); }}
+              onMouseLeave={() => { if (confirmDeleteId === project.id && !deletingId) setConfirmDeleteId(""); }}
             >
               <div className="splic-project-thumb-box">
+                {onDeleteProject ? (
+                  <div className="splic-project-delete-wrap">
+                    {confirmDeleteId === project.id && deletingId !== project.id ? (
+                      <button type="button" className="splic-project-delete-cancel" onClick={cancelDelete} title="Keep project" aria-label="Keep project">
+                        <X size={13} strokeWidth={1.5} />
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="splic-project-delete-btn"
+                      onClick={(event) => requestDelete(event, project)}
+                      disabled={Boolean(deletingId)}
+                      title={confirmDeleteId === project.id ? "Click again to delete permanently" : "Delete project"}
+                      aria-label={confirmDeleteId === project.id ? `Confirm delete ${project.name}` : `Delete ${project.name}`}
+                    >
+                      {deletingId === project.id
+                        ? <Loader2 size={13} strokeWidth={1.5} className="splic-projects-spin" />
+                        : <Trash2 size={13} strokeWidth={1.5} />}
+                      {confirmDeleteId === project.id ? <span>{deletingId === project.id ? "Deleting" : "Delete?"}</span> : null}
+                    </button>
+                  </div>
+                ) : null}
                 <img
                   src={project.thumbnail || "/assets/sample-portrait.png"}
                   alt={project.name}
@@ -204,7 +298,19 @@ export function ProjectsDashboard({
                   <span className="splic-project-name" title={project.name}>
                     {project.name}
                   </span>
+                  <span className={`splic-project-status is-${project.status || "draft"}`}>
+                    {STATUS_LABELS[project.status] || project.status || "Draft"}
+                  </span>
                 </div>
+
+                {project.hasEditPlan ? (
+                  <div className="splic-project-info-row" title={project.latestRun?.path || ""}>
+                    <span>{projectCountsLine(project) || "Edit plan saved"}</span>
+                    {project.runs ? <span>{project.runs} Auto-Cut run{project.runs === 1 ? "" : "s"}</span> : null}
+                  </div>
+                ) : (
+                  <div className="splic-project-info-row"><span>No Auto-Cut yet</span></div>
+                )}
 
                 <div className="splic-project-meta-row">
                   <span>{formatTimeAgo(project.updatedAt)}</span>

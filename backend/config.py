@@ -16,6 +16,7 @@ SPLIC_DIR = Path(os.getenv("SPLIC_DATA_DIR", str(DEFAULT_USER_DIR)))
 # Storage subpaths
 DB_PATH = SPLIC_DIR / "db.json"
 STICKERS_DIR = SPLIC_DIR / "stickers"
+RUNS_DIR = SPLIC_DIR / "runs"          # per Auto-Cut run: sticker_requests.json + edit_plan.json
 
 # Ensure user storage directories exist
 SPLIC_DIR.mkdir(parents=True, exist_ok=True)

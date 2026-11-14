@@ -96,12 +96,13 @@ async function loadClipBlob(clip) {
 }
 
 /** POST the clip's media to the backend and return the validated EditPlan JSON. */
-export async function requestAutoCutEditPlan(clip, { languageCode = "hi-IN", fetchStickers = true, signal } = {}) {
+export async function requestAutoCutEditPlan(clip, { languageCode = "hi-IN", fetchStickers = true, projectId = "", signal } = {}) {
   const blob = await loadClipBlob(clip);
   const form = new FormData();
   form.append("file", blob, clip.name || "timeline-video.mp4");
   form.append("language_code", languageCode);
   form.append("fetch_stickers", String(fetchStickers));
+  if (projectId) form.append("project_id", projectId);
   let response;
   try {
     response = await fetch(AUTO_CUT_ENDPOINT, { method: "POST", body: form, signal });

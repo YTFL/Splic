@@ -682,6 +682,49 @@ class TestDirectorTwoDocuments(unittest.TestCase):
                     if o["start"] < s["start"] + s["duration"] and s["start"] < o["start"] + o["duration"]]
             self.assertLessEqual(len(live), 2)
 
+    def test_project_list_reads_info_from_local_storage(self):
+        import sarvam_client
+        from config import DB_PATH, RUNS_DIR
+        db.create_project(name="Info project", project_id="info_project")
+        try:
+            def fake_post(url, headers, payload, provider):
+                return json.loads(json.dumps(_STUB_DIRECTOR_V2))
+            with umock.patch.object(sarvam_client, "_stt_request", side_effect=_stub_stt_timestamps), \
+                 umock.patch.object(sarvam_client, "_post_chat", side_effect=fake_post):
+                resp = self.client.post("/api/sarvam-auto-edit", data={"project_id": "info_project"},
+                                        files={"file": ("clip.wav", _make_wav(_SPEECH_LAYOUT), "audio/wav")})
+            self.assertEqual(resp.status_code, 200, resp.text)
+
+            body = self.client.get("/api/projects").json()
+            self.assertEqual(body["storage"]["db_path"], str(DB_PATH))
+            self.assertEqual(body["storage"]["runs_dir"], str(RUNS_DIR))
+            proj = next(p for p in body["projects"] if p["id"] == "info_project")
+            self.assertNotIn("edit_plan", proj)                      # list stays light
+            info = proj["summary"]
+            self.assertEqual(info["status"], "auto_edited")
+            self.assertTrue(info["has_edit_plan"])
+            self.assertAlmostEqual(info["duration"], 7.0, delta=0.05)
+            self.assertGreater(info["counts"]["captions"], 0)
+            self.assertEqual(info["counts"]["sfx"], 1)
+            self.assertEqual(info["runs"]["count"], 1)
+            latest = info["runs"]["latest"]
+            self.assertTrue(Path(latest["path"]).is_dir())
+            self.assertIn("edit_plan.json", latest["files"])
+            self.assertIn("sticker_requests.json", latest["files"])
+
+            single = self.client.get("/api/projects/info_project").json()
+            self.assertIn("edit_plan", single)
+            self.assertEqual(single["summary"]["runs"]["count"], 1)
+
+            # Deleting through the API also removes the project's run folders.
+            deleted = self.client.delete("/api/projects/info_project").json()
+            self.assertEqual(deleted["removed_runs"], 1)
+            self.assertFalse(Path(latest["path"]).exists())
+        finally:
+            db.delete_project("info_project")
+            from project_info import remove_project_runs
+            remove_project_runs("info_project")
+
     def test_resolve_endpoint(self):
         resp = self.client.post("/api/stickers/resolve", json={"sticker_requests": [
             {"ref": "a", "concept": "money", "source": "library", "library_id": "shop-coins"},

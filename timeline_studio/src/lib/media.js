@@ -2304,6 +2304,84 @@ function runFfmpegTask(task) {
   return nextTask;
 }
 
+// A WASM FFmpeg worker can die silently (usually an out-of-memory encode) and
+// its exec() promise then never settles. Every FFmpeg task is serialized on
+// ffmpegTaskQueue, so one stuck exec blocks every later task as well: the
+// export sits at the transcode step forever. The watchdog below turns a silent
+// hang into a rejected task, terminates the poisoned instance and lets the next
+// task load a fresh core.
+const FFMPEG_STALL_TIMEOUT_MS = 120_000; // no log output for 2 minutes
+const FFMPEG_HARD_TIMEOUT_MS = 10 * 60_000; // absolute ceiling per exec
+
+function createFfmpegStallError(label, timeoutMs) {
+  const seconds = Math.round(timeoutMs / 1000);
+  const error = new Error(
+    `FFmpeg ${label} produced no progress for ${seconds}s and was stopped. `
+    + "The encoder will be reloaded on the next attempt.",
+  );
+  error.name = "FfmpegStallError";
+  return error;
+}
+
+/** Run ffmpeg.exec with stall/hard timeouts, abort handling and a return-code check. */
+async function execFfmpegGuarded(ffmpeg, args, { signal, label = "task" } = {}) {
+  if (signal?.aborted) throw createAbortError("Export canceled");
+
+  let rejectGuard = null;
+  const guard = new Promise((_, reject) => { rejectGuard = reject; });
+  let stallTimer = null;
+  let hardTimer = null;
+  let onAbort = null;
+
+  const detach = () => {
+    if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }
+    if (hardTimer) { clearTimeout(hardTimer); hardTimer = null; }
+    if (onAbort) signal?.removeEventListener("abort", onAbort);
+    try { ffmpeg.off?.("log", bump); } catch { /* Older cores expose no off(). */ }
+  };
+
+  const fail = (error) => {
+    if (!rejectGuard) return;
+    const reject = rejectGuard;
+    rejectGuard = null;
+    detach();
+    try { ffmpeg.terminate(); } catch { /* Already stopped. */ }
+    ffmpegLoadPromise = null;
+    reject(error);
+  };
+
+  // FFmpeg logs continuously while encoding, so any log resets the stall timer.
+  const bump = () => {
+    if (!rejectGuard) return;
+    if (stallTimer) clearTimeout(stallTimer);
+    stallTimer = setTimeout(
+      () => fail(createFfmpegStallError(label, FFMPEG_STALL_TIMEOUT_MS)),
+      FFMPEG_STALL_TIMEOUT_MS,
+    );
+  };
+
+  onAbort = () => fail(createAbortError("Export canceled"));
+  signal?.addEventListener("abort", onAbort, { once: true });
+
+  try { ffmpeg.on?.("log", bump); } catch { /* Logs are optional. */ }
+  bump();
+  hardTimer = setTimeout(
+    () => fail(createFfmpegStallError(label, FFMPEG_HARD_TIMEOUT_MS)),
+    FFMPEG_HARD_TIMEOUT_MS,
+  );
+
+  try {
+    const execPromise = ffmpeg.exec(args);
+    const code = await Promise.race([execPromise, guard]);
+    if (typeof code === "number" && code !== 0) {
+      throw new Error(`FFmpeg ${label} failed with exit code ${code}.`);
+    }
+    return code;
+  } finally {
+    detach();
+  }
+}
+
 function createAbortError(message = "任务已取消") {
   const error = new Error(message);
   error.name = "AbortError";
@@ -2535,7 +2613,7 @@ export async function transcodeWebmToMp4(webmBlob, {
           "-metadata", `AIGC_DISCLOSURE=${generationMetadata.disclosure || ""}`,
           "-metadata", `AIGC_METADATA=${JSON.stringify(generationMetadata)}`,
         ] : [];
-        await ffmpeg.exec(copyStreams ? [
+        await execFfmpegGuarded(ffmpeg, copyStreams ? [
           "-i", inputName,
           "-map", "0",
           "-c", "copy",
@@ -2551,11 +2629,14 @@ export async function transcodeWebmToMp4(webmBlob, {
           ...metadataArgs,
           "-movflags", generationMetadata ? "faststart+use_metadata_tags" : "faststart",
           outputName,
-        ]);
-      } catch {
+        ], { signal, label: "MP4 transcode" });
+      } catch (error) {
         if (signal?.aborted) throw createAbortError("Export canceled");
+        // A stalled exec already terminated the instance, so retrying on it
+        // would fail again: surface the stall so the caller can fall back.
+        if (error?.name === "FfmpegStallError") throw error;
         await ffmpeg.deleteFile(outputName).catch(() => {});
-        await ffmpeg.exec([
+        await execFfmpegGuarded(ffmpeg, [
           "-i", inputName,
           ...(generationMetadata ? [
             "-metadata", `AIGC_GENERATION_TYPE=${generationMetadata.generationType || ""}`,
@@ -2567,7 +2648,7 @@ export async function transcodeWebmToMp4(webmBlob, {
             "-metadata", `AIGC_METADATA=${JSON.stringify(generationMetadata)}`,
           ] : []),
           "-movflags", generationMetadata ? "faststart+use_metadata_tags" : "faststart", outputName,
-        ]);
+        ], { signal, label: "MP4 transcode fallback" });
       }
       if (signal?.aborted) throw createAbortError("Export canceled");
       const data = await ffmpeg.readFile(outputName);

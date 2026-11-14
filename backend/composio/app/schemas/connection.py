@@ -27,8 +27,14 @@ class ConnectYouTubeRequest(BaseModel):
         description="If True, initiates a new auth link even if an active account exists."
     )
     scopes: Optional[List[str]] = Field(
-        default=["https://www.googleapis.com/auth/youtube.readonly"],
-        description="Requested Google/YouTube OAuth permission scopes."
+        default=[
+            "https://www.googleapis.com/auth/youtube.upload",
+            "https://www.googleapis.com/auth/youtube.readonly",
+        ],
+        description=(
+            "Requested Google/YouTube OAuth permission scopes. The upload scope is required "
+            "for publishing; drop it only for read-only connections."
+        )
     )
 
 

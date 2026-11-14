@@ -5,8 +5,20 @@ import {
   Globe,
   Video,
   Check,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { SplicLogo, SplicInlaidEmblem } from "./SplicLogo.jsx";
+import {
+  describeAuthError,
+  signInAsGuest,
+  signInWithEmail,
+  signInWithGoogle,
+  signUpWithEmail,
+} from "../lib/firebaseAuth.js";
+
+// Read-only YouTube scope requested by the "Continue with YouTube Creator" entry point.
+const YOUTUBE_READONLY_SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
 
 export function AuthModal({
   onLogin,
@@ -14,31 +26,52 @@ export function AuthModal({
   initialTab = "login", // "login" | "signup"
 }) {
   const [tab, setTab] = useState(initialTab);
-  const [email, setEmail] = useState("shashank@splic.ai");
-  const [password, setPassword] = useState("••••••••••••");
-  const [name, setName] = useState("Shashank K.");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
+  const [busyAction, setBusyAction] = useState(""); // "" | "email" | "google" | "youtube" | "guest"
+  const [error, setError] = useState("");
+
+  const isBusy = Boolean(busyAction);
+
+  const runAuth = async (action, task) => {
+    if (isBusy) return;
+    setBusyAction(action);
+    setError("");
+    try {
+      const profile = await task();
+      if (onLogin) {
+        onLogin(profile);
+      }
+    } catch (authError) {
+      setError(describeAuthError(authError));
+    } finally {
+      setBusyAction("");
+    }
+  };
 
   const handleSubmit = (e) => {
     e?.preventDefault();
-    if (onLogin) {
-      onLogin({
-        name: tab === "signup" ? (name || "Indic Creator") : "Shashank K.",
-        email: email || "creator@splic.ai",
-        isGuest: false,
-      });
+    const trimmedEmail = email.trim();
+    const trimmedName = name.trim();
+    if (!trimmedEmail || !password) {
+      setError("Enter your email address and password to continue.");
+      return;
     }
+    runAuth("email", () => (
+      tab === "signup"
+        ? signUpWithEmail(trimmedEmail, password, trimmedName)
+        : signInWithEmail(trimmedEmail, password)
+    ));
   };
 
-  const handleGuestLogin = () => {
-    if (onLogin) {
-      onLogin({
-        name: "Creator Guest",
-        email: "guest@splic.ai",
-        isGuest: true,
-      });
-    }
-  };
+  const handleGoogleLogin = () => runAuth("google", () => signInWithGoogle());
+
+  const handleYouTubeLogin = () =>
+    runAuth("youtube", () => signInWithGoogle({ scopes: [YOUTUBE_READONLY_SCOPE] }));
+
+  const handleGuestLogin = () => runAuth("guest", () => signInAsGuest());
 
   return (
     <div className="splic-auth-page">
@@ -131,20 +164,52 @@ export function AuthModal({
                 <button
                   type="button"
                   className="splic-social-btn"
-                  onClick={handleSubmit}
+                  onClick={handleGoogleLogin}
+                  disabled={isBusy}
                 >
-                  <Globe size={16} strokeWidth={1.5} />
+                  {busyAction === "google" ? (
+                    <Loader2 size={16} strokeWidth={1.5} className="spin-icon" />
+                  ) : (
+                    <Globe size={16} strokeWidth={1.5} />
+                  )}
                   <span>Continue with Google</span>
                 </button>
                 <button
                   type="button"
                   className="splic-social-btn"
-                  onClick={handleSubmit}
+                  onClick={handleYouTubeLogin}
+                  disabled={isBusy}
                 >
-                  <Video size={16} strokeWidth={1.5} style={{ color: "var(--splic-red-primary)" }} />
+                  {busyAction === "youtube" ? (
+                    <Loader2 size={16} strokeWidth={1.5} className="spin-icon" />
+                  ) : (
+                    <Video size={16} strokeWidth={1.5} style={{ color: "var(--splic-red-primary)" }} />
+                  )}
                   <span>Continue with YouTube Creator</span>
                 </button>
               </div>
+
+              {error ? (
+                <div
+                  role="alert"
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "8px",
+                    background: "rgba(225, 29, 72, 0.12)",
+                    border: "1px solid rgba(225, 29, 72, 0.35)",
+                    borderRadius: "8px",
+                    padding: "10px 12px",
+                    marginBottom: "14px",
+                    fontSize: "12px",
+                    lineHeight: 1.45,
+                    color: "#fda4af",
+                  }}
+                >
+                  <AlertCircle size={14} strokeWidth={1.5} style={{ flexShrink: 0, marginTop: "1px" }} />
+                  <span>{error}</span>
+                </div>
+              ) : null}
 
               <div className="splic-auth-divider">
                 <span>Or sign in with email</span>
@@ -223,9 +288,19 @@ export function AuthModal({
                   type="submit"
                   className="splic-btn-primary"
                   style={{ width: "100%", padding: "12px", fontSize: "13px" }}
+                  disabled={isBusy}
                 >
-                  <span>{tab === "login" ? "Sign In to Projects" : "Create Account & Launch Studio"}</span>
-                  <ArrowRight size={15} strokeWidth={2} />
+                  {busyAction === "email" ? (
+                    <>
+                      <Loader2 size={15} strokeWidth={2} className="spin-icon" />
+                      <span>{tab === "login" ? "Signing In…" : "Creating Account…"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{tab === "login" ? "Sign In to Projects" : "Create Account & Launch Studio"}</span>
+                      <ArrowRight size={15} strokeWidth={2} />
+                    </>
+                  )}
                 </button>
               </form>
 
@@ -234,16 +309,17 @@ export function AuthModal({
                 <button
                   type="button"
                   onClick={handleGuestLogin}
+                  disabled={isBusy}
                   style={{
                     background: "none",
                     border: "none",
                     color: "var(--splic-text-muted)",
                     fontSize: "12px",
-                    cursor: "pointer",
+                    cursor: isBusy ? "default" : "pointer",
                     textDecoration: "underline",
                   }}
                 >
-                  Continue as Guest (Instant Access)
+                  {busyAction === "guest" ? "Preparing guest session…" : "Continue as Guest (Instant Access)"}
                 </button>
               </div>
             </div>

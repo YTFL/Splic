@@ -74,5 +74,8 @@ desktop.ini
 # backend test storage
 backend/.splic_test/
 
+# rendered reels staged for social publishing
+backend/.splic_media/
+
 # Copied from node_modules/@ffmpeg/ffmpeg by timeline_studio/next.config.mjs
 timeline_studio/public/vendor/ffmpeg/

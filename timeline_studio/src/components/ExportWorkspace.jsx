@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Download,
   Share2,
@@ -16,7 +16,10 @@ import {
   Camera,
   Radio,
   Layers,
+  AlertCircle,
+  ExternalLink,
 } from "lucide-react";
+import { publishToInstagram, publishToYouTube } from "../lib/composioClient.js";
 
 export function ExportWorkspace({
   timelineDuration = 10,
@@ -32,6 +35,7 @@ export function ExportWorkspace({
   previewCanvasRef,
   previewVideoRef,
   connectedSocials,
+  onOpenSettings,
   t = (k, fallback) => fallback || k,
 }) {
   const [selectedPreset, setSelectedPreset] = useState("instagram-reels");
@@ -44,7 +48,17 @@ export function ExportWorkspace({
   const [privacy, setPrivacy] = useState("public");
   const [qualityPreset, setQualityPreset] = useState("high");
   const [burnCaptions, setBurnCaptions] = useState(true);
-  const [socialUploadState, setSocialUploadState] = useState("idle"); // "idle" | "uploading" | "success"
+  const [socialUploadState, setSocialUploadState] = useState("idle"); // "idle" | "rendering" | "uploading" | "success"
+  const [publishError, setPublishError] = useState("");
+  const [publishedResult, setPublishedResult] = useState(null);
+  const exportedArtifactRef = useRef(null);
+  const publishing = socialUploadState === "rendering" || socialUploadState === "uploading";
+  // A cached render is only reusable while the encoding settings are unchanged.
+  const renderSignature = `${selectedPreset}|${qualityPreset}|${burnCaptions ? "captions" : "clean"}`;
+
+  const platformSocial = connectedSocials?.[socialPlatform] || { connected: false, handle: "" };
+  const isSelectedPlatformConnected = Boolean(platformSocial.connected);
+  const platformLabel = socialPlatform === "instagram" ? "Instagram" : "YouTube";
 
   const presets = [
     {
@@ -89,21 +103,87 @@ export function ExportWorkspace({
     },
   ];
 
-  const handleStartExport = () => {
-    if (onExportVideo) {
-      onExportVideo({
-        preset: selectedPreset,
-        quality: qualityPreset,
-        burnCaptions,
-      });
+  const handleStartExport = async () => {
+    if (!onExportVideo) return;
+    const result = await onExportVideo({
+      preset: selectedPreset,
+      quality: qualityPreset,
+      burnCaptions,
+    });
+    if (result?.status === "success" && result.blob) {
+      exportedArtifactRef.current = { artifact: result, signature: renderSignature };
     }
   };
 
-  const handleSocialPublish = () => {
-    setSocialUploadState("uploading");
-    setTimeout(() => {
+  // Publishing needs the rendered file, so render first when nothing is cached yet.
+  const ensureRenderedReel = async () => {
+    if (exporting) {
+      throw new Error("A render is already running. Wait for it to finish, then publish.");
+    }
+
+    const cached = exportedArtifactRef.current;
+    if (cached?.signature === renderSignature && cached.artifact?.blob) {
+      return cached.artifact;
+    }
+
+    if (!onExportVideo) {
+      throw new Error("Rendering is not available in this workspace.");
+    }
+
+    setSocialUploadState("rendering");
+    const result = await onExportVideo({
+      preset: selectedPreset,
+      quality: qualityPreset,
+      burnCaptions,
+    });
+
+    if (result?.status === "success" && result.blob) {
+      exportedArtifactRef.current = { artifact: result, signature: renderSignature };
+      return result;
+    }
+    if (result?.status === "busy") {
+      throw new Error("A render is already running. Wait for it to finish, then publish.");
+    }
+    if (result?.status === "canceled") {
+      throw new Error("The render was cancelled before it could be published.");
+    }
+    throw new Error(
+      result?.error || "The reel could not be rendered. Check the export settings and try again.",
+    );
+  };
+
+  const handleSocialPublish = async () => {
+    if (publishing) return;
+    setPublishError("");
+    setPublishedResult(null);
+    try {
+      const artifact = await ensureRenderedReel();
+      setSocialUploadState("uploading");
+
+      const result = socialPlatform === "instagram"
+        ? await publishToInstagram({
+            file: artifact.blob,
+            fileName: artifact.fileName,
+            caption: [videoTitle, videoDescription].filter(Boolean).join("\n\n"),
+            shareToFeed: true,
+            accountId: platformSocial.accountId,
+          })
+        : await publishToYouTube({
+            file: artifact.blob,
+            fileName: artifact.fileName,
+            title: videoTitle,
+            description: videoDescription,
+            tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+            privacy,
+            accountId: platformSocial.accountId,
+          });
+
+      setPublishedResult(result || null);
       setSocialUploadState("success");
-    }, 2000);
+    } catch (error) {
+      setSocialUploadState("idle");
+      setPublishError(error?.message || "Publishing failed. Please try again.");
+    }
   };
 
   const estimatedSizeMB = Math.max(
@@ -391,6 +471,30 @@ export function ExportWorkspace({
               </button>
             </div>
 
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+                background: "var(--splic-bg-surface)",
+                border: "1px solid var(--splic-border-subtle)",
+                borderRadius: "8px",
+                padding: "10px 12px",
+                marginBottom: "14px",
+              }}
+            >
+              <span style={{ fontSize: "11px", color: "var(--splic-text-muted)" }}>
+                {isSelectedPlatformConnected
+                  ? `${platformLabel}: ${platformSocial.handle || "connected"}`
+                  : `${platformLabel} account is not connected`}
+              </span>
+              <span className={`splic-link-status-badge ${isSelectedPlatformConnected ? "is-connected" : "is-disconnected"}`}>
+                {isSelectedPlatformConnected ? <Check size={11} strokeWidth={2} /> : null}
+                {isSelectedPlatformConnected ? "Connected" : "Disconnected"}
+              </span>
+            </div>
+
             <div className="splic-form-group">
               <label>Post Title</label>
               <input
@@ -435,42 +539,103 @@ export function ExportWorkspace({
                   background: "rgba(34, 197, 94, 0.12)",
                   border: "1px solid rgba(34, 197, 94, 0.3)",
                   borderRadius: "8px",
-                  height: "44px",
+                  minHeight: "44px",
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "8px",
+                  gap: "4px",
                   color: "#4ade80",
                   fontSize: "12px",
                   fontWeight: 700,
                   width: "100%",
                   boxSizing: "border-box",
+                  padding: "10px 12px",
                 }}
               >
-                <CheckCircle2 size={16} strokeWidth={2} />
-                <span>
-                  Queued for {socialPlatform === "instagram" ? "Instagram Reels" : "YouTube Shorts"}!
+                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CheckCircle2 size={16} strokeWidth={2} />
+                  <span>Published to {platformLabel}</span>
                 </span>
+                {publishedResult?.post_url ? (
+                  <a
+                    href={publishedResult.post_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      color: "#4ade80",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <ExternalLink size={11} strokeWidth={1.75} />
+                    <span>View published post</span>
+                  </a>
+                ) : publishedResult?.post_id ? (
+                  <span style={{ fontSize: "11px", fontWeight: 500 }}>
+                    Post id {publishedResult.post_id}
+                  </span>
+                ) : null}
               </div>
-            ) : (
+            ) : !isSelectedPlatformConnected ? (
               <button
                 type="button"
                 className="deliver-primary-btn"
-                disabled={socialUploadState === "uploading"}
-                onClick={handleSocialPublish}
+                onClick={() => (onOpenSettings ? onOpenSettings() : null)}
               >
-                {socialUploadState === "uploading" ? (
-                  <>
-                    <RefreshCw size={15} className="spin-icon" strokeWidth={1.5} />
-                    <span>Syncing Upload Package...</span>
-                  </>
-                ) : (
-                  <>
-                    <Share2 size={15} strokeWidth={1.5} />
-                    <span>Publish Directly to {socialPlatform === "instagram" ? "Instagram" : "YouTube"}</span>
-                  </>
-                )}
+                <Share2 size={15} strokeWidth={1.5} />
+                <span>Connect {platformLabel} Account in Settings</span>
               </button>
+            ) : (
+              <div style={{ width: "100%" }}>
+                {publishError ? (
+                  <div
+                    role="alert"
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "8px",
+                      background: "rgba(225, 29, 72, 0.12)",
+                      border: "1px solid rgba(225, 29, 72, 0.35)",
+                      borderRadius: "8px",
+                      padding: "10px 12px",
+                      marginBottom: "10px",
+                      fontSize: "11px",
+                      lineHeight: 1.45,
+                      color: "#fda4af",
+                    }}
+                  >
+                    <AlertCircle size={13} strokeWidth={1.5} style={{ flexShrink: 0, marginTop: "1px" }} />
+                    <span>{publishError}</span>
+                  </div>
+                ) : null}
+
+                <button
+                  type="button"
+                  className="deliver-primary-btn"
+                  disabled={publishing || exporting}
+                  onClick={handleSocialPublish}
+                >
+                  {publishing ? (
+                    <>
+                      <RefreshCw size={15} className="spin-icon" strokeWidth={1.5} />
+                      <span>
+                        {socialUploadState === "rendering"
+                          ? "Rendering reel..."
+                          : `Publishing to ${platformLabel}...`}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 size={15} strokeWidth={1.5} />
+                      <span>Publish Directly to {platformLabel}</span>
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         </section>

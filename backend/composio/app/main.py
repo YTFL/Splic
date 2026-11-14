@@ -17,6 +17,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from app.config import get_settings
 from app.api.routes import (
     health_router,
@@ -24,6 +25,7 @@ from app.api.routes import (
     instagram_router,
     youtube_router,
     accounts_router,
+    publish_router,
 )
 from app.auth.firebase import initialize_firebase_admin
 from app.integrations.composio.client import get_composio_client_manager
@@ -131,6 +133,12 @@ def create_app() -> FastAPI:
     app.include_router(instagram_router, prefix=api_prefix)
     app.include_router(youtube_router, prefix=api_prefix)
     app.include_router(accounts_router, prefix=api_prefix)
+    app.include_router(publish_router, prefix=api_prefix)
+
+    # Serve staged renders so Instagram's servers can fetch them by URL.
+    media_dir = settings.media_root
+    media_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/media", StaticFiles(directory=str(media_dir)), name="splic_media")
 
     # Root health convenience redirects
     @app.get("/health", include_in_schema=False)

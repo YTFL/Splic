@@ -26,6 +26,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 
 logger = logging.getLogger("splic.composio_integration")
 
@@ -45,6 +46,7 @@ try:
         composio_router,
         health_router,
         instagram_router,
+        publish_router,
         youtube_router,
     )
     from app.auth.firebase import initialize_firebase_admin  # type: ignore  # noqa: E402
@@ -67,8 +69,23 @@ def register(app: FastAPI) -> bool:
     if not COMPOSIO_AVAILABLE:
         return False
 
-    for router in (health_router, composio_router, instagram_router, youtube_router, accounts_router):
+    for router in (
+        health_router,
+        composio_router,
+        instagram_router,
+        youtube_router,
+        accounts_router,
+        publish_router,
+    ):
         app.include_router(router, prefix=API_V1_PREFIX)
+
+    # Serve staged renders so Instagram's servers can fetch them by public URL.
+    try:
+        media_dir = get_composio_settings().media_root
+        media_dir.mkdir(parents=True, exist_ok=True)
+        app.mount("/media", StaticFiles(directory=str(media_dir)), name="splic_media")
+    except Exception as exc:  # never block the main server on a media directory issue
+        logger.warning("Could not mount the publishing media directory: %s", exc)
 
     # Same exception -> status mapping as backend/composio/app/main.py, applied
     # ONLY to /api/v1 routes so the pipeline routes keep FastAPI's defaults.

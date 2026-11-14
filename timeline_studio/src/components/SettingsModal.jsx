@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   X,
   Camera,
@@ -8,8 +8,48 @@ import {
   Shield,
   Palette,
   Check,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { SplicLogo } from "./SplicLogo.jsx";
+import { isSignedIn } from "../lib/firebaseAuth.js";
+import {
+  OAUTH_MESSAGE_TYPE,
+  buildOAuthCallbackUrl,
+  disconnectAccount,
+  getConnectedAccounts,
+  initiateInstagramConnect,
+  initiateYouTubeConnect,
+  mapAccountsToSocialState,
+  openOAuthPopup,
+} from "../lib/composioClient.js";
+
+const noticeStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  background: "rgba(148, 163, 184, 0.08)",
+  border: "1px solid var(--splic-border-subtle)",
+  borderRadius: "8px",
+  padding: "10px 12px",
+  marginBottom: "14px",
+  fontSize: "12px",
+  color: "var(--splic-text-muted)",
+};
+
+const errorStyle = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: "8px",
+  background: "rgba(225, 29, 72, 0.12)",
+  border: "1px solid rgba(225, 29, 72, 0.35)",
+  borderRadius: "8px",
+  padding: "10px 12px",
+  marginBottom: "14px",
+  fontSize: "12px",
+  lineHeight: 1.45,
+  color: "#fda4af",
+};
 
 export function SettingsModal({
   isOpen = true,
@@ -33,6 +73,94 @@ export function SettingsModal({
   const [autoRipple, setAutoRipple] = useState(true);
   const [snapPlayhead, setSnapPlayhead] = useState(true);
   const [savedToast, setSavedToast] = useState(false);
+
+  // Live Composio account state for the Instagram and YouTube cards.
+  const socialsRef = useRef(socials);
+  socialsRef.current = socials;
+  const [remoteStatus, setRemoteStatus] = useState("idle"); // idle | loading | signed-out | ready | awaiting-authorization | error
+  const [remoteError, setRemoteError] = useState("");
+  const [busyPlatform, setBusyPlatform] = useState("");
+
+  const refreshAccounts = useCallback(async () => {
+    if (!isSignedIn()) {
+      setRemoteStatus("signed-out");
+      return;
+    }
+    setRemoteStatus("loading");
+    setRemoteError("");
+    try {
+      const result = await getConnectedAccounts();
+      const next = mapAccountsToSocialState(result?.accounts || [], socialsRef.current);
+      setSocials(next);
+      if (onUpdateSocials) onUpdateSocials(next);
+      setRemoteStatus("ready");
+    } catch (error) {
+      setRemoteStatus("error");
+      setRemoteError(error?.message || "Could not load your connected accounts.");
+    }
+  }, [onUpdateSocials]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    refreshAccounts();
+  }, [isOpen, refreshAccounts]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleOAuthMessage = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== OAUTH_MESSAGE_TYPE) return;
+      refreshAccounts();
+    };
+    window.addEventListener("message", handleOAuthMessage);
+    return () => window.removeEventListener("message", handleOAuthMessage);
+  }, [isOpen, refreshAccounts]);
+
+  const connectPlatform = async (platform) => {
+    setBusyPlatform(platform);
+    setRemoteError("");
+    try {
+      const callbackUrl = buildOAuthCallbackUrl(platform);
+      const result = platform === "instagram"
+        ? await initiateInstagramConnect(callbackUrl)
+        : await initiateYouTubeConnect(callbackUrl);
+      if (!result?.redirect_url) {
+        throw new Error("The backend did not return an authorization link for this platform.");
+      }
+      const popup = openOAuthPopup(result.redirect_url);
+      if (!popup) {
+        throw new Error("Your browser blocked the authorization popup. Allow popups and try again.");
+      }
+      setRemoteStatus("awaiting-authorization");
+    } catch (error) {
+      setRemoteStatus("error");
+      setRemoteError(error?.message || "Could not start the authorization flow.");
+    } finally {
+      setBusyPlatform("");
+    }
+  };
+
+  const disconnectPlatform = async (platform) => {
+    const accountId = socialsRef.current?.[platform]?.accountId;
+    if (!accountId) {
+      const fallback = { ...socialsRef.current };
+      fallback[platform] = { ...fallback[platform], connected: false, handle: "", accountId: "" };
+      setSocials(fallback);
+      if (onUpdateSocials) onUpdateSocials(fallback);
+      return;
+    }
+    setBusyPlatform(platform);
+    setRemoteError("");
+    try {
+      await disconnectAccount(accountId);
+      await refreshAccounts();
+    } catch (error) {
+      setRemoteStatus("error");
+      setRemoteError(error?.message || "Could not disconnect that account.");
+    } finally {
+      setBusyPlatform("");
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -146,6 +274,27 @@ export function SettingsModal({
                 </p>
               </div>
 
+              {remoteStatus === "signed-out" ? (
+                <div style={noticeStyle}>
+                  <AlertCircle size={14} strokeWidth={1.5} />
+                  <span>Sign in with a Splic account to link Instagram or YouTube.</span>
+                </div>
+              ) : null}
+
+              {remoteStatus === "awaiting-authorization" ? (
+                <div style={noticeStyle}>
+                  <Loader2 size={14} strokeWidth={1.5} className="spin-icon" />
+                  <span>Complete the authorization in the popup window. This panel refreshes automatically.</span>
+                </div>
+              ) : null}
+
+              {remoteError ? (
+                <div style={errorStyle} role="alert">
+                  <AlertCircle size={14} strokeWidth={1.5} style={{ flexShrink: 0, marginTop: "1px" }} />
+                  <span>{remoteError}</span>
+                </div>
+              ) : null}
+
               {/* Instagram */}
               <div className="splic-social-link-card">
                 <div className="splic-social-link-left">
@@ -155,7 +304,9 @@ export function SettingsModal({
                   <div>
                     <div className="splic-social-link-title">Instagram Reels</div>
                     <div className="splic-social-link-handle">
-                      {socials.instagram.connected ? socials.instagram.handle : "Not connected"}
+                      {socials.instagram.connected
+                        ? socials.instagram.handle || "Connected account"
+                        : "Not connected"}
                     </div>
                   </div>
                 </div>
@@ -168,10 +319,22 @@ export function SettingsModal({
                   <button
                     type="button"
                     className="splic-btn-secondary"
-                    style={{ width: "auto", padding: "6px 12px", fontSize: "11px" }}
-                    onClick={() => toggleSocial("instagram", "@indic_creator_daily")}
+                    style={{ width: "auto", padding: "6px 12px", fontSize: "11px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                    disabled={busyPlatform === "instagram"}
+                    onClick={() => (
+                      socials.instagram.connected
+                        ? disconnectPlatform("instagram")
+                        : connectPlatform("instagram")
+                    )}
                   >
-                    {socials.instagram.connected ? "Disconnect" : "Connect"}
+                    {busyPlatform === "instagram" ? (
+                      <>
+                        <Loader2 size={12} strokeWidth={1.5} className="spin-icon" />
+                        <span>Working</span>
+                      </>
+                    ) : (
+                      <span>{socials.instagram.connected ? "Disconnect" : "Connect"}</span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -185,7 +348,9 @@ export function SettingsModal({
                   <div>
                     <div className="splic-social-link-title">YouTube Shorts & Channel</div>
                     <div className="splic-social-link-handle">
-                      {socials.youtube.connected ? socials.youtube.handle : "Not connected"}
+                      {socials.youtube.connected
+                        ? socials.youtube.handle || "Connected account"
+                        : "Not connected"}
                     </div>
                   </div>
                 </div>
@@ -198,10 +363,22 @@ export function SettingsModal({
                   <button
                     type="button"
                     className="splic-btn-secondary"
-                    style={{ width: "auto", padding: "6px 12px", fontSize: "11px" }}
-                    onClick={() => toggleSocial("youtube", "Splic Tech Shorts")}
+                    style={{ width: "auto", padding: "6px 12px", fontSize: "11px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                    disabled={busyPlatform === "youtube"}
+                    onClick={() => (
+                      socials.youtube.connected
+                        ? disconnectPlatform("youtube")
+                        : connectPlatform("youtube")
+                    )}
                   >
-                    {socials.youtube.connected ? "Disconnect" : "Connect"}
+                    {busyPlatform === "youtube" ? (
+                      <>
+                        <Loader2 size={12} strokeWidth={1.5} className="spin-icon" />
+                        <span>Working</span>
+                      </>
+                    ) : (
+                      <span>{socials.youtube.connected ? "Disconnect" : "Connect"}</span>
+                    )}
                   </button>
                 </div>
               </div>

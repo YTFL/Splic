@@ -12,6 +12,7 @@ from app.integrations.composio.toolkit_discovery import ToolkitDiscoveryService
 from app.integrations.composio.execution import ActionExecutionService
 from app.services.account_service import AccountService
 from app.services.connection_service import ConnectionService
+from app.services.publish_service import PublishService
 
 logger = logging.getLogger("composio.dependencies")
 
@@ -98,6 +99,11 @@ def get_connection_service() -> ConnectionService:
 def get_discovery_service() -> ToolkitDiscoveryService:
     """Dependency provider for ToolkitDiscoveryService."""
     return ToolkitDiscoveryService(get_composio_client_manager())
+
+
+def get_publish_service() -> PublishService:
+    """Dependency provider for the social publishing service."""
+    return PublishService(get_composio_client_manager())
 
 
 def get_execution_service() -> ActionExecutionService:

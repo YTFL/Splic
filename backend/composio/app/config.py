@@ -10,6 +10,7 @@ import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -58,6 +59,13 @@ class Settings(BaseSettings):
     # OAuth Redirect Flow
     OAUTH_REDIRECT_URL: Optional[str] = "http://localhost:3000/auth/callback"
 
+    # Social publishing
+    # Public origin that Instagram can reach (tunnel or deployed backend URL).
+    # Instagram has no file upload API: it fetches the rendered video from a URL.
+    PUBLIC_MEDIA_BASE_URL: Optional[str] = None
+    # Maximum rendered video size accepted for publishing, in megabytes.
+    MAX_UPLOAD_MB: int = 200
+
     if SettingsConfigDict is not None:
         model_config = SettingsConfigDict(
             env_file=str(ROOT_ENV_LOCAL_PATH),
@@ -75,6 +83,33 @@ class Settings(BaseSettings):
     def is_root_env_present(self) -> bool:
         """Return True if the root .env.local file exists on disk."""
         return ROOT_ENV_LOCAL_PATH.is_file()
+
+    @property
+    def media_root(self) -> Path:
+        """Directory holding rendered videos staged for social publishing."""
+        return ROOT_PROJECT_DIR / "backend" / ".splic_media"
+
+    @property
+    def media_public_base_url(self) -> Optional[str]:
+        """Return the configured public media origin, or None when it is unusable.
+
+        Loopback and link-local origins are rejected because Instagram's servers
+        must be able to fetch the media themselves.
+        """
+        raw = (self.PUBLIC_MEDIA_BASE_URL or "").strip().rstrip("/")
+        if not raw:
+            return None
+
+        parsed = urlparse(raw)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            return None
+
+        host = parsed.hostname.lower()
+        loopback_hosts = {"localhost", "127.0.0.1", "0.0.0.0", "::1", "host.docker.internal"}
+        if host in loopback_hosts or host.endswith(".local") or host.endswith(".localhost"):
+            return None
+
+        return raw
 
     @property
     def cors_origins(self) -> List[str]:

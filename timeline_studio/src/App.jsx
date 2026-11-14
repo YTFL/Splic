@@ -35,6 +35,12 @@ import { AuthModal } from "./components/AuthModal.jsx";
 import { ProjectsDashboard } from "./components/ProjectsDashboard.jsx";
 import { NewProjectModal } from "./components/NewProjectModal.jsx";
 import { SettingsModal } from "./components/SettingsModal.jsx";
+import { signOut as firebaseSignOut } from "./lib/firebaseAuth.js";
+import {
+  OAUTH_MESSAGE_TYPE,
+  getConnectedAccounts,
+  mapAccountsToSocialState,
+} from "./lib/composioClient.js";
 import { VisualReplacementDialog } from "./components/VisualReplacementDialog.jsx";
 import { TemplateInspector } from "./components/TemplateLibrary.jsx";
 import { MiganRepairDialog } from "./components/MiganRepairDialog.jsx";
@@ -286,9 +292,11 @@ export function App({ hostSession = null }) {
   // Projects stored in the backend TinyDB (~/.splic/db.json), loaded on the Projects screen.
   const [existingProjects, setExistingProjects] = useState([]);
   const [projectsStatus, setProjectsStatus] = useState({ state: "idle", error: "" });
+  // Instagram and YouTube reflect the creator's real Composio connections once
+  // they are signed in; they start disconnected until the backend confirms them.
   const [connectedSocials, setConnectedSocials] = useState({
-    instagram: { connected: true, handle: "@indic_creator_daily", name: "Instagram Reels" },
-    youtube: { connected: true, handle: "Splic Tech Shorts", name: "YouTube Shorts & Video" },
+    instagram: { connected: false, handle: "", name: "Instagram Reels", accountId: "" },
+    youtube: { connected: false, handle: "", name: "YouTube Shorts & Video", accountId: "" },
     tiktok: { connected: false, handle: "", name: "TikTok Creator" },
     x: { connected: false, handle: "", name: "X (Twitter)" },
   });
@@ -2293,7 +2301,30 @@ export function App({ hostSession = null }) {
     }
     setJourneyStage("auth");
     notify("Signed out successfully.");
+    firebaseSignOut().catch(() => {});
   }, [notify]);
+
+  // Pull the creator's real Instagram/YouTube connection status from the backend.
+  const syncConnectedSocials = useCallback(async () => {
+    try {
+      const result = await getConnectedAccounts();
+      setConnectedSocials((previous) => mapAccountsToSocialState(result?.accounts || [], previous));
+    } catch (_error) {
+      // Guest sessions and an unconfigured backend keep the current local state.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+    syncConnectedSocials();
+    const handleOAuthMessage = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== OAUTH_MESSAGE_TYPE) return;
+      syncConnectedSocials();
+    };
+    window.addEventListener("message", handleOAuthMessage);
+    return () => window.removeEventListener("message", handleOAuthMessage);
+  }, [isAuthenticated, syncConnectedSocials]);
 
   const handleDeleteProject = useCallback(async (projectId) => {
     const project = existingProjects.find((item) => item.id === projectId);
@@ -2720,6 +2751,7 @@ export function App({ hostSession = null }) {
           previewCanvasRef={previewCanvasRef}
           previewVideoRef={previewVideoRef}
           connectedSocials={connectedSocials}
+          onOpenSettings={() => setShowSettingsModal(true)}
           t={t}
         />
       ) : workspacePage === "projects" ? (

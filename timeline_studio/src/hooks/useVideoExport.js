@@ -156,7 +156,9 @@ export function useVideoExport(d) {
           downloadBlob(subtitle, `${exportBaseName}.srt`);
           sidecars.push({ fileName: `${exportBaseName}.srt`, extension: "srt", byteSize: subtitle.size });
         }
-        return { fileName, extension, byteSize: blob.size, mimeType: blob.type, sidecars };
+        // `blob` is returned so callers can reuse the rendered file without
+        // re-encoding it (for example social publishing from the Deliver tab).
+        return { blob, fileName, extension, byteSize: blob.size, mimeType: blob.type, sidecars };
       };
       const { prepareEditorComposition } = await import("../lib/editorComposition.js");
       throwIfExportAborted(signal);

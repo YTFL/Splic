@@ -35,7 +35,7 @@ class ComposioClientManager:
         try:
             # Attempt to import official Composio SDK (v3)
             from composio import Composio
-            self._client = Composio(api_key=self.settings.COMPOSIO_API_KEY)
+            self._client = self._build_client(Composio)
             self._init_error = None
             logger.info("Composio SDK client initialized successfully.")
             return self._client
@@ -54,6 +54,37 @@ class ComposioClientManager:
                 )
                 logger.error(f"{self._init_error} (error: {exc})")
                 raise RuntimeError(self._init_error) from exc
+        except Exception as exc:
+            self._init_error = f"Failed to initialize Composio client: {str(exc)}"
+            logger.error(self._init_error)
+            raise RuntimeError(self._init_error) from exc
+
+    def _build_client(self, composio_factory: Any) -> Any:
+        """Create the Composio client, enabling local-file uploads for publishing.
+
+        YouTube uploads pass a staged file path; the SDK turns that into a
+        Composio S3 upload automatically once auto-upload is enabled and the
+        staging directory is on the allowlist. Older SDK builds without these
+        options still work by falling back to the plain constructor.
+        """
+        try:
+            media_dir = self.settings.media_root
+            media_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:  # pragma: no cover - defensive
+            logger.warning("Could not prepare the media directory for uploads: %s", exc)
+            return composio_factory(api_key=self.settings.COMPOSIO_API_KEY)
+
+        try:
+            return composio_factory(
+                api_key=self.settings.COMPOSIO_API_KEY,
+                dangerously_allow_auto_upload_download_files=True,
+                file_upload_dirs=[str(media_dir)],
+            )
+        except TypeError:
+            logger.debug(
+                "Composio SDK rejected file-upload options; using the plain constructor."
+            )
+            return composio_factory(api_key=self.settings.COMPOSIO_API_KEY)
         except Exception as exc:
             self._init_error = f"Failed to initialize Composio client: {str(exc)}"
             logger.error(self._init_error)

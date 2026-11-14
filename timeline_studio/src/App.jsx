@@ -1918,8 +1918,10 @@ export function App({ hostSession = null }) {
     await pace(80); // let the cut timeline render first
     window.dispatchEvent(new CustomEvent("editor-timeline-command", { detail: "zoom-fit" }));
 
-    // ~0.2 s of animation per second of video, kept between 6 and 15 seconds.
-    const sweepMs = Math.min(15000, Math.max(6000, clipSpan * 200));
+    // Human-paced agentic timing: ensures the ghost cursor has time to traverse menus,
+    // pick up planned assets, and let the Thanos snap shape-assembly complete on tracks.
+    const plannedEditsCount = Math.max(1, captions.length + stickers.length + sfx.length + seams.length + effects.length);
+    const sweepMs = Math.max(14000, Math.min(36000, plannedEditsCount * 1300));
     const sweepStart = performance.now();
     const shown = { captions: 0, stickers: 0, sfx: 0, effects: 0, seams: 0 };
     let flash = 0;
@@ -1946,15 +1948,30 @@ export function App({ hostSession = null }) {
       if (crossedSeam) flash += 1;
 
       const latest = newSfx.at(-1)?.name || newStickers.at(-1)?.name || (crossedSeam ? "Ripple cut" : "") || newCaptions.at(-1)?.text;
+      const eventType = crossedSeam
+        ? "cut"
+        : newStickers.length
+        ? "sticker"
+        : newSfx.length
+        ? "sfx"
+        : newCaptions.length
+        ? "caption"
+        : newEffects.length
+        ? "effect"
+        : null;
+      const eventItem = newStickers.at(-1) || newSfx.at(-1) || newCaptions.at(-1) || newEffects.at(-1) || null;
+
       setAutoCutSweep({
         text: latest ? `Editing: ${latest}` : "Editing the timeline...",
         time: time - clipStart,
         total: clipSpan,
         flash,
+        eventType,
+        eventItem,
       });
       seekTo(time, { immediate: true });
       if (progress >= 1) break;
-      await pace(90);
+      await pace(130);
     }
 
     if (captions.length) setScript(captions.map((caption) => caption.text).join("\n"));

@@ -39,19 +39,19 @@ export function useScriptReview({ hostSession, getContext }) {
     inspectVisualSearch: () => request("visual-search"),
     queryVisualSearch: input => request("visual-search/queries", input),
     saveProvider: (event, value) => {
-      if (!event?.isTrusted) throw new Error("请从配置面板直接保存服务配置。");
+      if (!event?.isTrusted) throw new Error("Please save the service configuration directly from the settings panel.");
       return hostSession.request("/api/v1/planning-provider", value);
     },
     preview: record => request("planning-previews", { scriptId: record.scriptId, revision: record.revision }),
     generate: (event, confirmationId, key) => {
-      if (!event?.isTrusted) throw new Error("请直接确认外发范围。");
+      if (!event?.isTrusted) throw new Error("Please confirm the publishing scope directly.");
       return request("planning-runs", { confirmationId }, key);
     },
     runs: () => request("planning-runs"),
     taskAction: (taskId, action) => request(`planning-runs/${encodeURIComponent(taskId)}/${action}`, {}),
     async save(record, draft, event) {
-      if (inFlight.current) throw new Error("正在保存上一修订，请稍候。");
-      if (event && !event.isTrusted) throw new Error("请直接点击确认脚本。");
+      if (inFlight.current) throw new Error("Saving the previous revision; please wait.");
+      if (event && !event.isTrusted) throw new Error("Please click to confirm the script directly.");
       inFlight.current = true;
       setSaving(true);
       try {
@@ -67,7 +67,7 @@ export function useScriptReview({ hostSession, getContext }) {
               confirmDigest: event ? record.digest : null, confirmationId } };
         }
         const operation = pending.current;
-        if (operation.projectId !== context.projectId) throw new Error("上一项目仍有未确认的脚本保存；请返回该项目重试。");
+        if (operation.projectId !== context.projectId) throw new Error("The previous project still has an unconfirmed script save. Please return to that project and retry.");
         const saved = await request(operation.body.expectedRevision === 0 ? "scripts" : `scripts/${encodeURIComponent(operation.scriptId)}/revisions`, operation.body, operation.key);
         if (saved.status !== "succeeded") {
           if (saved.status === "failed") {
@@ -78,7 +78,7 @@ export function useScriptReview({ hostSession, getContext }) {
               operation.body.confirmationId = confirmation.confirmationId;
             }
           }
-          throw new Error(saved.error?.message || "脚本保存尚未完成。");
+          throw new Error(saved.error?.message || "Script save has not completed.");
         }
         pending.current = null;
         const list = await request("scripts");

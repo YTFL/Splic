@@ -5,14 +5,14 @@ import { loadProjectMediaBlob } from "../lib/projectSnapshot.js";
 
 export function useSourceAudioExtraction(d) {
   return useCallback(async (asset, timelineStart = 0, options = {}) => {
-    if (!asset?.blob && !asset?.src && !asset?.projectMedia?.bindings?.blob) { d.notify("当前视频素材缺少原文件，无法分离原声"); return false; }
-    d.setStatus("generating"); d.setStatusText(asset.compatibilityAudioBlob ? d.t("mediaCompatibilityProcessing") : "加载 FFmpeg WASM 分离视频原声"); d.setProgress(12);
+    if (!asset?.blob && !asset?.src && !asset?.projectMedia?.bindings?.blob) { d.notify("Video asset is missing source file, cannot separate audio."); return false; }
+    d.setStatus("generating"); d.setStatusText(asset.compatibilityAudioBlob ? d.t("mediaCompatibilityProcessing") : "Loading FFmpeg WASM to separate audio"); d.setProgress(12);
     try {
       const extractedBlob = asset.compatibilityAudioBlob || asset.projectMedia?.bindings?.compatibilityAudioBlob
         ? await loadProjectMediaBlob(asset, "compatibilityAudioBlob")
         : await extractAudioFromVideo(await loadProjectMediaBlob(asset), asset.name);
-      d.setStatusText("解析视频原声波形"); d.setProgress(78);
-      const extracted = await decodeWaveform(extractedBlob, 96); if (!extracted.duration) throw new Error("视频没有可识别的音频轨");
+      d.setStatusText("Analyzing video audio waveform"); d.setProgress(78);
+      const extracted = await decodeWaveform(extractedBlob, 96); if (!extracted.duration) throw new Error("Video has no recognizable audio track");
       if (options.destination === "audio") {
         const playbackRate = Math.max(0.25, Math.min(4, Number(asset.playbackRate) || 1));
         const sourceStart = Math.max(0, Number(asset.sourceStart) || 0);
@@ -20,9 +20,9 @@ export function useSourceAudioExtraction(d) {
           Math.max(0, Number(asset.duration) || 0),
           asset.speedCurve?.enabled ? asset.duration : Math.max(0, (extracted.duration - sourceStart) / playbackRate),
         );
-        if (!(timelineDuration > 0)) throw new Error("画中画片段没有可分离的音频区间");
-        const sourceName = `${asset.name.replace(/\.[^.]+$/, "")} 原声.wav`;
-        const audioSegment = d.replaceAudio(extractedBlob, extracted.duration, extracted.peaks, "画中画原声已分离", {
+        if (!(timelineDuration > 0)) throw new Error("Overlay clip has no separable audio range");
+        const sourceName = `${asset.name.replace(/\.[^.]+$/, "")} Audio.wav`;
+        const audioSegment = d.replaceAudio(extractedBlob, extracted.duration, extracted.peaks, "Overlay audio separated", {
           assetId: getSourceAudioAssetId(asset),
           name: sourceName,
           playbackRate,
@@ -37,7 +37,7 @@ export function useSourceAudioExtraction(d) {
         d.setVisualOverlaySegments?.((segments) => segments.map((segment) => (
           segment.id === asset.id ? { ...segment, muted: true, audioSeparated: true } : segment
         )));
-        d.notify("画中画原声已分离到音频轨");
+        d.notify("Overlay audio separated to audio track");
         return { track: "audio", segmentId: audioSegment.id };
       }
       const shouldAppend = options.append === true && d.sourceAudioBlob instanceof Blob;
@@ -46,12 +46,12 @@ export function useSourceAudioExtraction(d) {
       const blob = shouldAppend ? await concatenateAudioBlobs([d.sourceAudioBlob, extractedBlob]) : extractedBlob;
       const decoded = shouldAppend ? await decodeWaveform(blob, 192) : extracted;
       d.setVisualSegments((segments) => attachSourceAudioOffset(segments, asset, sourceAudioOffset));
-      const sourceName = shouldAppend ? "视频原声合集.wav" : `${asset.name.replace(/\.[^.]+$/, "")} 原声.wav`;
-      d.replaceSourceAudio(blob, decoded.duration, decoded.peaks, sourceName, shouldAppend ? "视频原声已追加到时间线" : "视频原声已分离到时间线", timelineStart, shouldAppend ? "" : sourceAudioAssetId, { focusAudio: false });
+      const sourceName = shouldAppend ? "Merged Video Audio.wav" : `${asset.name.replace(/\.[^.]+$/, "")} Audio.wav`;
+      d.replaceSourceAudio(blob, decoded.duration, decoded.peaks, sourceName, shouldAppend ? "Video audio appended to timeline" : "Video audio separated to timeline", timelineStart, shouldAppend ? "" : sourceAudioAssetId, { focusAudio: false });
       return { track: "source", segmentId: asset.id };
     } catch (error) {
-      const message = "视频画面已添加，但没有可分离的原声音轨";
-      console.warn(error); d.setStatus("ready"); d.setStatusText("视频未检测到可分离原声");
+      const message = "Video visual added, but no separable audio track detected.";
+      console.warn(error); d.setStatus("ready"); d.setStatusText("No separable audio detected in video");
       d.setProgress(0); d.notify(message);
       return false;
     }

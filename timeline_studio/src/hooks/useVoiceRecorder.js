@@ -11,8 +11,8 @@ export function useVoiceRecorder(d) {
         duration: decoded.duration, peaks: decoded.peaks, createdAt, extension };
       d.setRecordedVoices((items) => [recording, ...items.slice(0, 8)]);
       d.setActiveTool("audio"); d.setVoiceTab("mine"); d.setStatus("ready");
-      d.setStatusText(d.t("recordingReadyForClone", "录音已就绪，请完成克隆试听"));
-      d.notify(d.t("recordingReadyForClone", "录音已就绪，请完成克隆试听"));
+      d.setStatusText(d.t("recordingReadyForClone", "Recording ready, proceed with voice clone"));
+      d.notify(d.t("recordingReadyForClone", "Recording ready, proceed with voice clone"));
     } catch (error) {
       console.error(error); d.setStatus("error"); d.setStatusText(error instanceof Error ? error.message : d.t("recordingPermissionDenied"));
       d.notify(d.t("recordingPermissionDenied"));

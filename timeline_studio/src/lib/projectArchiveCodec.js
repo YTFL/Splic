@@ -6,7 +6,7 @@ export function readArchiveBlobBuffer(blob) {
   if (typeof blob?.arrayBuffer === "function") return blob.arrayBuffer();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(reader.error || new Error("无法读取工程文件"));
+    reader.onerror = () => reject(reader.error || new Error("Unable to read project file"));
     reader.onload = () => resolve(reader.result);
     reader.readAsArrayBuffer(blob);
   });
@@ -38,7 +38,7 @@ export async function unpackProjectArchive(file, { onProgress } = {}) {
       break;
     }
   }
-  if (!directoryFound) throw new Error("无效工程包");
+  if (!directoryFound) throw new Error("Invalid project archive");
   const files = new Map();
   let archiveError = null;
   let pendingFiles = 0;
@@ -66,11 +66,11 @@ export async function unpackProjectArchive(file, { onProgress } = {}) {
     // Report bytes only after they have actually been read and decompressed.
     reportProgress(end);
   }
-  if (pendingFiles) throw new Error("无效工程包");
+  if (pendingFiles) throw new Error("Invalid project archive");
   const metadata = files.get("project.json");
-  if (!metadata) throw new Error("缺少 project.json");
+  if (!metadata) throw new Error("Missing project.json");
   const payload = JSON.parse(new TextDecoder().decode(await readArchiveBlobBuffer(metadata)));
-  if (payload?.format !== "timeline-studio-archive" || !payload.project) throw new Error("无效工程包");
+  if (payload?.format !== "timeline-studio-archive" || !payload.project) throw new Error("Invalid project archive");
   const mediaBlobs = new Map();
   const getBlob = (entry) => {
     if (!entry?.path || !files.has(entry.path)) return null;

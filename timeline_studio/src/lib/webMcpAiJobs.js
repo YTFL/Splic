@@ -7,7 +7,7 @@ import { DEFAULT_GENERATED_VOICE_GAP } from "./generatedVoicePlacement.js";
 import { prepareTextForVoice, splitTextAtSentenceEnd } from "./ttsText.js";
 
 const LANGUAGES = ["zh", "en", "ja", "ko", "es", "fr", "de", "pt", "th", "vi", "ru", "it", "id"];
-const VOICE_LANGUAGES = { 中文: "zh", English: "en", 日本語: "ja", 한국어: "ko", Español: "es", Français: "fr", Deutsch: "de", Português: "pt", ไทย: "th", "Tiếng Việt": "vi", Русский: "ru", Italiano: "it", "Bahasa Indonesia": "id" };
+const VOICE_LANGUAGES = { Chinese: "zh", English: "en", Japanese: "ja", 한국어: "ko", Español: "es", Français: "fr", Deutsch: "de", Português: "pt", ไทย: "th", "Tiếng Việt": "vi", Русский: "ru", Italiano: "it", "Bahasa Indonesia": "id" };
 const MAX_TEXT = 2000;
 const MAX_SEGMENTS = 80;
 const MAX_TRANSCRIPTION_SECONDS = 120;
@@ -299,7 +299,7 @@ export function createWebMcpAiJobs(getEditor, { makeId = () => crypto.randomUUID
     const result = await transcribeAudioToCaptionSegments(blob, {
       preferredLanguage: request.language, timelineOffset: request.timelineOffset,
       signal: job.controller.signal, requireWorker: true,
-      onProgress: ({ progress, phase }) => update(job, /下载|初始化/.test(phase) ? "aiPreparing" : /解码/.test(phase) ? "aiDecoding" : "aiTranscribing", progress),
+      onProgress: ({ progress, phase }) => update(job, /download|initialize/.test(phase) ? "aiPreparing" : /decode/.test(phase) ? "aiDecoding" : "aiTranscribing", progress),
     });
     aborted(job.controller.signal);
     const rangeEnd = Math.min(MAX_TIMELINE_DURATION_SECONDS, request.timelineOffset + result.duration);

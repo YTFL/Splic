@@ -25,7 +25,7 @@ export function useVoiceGeneration(d) {
           d.selectedVoiceProfile.embeddingVersion !== OPENVOICE_EMBEDDING_VERSION
           && d.selectedVoiceProfile.referenceBlob
         ) {
-          d.setStatusText(d.t("cloneEncoding", "重新提取音色"));
+          d.setStatusText(d.t("cloneEncoding", "Extracting voice profile"));
           targetEmbedding = await extractVoiceEmbedding(d.selectedVoiceProfile.referenceBlob, (event) => {
             if (event.phase) d.setStatusText(event.phase);
             if (Number.isFinite(event.progress)) d.setProgress(Math.max(1, Math.min(45, Math.round(event.progress * 0.45))));
@@ -57,7 +57,7 @@ export function useVoiceGeneration(d) {
         if (targetEmbedding) {
           d.setStatusText(sentenceSegments.length > 1
             ? d.t("ttsStatusConvertingSegment").replace("{current}", index + 1).replace("{total}", sentenceSegments.length)
-            : d.t("cloneStageTwo", "第 2 步：转换为克隆音色"));
+            : d.t("cloneStageTwo", "Step 2: Converting to cloned voice"));
           blob = await convertVoiceBlob(blob, targetEmbedding, {
             seed: 2026 + index,
             onProgress: (event) => {

@@ -812,16 +812,16 @@ export function PreviewStage({
       style={isFocusPreviewOpen ? { "--focus-preview-ratio": previewRatioValue } : undefined}
       role={isFocusPreviewOpen ? "dialog" : undefined}
       aria-modal={isFocusPreviewOpen ? "true" : undefined}
-      aria-label={isFocusPreviewOpen ? t("focusPreviewTitle", "大画布编辑") : undefined}
+      aria-label={isFocusPreviewOpen ? t("focusPreviewTitle", "Expanded Canvas") : undefined}
     >
       <SubjectMaterialFilterDefs effect={normalizedSubjectEffect} />
       {isFocusPreviewOpen ? <header className="focus-preview-header">
-        <div><strong>{t("focusPreviewTitle", "大画布编辑")}</strong><span>{t("focusPreviewHint", "点击画面元素进行移动、缩放和旋转")}</span></div>
+        <div><strong>{t("focusPreviewTitle", "Expanded Canvas")}</strong><span>{t("focusPreviewHint", "Click canvas elements to move, scale, and rotate")}</span></div>
         <button
           className="focus-preview-close"
           type="button"
-          aria-label={t("closeFocusPreview", "关闭大画布预览")}
-          title={t("closeFocusPreview", "关闭大画布预览")}
+          aria-label={t("closeFocusPreview", "Close Expanded Canvas")}
+          title={t("closeFocusPreview", "Close Expanded Canvas")}
           onPointerDown={(event) => {
             event.stopPropagation();
           }}
@@ -1030,8 +1030,8 @@ export function PreviewStage({
             {renderedVisualSrc && trackVisibility.image ? <ClickRippleOverlay effect={visualEffects?.clickRipple} time={visualLocalTime} /> : null}
             {renderedVisualSrc && trackVisibility.image && visualTransformEditable && !visualMaskEditable ? (
               <div className="visual-transform-box" data-preview-track="image" data-preview-clip-id={previewVisualSegment?.id} style={visualTransformBoxStyle} onPointerDown={(event) => startVisualTransform(event, "move")}>
-                <button className="visual-transform-rotate" type="button" aria-label={t("visualRotation", "旋转")} onPointerDown={(event) => startVisualTransform(event, "rotate")} />
-                {['nw', 'ne', 'sw', 'se'].map((corner) => <button key={corner} className={`visual-transform-handle is-${corner}`} type="button" aria-label={t("visualScale", "缩放")} onPointerDown={(event) => startVisualTransform(event, `scale-${corner}`)} />)}
+                <button className="visual-transform-rotate" type="button" aria-label={t("visualRotation", "Rotate")} onPointerDown={(event) => startVisualTransform(event, "rotate")} />
+                {['nw', 'ne', 'sw', 'se'].map((corner) => <button key={corner} className={`visual-transform-handle is-${corner}`} type="button" aria-label={t("visualScale", "Scale")} onPointerDown={(event) => startVisualTransform(event, `scale-${corner}`)} />)}
               </div>
             ) : null}
             {!geometricTransition ? transitionLayer : null}
@@ -1183,8 +1183,8 @@ export function PreviewStage({
                     onPointerDown={(event) => startOverlayMaskEdit(event, "move", overlay)}
                   ><span>{t("visualMask")}</span><button type="button" aria-label={t("visualMaskResize")} onPointerDown={(event) => startOverlayMaskEdit(event, "resize", overlay)} /></div> : null}
                   {selected && !isPlaying && !visualOverlayMaskEditable ? <>
-                    <button className="visual-transform-rotate" type="button" aria-label={t("visualRotation", "旋转")} onPointerDown={(event) => startOverlayTransform(event, "rotate", overlay)} />
-                    {['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map((handle) => <button key={handle} className={`visual-transform-handle is-${handle}`} type="button" aria-label={t("visualScale", "缩放")} onPointerDown={(event) => startOverlayTransform(event, `scale-${handle}`, overlay)} />)}
+                    <button className="visual-transform-rotate" type="button" aria-label={t("visualRotation", "Rotate")} onPointerDown={(event) => startOverlayTransform(event, "rotate", overlay)} />
+                    {['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map((handle) => <button key={handle} className={`visual-transform-handle is-${handle}`} type="button" aria-label={t("visualScale", "Scale")} onPointerDown={(event) => startOverlayTransform(event, `scale-${handle}`, overlay)} />)}
                   </> : null}
                 </div> : null}
                 {selected && !isPlaying ? (
@@ -1192,11 +1192,11 @@ export function PreviewStage({
                     className={`visual-overlay-order-actions is-${overlayToolbar.placement}`}
                     style={{ left: `${overlayToolbar.left}px`, top: `${overlayToolbar.top}px` }}
                     role="toolbar"
-                    aria-label={t("pictureInPicture", "画中画")}
+                    aria-label={t("pictureInPicture", "Overlay (PiP)")}
                     onPointerDown={(event) => event.stopPropagation()}
                   >
-                    <button type="button" title={t("moveLayerUp", "上移一层")} aria-label={t("moveLayerUp", "上移一层")} onClick={(event) => { event.stopPropagation(); onReorderVisualOverlay?.(overlay.id, 1); }}><ArrowUp size={15} /></button>
-                    <button type="button" title={t("moveLayerDown", "下移一层")} aria-label={t("moveLayerDown", "下移一层")} onClick={(event) => { event.stopPropagation(); onReorderVisualOverlay?.(overlay.id, -1); }}><ArrowDown size={15} /></button>
+                    <button type="button" title={t("moveLayerUp", "Move Layer Up")} aria-label={t("moveLayerUp", "Move Layer Up")} onClick={(event) => { event.stopPropagation(); onReorderVisualOverlay?.(overlay.id, 1); }}><ArrowUp size={15} /></button>
+                    <button type="button" title={t("moveLayerDown", "Move Layer Down")} aria-label={t("moveLayerDown", "Move Layer Down")} onClick={(event) => { event.stopPropagation(); onReorderVisualOverlay?.(overlay.id, -1); }}><ArrowDown size={15} /></button>
                   </div>
                 ) : null}
               </Fragment>;
@@ -1273,8 +1273,8 @@ export function PreviewStage({
                 >
                   <img className="sticker-overlay-image" src={sticker.src} alt="" draggable={false} />
                   {isEditable ? <>
-                    <button className="sticker-rotate-handle" type="button" aria-label={t("visualRotation", "旋转")} onPointerDown={(event) => startStickerTransform(event, "rotate", sticker.motionBase || sticker)} />
-                    <button className="sticker-scale-handle" type="button" aria-label={t("visualScale", "缩放")} onPointerDown={(event) => startStickerTransform(event, "scale", sticker.motionBase || sticker)}>
+                    <button className="sticker-rotate-handle" type="button" aria-label={t("visualRotation", "Rotate")} onPointerDown={(event) => startStickerTransform(event, "rotate", sticker.motionBase || sticker)} />
+                    <button className="sticker-scale-handle" type="button" aria-label={t("visualScale", "Scale")} onPointerDown={(event) => startStickerTransform(event, "scale", sticker.motionBase || sticker)}>
                       <Resize size={12} weight="bold" aria-hidden="true" />
                     </button>
                   </> : null}
@@ -1316,18 +1316,18 @@ export function PreviewStage({
             type="button"
             onClick={() => {
               setFitMode((mode) => (mode === "contain" ? "cover" : "contain"));
-              notify(fitMode === "contain" ? "预览已切换为填充裁切" : "预览已切换为完整适配");
+              notify(fitMode === "contain" ? "Preview set to fill" : "Preview set to fit");
             }}
           >
             {fitMode === "contain" ? t("fit") : t("cover")} <CaretDown size={14} />
           </button>
-          <label className="mobile-ratio-select" aria-label={t("canvasRatio", "画布比例")}>
+          <label className="mobile-ratio-select" aria-label={t("canvasRatio", "Canvas Ratio")}>
             <select value={ratioId} onChange={(event) => setRatioId?.(event.target.value)}>
               {RATIO_OPTIONS.map((option) => <option value={option.id} key={option.id}>{option.label}</option>)}
             </select>
             <CaretDown size={14} />
           </label>
-          <IconButton label={isFocusPreviewOpen ? t("closeFocusPreview", "关闭大画布预览") : t("fullscreenPreview")} onClick={() => setIsFocusPreviewOpen((open) => !open)}>
+          <IconButton label={isFocusPreviewOpen ? t("closeFocusPreview", "Close Expanded Canvas") : t("fullscreenPreview")} onClick={() => setIsFocusPreviewOpen((open) => !open)}>
             <FrameCorners size={19} />
           </IconButton>
         </div>
@@ -1340,7 +1340,7 @@ export function PreviewStage({
     splitLocked={Boolean((visualOverlays.length && alignmentLocks.overlay) || (trackVisibility.image && previewVisualSegment && alignmentLocks.image))} t={t} onAction={onPreviewAlignment} onClose={() => setContextMenu(null)} /> : null;
   if (isFocusPreviewOpen && typeof document !== "undefined") {
     return createPortal(<>
-      <button className="focus-preview-backdrop" type="button" aria-label={t("closeFocusPreview", "关闭大画布预览")} onClick={() => setIsFocusPreviewOpen(false)} />
+      <button className="focus-preview-backdrop" type="button" aria-label={t("closeFocusPreview", "Close Expanded Canvas")} onClick={() => setIsFocusPreviewOpen(false)} />
       {previewStage}
       {alignmentMenu}
     </>, document.body);

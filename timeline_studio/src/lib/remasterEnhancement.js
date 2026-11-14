@@ -17,10 +17,10 @@ function getWorker() {
     pending.delete(message.requestId);
     request.signal?.removeEventListener("abort", request.abort);
     if (message.type === "result") request.resolve(message.result);
-    else request.reject(new Error(message.error || "视频增强失败"));
+    else request.reject(new Error(message.error || "Video enhancement failed"));
   });
   worker.addEventListener("error", (event) => {
-    const error = new Error(event.message || "视频增强 Worker 运行失败");
+    const error = new Error(event.message || "Video enhancement Worker encountered an error");
     pending.forEach((request) => request.reject(error)); pending.clear();
     worker?.terminate(); worker = null;
   });
@@ -28,7 +28,7 @@ function getWorker() {
 }
 
 export function enhanceRemasterFrame({ bitmap, maxLongEdge = 960, strength = 1, outputType = "blob", sequenceId = "", allowResidualReuse = false, reuseThreshold = 0.012, onProgress, signal }) {
-  if (!bitmap) return Promise.reject(new Error("没有可增强的画面"));
+  if (!bitmap) return Promise.reject(new Error("No frame available for enhancement"));
   const requestId = `remaster-${crypto.randomUUID?.() ?? Date.now()}`;
   return new Promise((resolve, reject) => {
     const activeWorker = getWorker();
@@ -36,7 +36,7 @@ export function enhanceRemasterFrame({ bitmap, maxLongEdge = 960, strength = 1, 
       pending.delete(requestId);
       bitmap.close?.();
       activeWorker.postMessage({ type: "cancel", requestId });
-      const error = new Error("视频增强已取消"); error.name = "AbortError"; reject(error);
+      const error = new Error("Video enhancement has been cancelled"); error.name = "AbortError"; reject(error);
     };
     if (signal?.aborted) { abort(); return; }
     signal?.addEventListener("abort", abort, { once: true });
@@ -48,18 +48,18 @@ export function enhanceRemasterFrame({ bitmap, maxLongEdge = 960, strength = 1, 
 export async function captureRemasterSource({ type, src, video }) {
   if (type === "video") {
     if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
-      throw new Error("当前视频帧尚未准备好，请稍后重试");
+      throw new Error("The current video frame is not ready; please try again shortly");
     }
     return createImageBitmap(video);
   }
   const response = await fetch(src);
-  if (!response.ok) throw new Error(`读取画面失败（HTTP ${response.status}）`);
+  if (!response.ok) throw new Error(`Failed to read frame (HTTP ${response.status})`);
   return createImageBitmap(await response.blob());
 }
 
 export function disposeRemasterWorker() {
   worker?.terminate(); worker = null;
-  pending.forEach((request) => request.reject(new Error("视频增强 Worker 已关闭")));
+  pending.forEach((request) => request.reject(new Error("Video enhancement Worker has been closed")));
   pending.clear();
 }
 

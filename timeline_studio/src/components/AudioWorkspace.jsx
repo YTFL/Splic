@@ -9,7 +9,7 @@ import { getVideoTrackFrameAtSourceTime, getVideoTrackFrameSource } from "../lib
 import { WaveformStrip } from "./ui.jsx";
 
 const copy = {
-  zh: ["配音", "暂无音频"],
+  zh: ["Voiceover", "No audio"],
   en: ["Voiceover", "No audio"],
   ja: ["ナレーション", "音声なし"],
   ko: ["내레이션", "오디오 없음"],
@@ -25,7 +25,7 @@ const copy = {
 };
 
 const metadataCopy = {
-  zh: "编码|采样率|声道|平均码率|素材信息|作者|标题|容器|源音频时长|文件大小|单声道|立体声",
+  zh: "Codec|Sample rate|Channels|Average bitrate|Asset information|Author|Title|Container|Source audio duration|File size|Mono|Stereo",
   en: "Codec|Sample rate|Channels|Average bitrate|Asset information|Author|Title|Container|Source audio duration|File size|Mono|Stereo",
   ja: "コーデック|サンプルレート|チャンネル|平均ビットレート|素材情報|作者|タイトル|コンテナ|元音声の長さ|ファイルサイズ|モノラル|ステレオ",
   ko: "코덱|샘플링 주파수|채널|평균 비트레이트|소재 정보|작성자|제목|컨테이너|원본 오디오 길이|파일 크기|모노|스테레오",

@@ -151,6 +151,6 @@ export async function commitGenerationOutputs(outputs, {
   setUserAssets((items) => [...assets.slice().reverse(), ...items]);
   const selectedId = assets.at(-1)?.id || "";
   if (selectedId) setSelectedLibraryAssetId(selectedId);
-  notify?.("生成结果已加入 My assets");
+  notify?.("Generation result added to My assets");
   return { assetIds: assets.map((asset) => asset.id), selectedAssetId: selectedId };
 }

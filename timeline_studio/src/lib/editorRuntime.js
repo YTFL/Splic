@@ -72,7 +72,7 @@ export function setTimelineAudioGain(media, value, spatialEffect = "original", s
 
 export async function decodeAvatarAudio16k(blob) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) throw new Error("当前浏览器不支持音频解码");
+  if (!AudioContextClass) throw new Error("Audio decoding is not supported in this browser");
   const context = new AudioContextClass();
   try {
     const decoded = await context.decodeAudioData((await blob.arrayBuffer()).slice(0));
@@ -115,8 +115,8 @@ export async function encodeAvatarFrames(blobs, width, height, fps, keyframeTime
   const canvas = document.createElement("canvas");
   canvas.width = width; canvas.height = height;
   const context = canvas.getContext("2d", { alpha: false });
-  if (!context) throw new Error("无法创建视频编码画布");
-  if (typeof VideoEncoder === "undefined") throw new Error("当前浏览器不支持 WebCodecs 视频编码");
+  if (!context) throw new Error("Unable to create video encoding canvas");
+  if (typeof VideoEncoder === "undefined") throw new Error("This browser does not support WebCodecs video encoding");
   const { BufferTarget, CanvasSource, Output, WebMOutputFormat } = await import("mediabunny");
   if (options.signal?.aborted) throw new DOMException("Canceled", "AbortError");
   const bitmaps = await Promise.all(blobs.map((blob) => createImageBitmap(blob)));
@@ -135,7 +135,7 @@ export async function encodeAvatarFrames(blobs, width, height, fps, keyframeTime
     await output.start();
     for (let frame = 0; frame < totalFrames; frame += 1) {
       if (options.signal?.aborted) {
-        const error = new Error("视频编码已取消");
+        const error = new Error("Video encoding has been cancelled");
         error.name = "AbortError";
         throw error;
       }
@@ -159,7 +159,7 @@ export async function encodeAvatarFrames(blobs, width, height, fps, keyframeTime
     bitmaps.forEach((bitmap) => bitmap.close());
   }
   const result = new Blob([target.buffer], { type: "video/webm" });
-  if (!result.size) throw new Error("数字人视频编码结果为空");
+  if (!result.size) throw new Error("Avatar video encoding result is empty");
   return result;
 }
 

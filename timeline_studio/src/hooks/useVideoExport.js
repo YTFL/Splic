@@ -25,11 +25,11 @@ function getExportFailureMessage(error, copy, localize) {
     messages.push(`${cause.name || ""} ${cause.message || ""}`);
   }
   const detail = messages.join(" ");
-  if (/out of memory|memory allocation|insufficient memory|array buffer allocation|allocation failed|内存/i.test(detail)) return copy.memory;
-  if (/failed to fetch|networkerror|err_network|load failed|network request|网络/i.test(detail)) return copy.network;
-  if (/NotReadableError|NotFoundError|MEDIA_ERR|media.*(?:missing|not found|unavailable)|音频媒体已丢失|素材.*(?:失效|丢失)/i.test(detail)) return copy.media;
-  if (/音轨|audio track|audio encoder|AudioEncoder/i.test(detail)) return copy.audio;
-  if (/NotSupportedError|not supported|unsupported|不支持/i.test(detail)) return copy.unsupported;
+  if (/out of memory|memory allocation|insufficient memory|array buffer allocation|allocation failed|memory/i.test(detail)) return copy.memory;
+  if (/failed to fetch|networkerror|err_network|load failed|network request|network/i.test(detail)) return copy.network;
+  if (/NotReadableError|NotFoundError|MEDIA_ERR|media.*(?:missing|not found|unavailable)|audio media is missing|asset is unavailable or missing/i.test(detail)) return copy.media;
+  if (/audio track|audio track|audio encoder|AudioEncoder/i.test(detail)) return copy.audio;
+  if (/NotSupportedError|not supported|unsupported|not supported/i.test(detail)) return copy.unsupported;
   if (error?.message === localize("exportRangeInvalid")) return error.message;
   return copy.generic;
 }
@@ -211,7 +211,7 @@ export function useVideoExport(d) {
           || (actualPipeline === "compatible" && !video.diagnostics?.audioTrackCount)
         )
       ) {
-        throw new Error("导出器未能创建配音音轨，已停止保存无声视频，请重试或切换导出管线。");
+        throw new Error("The exporter failed to create a voiceover audio track; saving a silent video has been stopped. Please retry or switch the export pipeline.");
       }
       if (exportSettings.codec !== "h264") {
         if (generationMetadata && video.extension === "webm" && actualPipeline === "compatible") {

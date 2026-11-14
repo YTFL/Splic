@@ -11,17 +11,17 @@ function formatMessage(template, values = {}) {
 
 function effectPhaseKey(phase) {
   const text = String(phase ?? "");
-  if (/光流|逐帧描边|optical flow/i.test(text)) return "effectPhaseTracking";
-  if (/MediaPipe|MagicTouch|SlimSAM|清理主体|完整人像锚点|不完整|refin/i.test(text)) return "effectPhaseRefining";
-  if (/MODNet|抠图|透明|Alpha|matting/i.test(text)) return "effectPhaseMatting";
-  if (/YOLOS|NanoDet|识别主体|识别实物|已识别主体|未识别|detect/i.test(text)) return "effectPhaseDetecting";
-  if (/模型|ONNX|下载|读取|解码|准备|初始化|已就绪|model|download|decod/i.test(text)) return "effectPhaseLoadingModels";
+  if (/optical flow|frame-by-frame outline|optical flow/i.test(text)) return "effectPhaseTracking";
+  if (/MediaPipe|MagicTouch|SlimSAM|cleaning up subject|full portrait anchor|incomplete|refin/i.test(text)) return "effectPhaseRefining";
+  if (/MODNet|cutout|transparent|Alpha|matting/i.test(text)) return "effectPhaseMatting";
+  if (/YOLOS|NanoDet|detecting subject|detecting object|subject detected|not detected|detect/i.test(text)) return "effectPhaseDetecting";
+  if (/model|ONNX|download|load|decode|prepare|initialize|ready|model|download|decod/i.test(text)) return "effectPhaseLoadingModels";
   return "effectAnalysisRunning";
 }
 
 function localizeEffectPhase(phase, t, targetKind = "person") {
   if (!phase || typeof t !== "function") return phase;
-  const frameMatch = String(phase).match(/^(?:帧|逐帧描边)\s*(\d+)\/(\d+)\s*·\s*(.+)$/);
+  const frameMatch = String(phase).match(/^(?:frame|frame-outline)\s*(\d+)\/(\d+)\s*·\s*(.+)$/);
   const phaseKey = effectPhaseKey(phase);
   const localizedPhase = t(targetKind === "object"
     ? {

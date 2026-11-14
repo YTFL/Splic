@@ -31,12 +31,12 @@ function postProgress(requestId, progress, phaseKey, extra = {}) {
 
 function describeError(error) {
   if (error instanceof Error) return `${error.name}: ${error.message}`;
-  return String(error || "未知错误");
+  return String(error || "Unknown error");
 }
 
 async function fetchModel(requestId) {
   const response = await fetch(REMASTER_DRUNET_MODEL_URL);
-  if (!response.ok) throw new Error(`Remaster DRUNet 下载失败（HTTP ${response.status}）`);
+  if (!response.ok) throw new Error(`Remaster DRUNet download failed (HTTP ${response.status})`);
   const total = Number(response.headers.get("content-length")) || 0;
   if (!response.body || !total) return response.arrayBuffer();
   const reader = response.body.getReader();
@@ -61,7 +61,7 @@ async function getSession(requestId) {
       postProgress(requestId, 50, "remasterPhaseInitModel");
       const useWebGpu = Boolean(self.navigator?.gpu);
       try {
-        if (!useWebGpu) throw new Error("当前环境不支持 WebGPU");
+        if (!useWebGpu) throw new Error("WebGPU is not supported in this environment");
         const session = await ort.InferenceSession.create(model, {
           executionProviders: [{
             name: "webgpu",
@@ -276,7 +276,7 @@ self.addEventListener("message", (event) => {
       if (result && !canceledRequests.has(requestId)) self.postMessage({ type: "result", requestId, result }, result.bitmap ? [result.bitmap] : []);
       else result?.bitmap?.close?.();
     } catch (error) {
-      if (!canceledRequests.has(requestId)) self.postMessage({ type: "error", requestId, error: error instanceof Error ? error.message : "视频增强失败" });
+      if (!canceledRequests.has(requestId)) self.postMessage({ type: "error", requestId, error: error instanceof Error ? error.message : "Video enhancement failed" });
     } finally {
       canceledRequests.delete(requestId);
     }

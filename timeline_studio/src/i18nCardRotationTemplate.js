@@ -1,6 +1,6 @@
 const keys = ["title", "summary", "slot", "placeholder", "reuse", "applied", "intro", "slots", "locked"];
 const rows = {
-  zh: ["扑克牌旋转卡点", "霓虹四花色开场 · 10 段卡点换片", "素材", "使用编号占位图", "沿用第 01 段素材或使用占位图", "扑克牌旋转卡点模板已添加", "四花色开场", "更多素材位", "请显示并解锁画面轨道。"],
+  zh: ["Spinning cards", "Neon suits · 10 cuts on the beat", "Shot", "Use a numbered placeholder", "Reuse shot 01 or use a placeholder", "Spinning cards template added", "Four-suit intro", "More media slots", "Show and unlock the Visuals track."],
   en: ["Spinning cards", "Neon suits · 10 cuts on the beat", "Shot", "Use a numbered placeholder", "Reuse shot 01 or use a placeholder", "Spinning cards template added", "Four-suit intro", "More media slots", "Show and unlock the Visuals track."],
   ja: ["回転トランプ", "ネオンの4スート · 10カット", "素材", "番号付き素材を使う", "素材01を再利用、または仮素材を使う", "回転トランプのテンプレートを追加しました", "4スートのイントロ", "その他の素材枠", "映像トラックを表示し、ロックを解除してください。"],
   ko: ["회전하는 트럼프 카드", "네온 카드 오프닝 · 비트 컷 10개", "소재", "번호 자리표시자 사용", "소재 01 재사용 또는 자리표시자 사용", "회전 트럼프 카드 템플릿을 추가했습니다", "네 가지 카드 오프닝", "소재 슬롯 더 보기", "화면 트랙을 표시하고 잠금을 해제하세요."],
@@ -17,7 +17,7 @@ const rows = {
 
 const faceKeys = ["faces", "diamond", "club", "heart", "spade", "followCuts", "rendering", "renderFailed", "description"];
 const faces = {
-  zh: ["开场牌面", "方块", "梅花", "红心", "黑桃", "跟随卡点素材", "正在制作旋转牌面…", "无法制作牌面。请尝试换一张照片或一段视频。", "照片或视频随四张霓虹牌一起旋转，红心碎裂后切入 10 段卡点。开场默认跟随卡点素材，也可按花色单独选择。"],
+  zh: ["Intro card faces", "Diamonds", "Clubs", "Hearts", "Spades", "Follow beat-cut media", "Rendering rotating cards…", "The card faces couldn’t be rendered. Try a different photo or video.", "Photos or videos rotate with four neon cards. The heart shatters into ten beat cuts. The intro uses the cut media by default; you can also set a different source for each suit."],
   en: ["Intro card faces", "Diamonds", "Clubs", "Hearts", "Spades", "Follow beat-cut media", "Rendering rotating cards…", "The card faces couldn’t be rendered. Try a different photo or video.", "Photos or videos rotate with four neon cards. The heart shatters into ten beat cuts. The intro uses the cut media by default; you can also set a different source for each suit."],
   ja: ["イントロのカード表面", "ダイヤ", "クラブ", "ハート", "スペード", "ビートカットの素材を使う", "回転カードを作成中…", "カード表面を作成できませんでした。別の写真や動画をお試しください。", "4枚のネオンカードに写真や動画を載せて回転させ、ハートが砕けるとビートに合わせた10カットに切り替わります。カットの素材をそのまま使うか、スートごとに選べます。"],
   ko: ["오프닝 카드 앞면", "다이아몬드", "클로버", "하트", "스페이드", "비트 컷 소재 사용", "회전 카드 만드는 중…", "카드 앞면을 만들 수 없습니다. 다른 사진이나 영상을 사용해 보세요.", "사진이나 영상이 네온 카드 네 장과 함께 돌고, 하트가 깨지면 비트 컷 10개가 이어집니다. 컷 소재를 그대로 쓰거나 무늬별로 고를 수 있습니다."],

@@ -599,7 +599,7 @@ export function encodeAudioBufferAsWav(buffer) {
 
 export async function sliceAudioBlob(blob, start = 0, duration = Infinity) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) throw new Error("当前浏览器不支持 AudioContext，无法裁剪音频。");
+  if (!AudioContextClass) throw new Error("AudioContext is not supported in this browser; cannot slice audio.");
   const context = new AudioContextClass();
   try {
     const decoded = await context.decodeAudioData((await blob.arrayBuffer()).slice(0));
@@ -620,11 +620,11 @@ export async function sliceAudioBlob(blob, start = 0, duration = Infinity) {
 
 export async function concatenateAudioBlobs(blobs = []) {
   const sources = blobs.filter((blob) => blob instanceof Blob && blob.size > 0);
-  if (!sources.length) throw new Error("没有可合并的音频");
+  if (!sources.length) throw new Error("No audio to concatenate.");
   if (sources.length === 1) return sources[0];
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const OfflineAudioContextClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-  if (!AudioContextClass || !OfflineAudioContextClass) throw new Error("当前浏览器不支持音频合并");
+  if (!AudioContextClass || !OfflineAudioContextClass) throw new Error("Audio concatenation is not supported in this browser.");
   const decoder = new AudioContextClass();
   try {
     const decoded = await Promise.all(sources.map(async (blob) => decoder.decodeAudioData((await blob.arrayBuffer()).slice(0))));
@@ -648,7 +648,7 @@ export async function concatenateAudioBlobs(blobs = []) {
 
 export async function reverseAudioBlob(blob) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) throw new Error("当前浏览器不支持 AudioContext，无法反转音频。");
+  if (!AudioContextClass) throw new Error("AudioContext is not supported in this browser; cannot reverse audio.");
   const context = new AudioContextClass();
   try {
     const decoded = await context.decodeAudioData((await blob.arrayBuffer()).slice(0));
@@ -1577,7 +1577,7 @@ export function getSupportedRecordingFormat() {
     return {
       mimeType: "",
       extension: "webm",
-      label: "默认视频",
+      label: "Default Video",
     };
   }
 
@@ -1588,7 +1588,7 @@ export function getSupportedRecordingFormat() {
   return supportedFormat ?? {
     mimeType: "",
     extension: "webm",
-    label: "默认视频",
+    label: "Default Video",
   };
 }
 
@@ -1635,7 +1635,7 @@ function createVideoRecorder(outputStream, {
     format: {
       mimeType: "",
       extension: "webm",
-      label: "默认视频",
+      label: "Default Video",
     },
   };
 }
@@ -1684,7 +1684,7 @@ export async function exportBrowserVideo({
   await ensureFaceAttachmentAssets(effectClips);
   throwIfExportAborted(signal);
   if (!window.MediaRecorder) {
-    throw new Error("当前浏览器不支持 MediaRecorder，无法导出视频。");
+    throw new Error("Current browser does not support MediaRecorder, cannot export video.");
   }
 
   if (document.fonts?.ready) {
@@ -1859,7 +1859,7 @@ export async function exportBrowserVideo({
 
   if (audioInputs.length) {
     if (!AudioContextClass) {
-      throw new Error("当前浏览器不支持 AudioContext，无法混入音频。");
+      throw new Error("AudioContext is not supported in this browser; cannot mix audio.");
     }
 
     onProgress?.({ progress: 12, phaseKey: "exportMixAudio" });
@@ -2304,7 +2304,7 @@ function runFfmpegTask(task) {
   return nextTask;
 }
 
-function createAbortError(message = "任务已取消") {
+function createAbortError(message = "Task canceled") {
   const error = new Error(message);
   error.name = "AbortError";
   return error;
@@ -2313,13 +2313,13 @@ function createAbortError(message = "任务已取消") {
 function getAbortableFfmpeg(signal) {
   const loading = getFfmpeg();
   if (!signal) return loading;
-  if (signal.aborted) return Promise.reject(createAbortError("整段增强已取消"));
+  if (signal.aborted) return Promise.reject(createAbortError("Video enhancement canceled"));
   return new Promise((resolve, reject) => {
     let settled = false;
     const abort = () => {
       if (settled) return;
       settled = true;
-      reject(createAbortError("整段增强已取消"));
+      reject(createAbortError("Video enhancement canceled"));
     };
     signal.addEventListener("abort", abort, { once: true });
     loading.then((ffmpeg) => {
@@ -2439,7 +2439,7 @@ export async function encodePngFrameSequence({
   audioDuration = 0,
 }) {
   return runFfmpegTask(async () => {
-    if (signal?.aborted) throw createAbortError("整段增强已取消");
+    if (signal?.aborted) throw createAbortError("Video enhancement canceled");
     let ffmpeg = null;
     const id = makeId("remaster");
     const prefix = `${id}-frame`;
@@ -2456,15 +2456,15 @@ export async function encodePngFrameSequence({
     signal?.addEventListener("abort", abort, { once: true });
     try {
       for (let index = 0; index < totalFrames; index += 1) {
-        if (signal?.aborted) throw createAbortError("整段增强已取消");
+        if (signal?.aborted) throw createAbortError("Video enhancement canceled");
         const blob = await produceFrame(index);
-        if (signal?.aborted) throw createAbortError("整段增强已取消");
+        if (signal?.aborted) throw createAbortError("Video enhancement canceled");
         frameBlobs.push(blob);
       }
-      if (signal?.aborted) throw createAbortError("整段增强已取消");
+      if (signal?.aborted) throw createAbortError("Video enhancement canceled");
       onProgress?.({ progress: 91, phaseKey: "remasterPhaseLoadEncoder" });
       ffmpeg = await getAbortableFfmpeg(signal);
-      if (signal?.aborted) throw createAbortError("整段增强已取消");
+      if (signal?.aborted) throw createAbortError("Video enhancement canceled");
       for (let index = 0; index < frameBlobs.length; index += 1) {
         const name = `${prefix}-${String(index).padStart(6, "0")}.png`;
         frameNames.push(name);
@@ -2473,7 +2473,7 @@ export async function encodePngFrameSequence({
       if (audioSourceBlob instanceof Blob) {
         await ffmpeg.writeFile(audioInputName, new Uint8Array(await audioSourceBlob.arrayBuffer()));
       }
-      if (signal?.aborted) throw createAbortError("整段增强已取消");
+      if (signal?.aborted) throw createAbortError("Video enhancement canceled");
       onProgress?.({ progress: 92, phaseKey: "remasterPhaseEncodeVideo" });
       const audioArgs = audioSourceBlob instanceof Blob
         ? ["-ss", String(Math.max(0, audioStart)), ...(audioDuration > 0 ? ["-t", String(audioDuration)] : []), "-i", audioInputName]
@@ -2487,7 +2487,7 @@ export async function encodePngFrameSequence({
         "-crf", "18", "-pix_fmt", "yuv420p", "-movflags", "faststart",
         outputName,
       ]);
-      if (signal?.aborted) throw createAbortError("整段增强已取消");
+      if (signal?.aborted) throw createAbortError("Video enhancement canceled");
       const data = await ffmpeg.readFile(outputName);
       onProgress?.({ progress: 99, phaseKey: "remasterPhaseCreateAsset" });
       return new Blob([data], { type: "video/mp4" });

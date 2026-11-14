@@ -136,14 +136,6 @@ export function AuthModal({
                   <Globe size={16} strokeWidth={1.5} />
                   <span>Continue with Google</span>
                 </button>
-                <button
-                  type="button"
-                  className="splic-social-btn"
-                  onClick={handleSubmit}
-                >
-                  <Video size={16} strokeWidth={1.5} style={{ color: "var(--splic-red-primary)" }} />
-                  <span>Continue with YouTube Creator</span>
-                </button>
               </div>
 
               <div className="splic-auth-divider">

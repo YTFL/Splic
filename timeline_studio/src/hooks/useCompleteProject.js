@@ -23,7 +23,7 @@ export function useCompleteProject({ hostSession, captureCompleteProject, prepar
   const captureTimer = useRef(null);
   const pendingCapture = useRef(false);
   const ensureOperation = (version) => {
-    if (version !== operationVersion.current) throw new Error("项目操作已结束。");
+    if (version !== operationVersion.current) throw new Error("Project operation has ended.");
   };
   const remember = (current) => {
     try {
@@ -69,7 +69,7 @@ export function useCompleteProject({ hostSession, captureCompleteProject, prepar
       editorSequence: current.project.editorSequence ?? -1,
       getEditorSessionId: () => {
         if (current.conflict) throw Object.assign(new Error("The project changed in another session."), { code: "PROJECT_REVISION_CONFLICT" });
-        if (!current.lease || Date.parse(current.lease.expiresAt) <= Date.now()) throw Object.assign(new Error("编辑会话已过期，请重试保存。"), { code: "EDITOR_SESSION_EXPIRED" });
+        if (!current.lease || Date.parse(current.lease.expiresAt) <= Date.now()) throw Object.assign(new Error("Edit session has expired; please retry the save."), { code: "EDITOR_SESSION_EXPIRED" });
         return current.lease.editorSessionId;
       } });
     current.unsubscribe = current.queue.subscribe(() => {
@@ -120,7 +120,7 @@ export function useCompleteProject({ hostSession, captureCompleteProject, prepar
       setState({ ...current.queue.getSnapshot(), name: current.project.name });
     } catch (error) {
       if (version !== operationVersion.current) return;
-      const message = error instanceof Error ? error.message : "完整项目保存失败。";
+      const message = error instanceof Error ? error.message : "Full project save failed.";
       setState(previous => ({ ...previous, status: "error", error: message, errorCode: error?.code }));
       latest.current.notify(hostErrorText(language, error));
     } finally { if (version === operationVersion.current) creating.current = false; }
@@ -151,13 +151,13 @@ export function useCompleteProject({ hostSession, captureCompleteProject, prepar
           if (!["PROJECT_INVALID", "STORAGE_IO_FAILED", "REFERENCE_INVALID", "INVALID_ARGUMENT"].includes(error?.code)) throw error;
           const report = await hostSession.request("/api/v1/projects/recovery-options", { selectionId: selection.selectionId });
           if (report.status !== "previous_available") throw new Error(report.status === "no_valid_previous"
-            ? "当前及上一保存点均不可用，项目文件已保留。" : error.message, { cause: error });
+            ? "Both the current and previous save points are unavailable; project file retained." : error.message, { cause: error });
           ensureOperation(version);
           if (signature(latest.current.captureCompleteProject()) !== originalSignature || latest.current.isEditorBusy?.()) {
-            throw new Error("当前内容发生变化，请先保存再执行项目恢复。", { cause: error });
+            throw new Error("Content has changed. Please save before performing project recovery.", { cause: error });
           }
           if (!window.confirm(ht("recoverConfirm"))) {
-            throw new Error("已取消回退，项目文件保持原样。", { cause: error });
+            throw new Error("Rollback cancelled; project file remains unchanged.", { cause: error });
           }
           const choice = { currentSavePointId: report.currentSavePointId, currentCommitSequence: report.currentCommitSequence,
             currentCommitSha256: report.currentCommitSha256, previousSavePointId: report.previousSavePointId };
@@ -169,16 +169,16 @@ export function useCompleteProject({ hostSession, captureCompleteProject, prepar
           for (;;) {
             ensureOperation(version);
             const saved = await hostSession.request(`/api/v1/saves/${encodeURIComponent(receipt.saveId)}`, undefined, undefined, { signal });
-            if (saved.status === "failed") throw new Error(saved.error?.message || "项目回退未完成，原文件已保留。", { cause: error });
+            if (saved.status === "failed") throw new Error(saved.error?.message || "Project rollback did not complete; original file retained.", { cause: error });
             if (saved.status === "succeeded") {
-              if (!saved.savePointId) throw new Error("回退回执缺少保存点。", { cause: error });
+              if (!saved.savePointId) throw new Error("Rollback receipt is missing a save checkpoint.", { cause: error });
               recoveryAttempt.current = null;
               break;
             }
             await new Promise(resolve => setTimeout(resolve, 500));
           }
           project = await hostSession.request(`/api/v1/projects/${encodeURIComponent(receipt.projectId)}`);
-          if (!project.editorSnapshot) throw new Error("回退已完成，但该保存点不含可打开的编辑快照。", { cause: error });
+          if (!project.editorSnapshot) throw new Error("Rollback completed, but this save point does not contain an openable editor snapshot.", { cause: error });
         }
       }
       ensureOperation(version);
@@ -186,12 +186,12 @@ export function useCompleteProject({ hostSession, captureCompleteProject, prepar
       await acquire(candidate);
       await waitForHostMediaController();
       const data = await hostSession.request(`/api/v1/projects/${encodeURIComponent(project.projectId)}`);
-      if (!data.editorSnapshot) throw new Error("此项目还没有已保存的完整编辑快照。");
+      if (!data.editorSnapshot) throw new Error("This project does not yet have a saved complete editor snapshot.");
       candidate.project = data;
       const prepared = await latest.current.prepareCompleteProject(data.editorSnapshot, project.projectId);
       ensureOperation(version);
       if (signature(latest.current.captureCompleteProject()) !== originalSignature || latest.current.isEditorBusy?.()) {
-        throw new Error("打开期间当前内容发生变化，已保留当前时间线。请保存后重新打开。");
+        throw new Error("Content changed while opening; the current timeline has been preserved. Please save and reopen.");
       }
       await acquire(candidate);
       ensureOperation(version);
@@ -215,8 +215,8 @@ export function useCompleteProject({ hostSession, captureCompleteProject, prepar
         await hostSession.request(`/api/v1/editor-sessions/${encodeURIComponent(candidate.lease.editorSessionId)}`, undefined, undefined, { method: "DELETE" }).catch(() => {});
       }
       if (version !== operationVersion.current) return;
-      const message = error?.code === "PROJECT_ID_CONFLICT" ? "请先在文件菜单关闭正在编辑的项目副本，再打开所选目录。"
-        : error instanceof Error ? error.message : "打开完整项目失败。";
+      const message = error?.code === "PROJECT_ID_CONFLICT" ? "Please close the project copy currently being edited from the File menu before opening the selected directory."
+        : error instanceof Error ? error.message : "Failed to open the full project.";
       setState(old => ({ ...old, status: "error", error: message, errorCode: error?.code })); latest.current.notify(hostErrorText(language, error));
     } finally { if (version === operationVersion.current) creating.current = false; }
   };
@@ -240,7 +240,7 @@ export function useCompleteProject({ hostSession, captureCompleteProject, prepar
       }
       ensureOperation(version);
       if (signature(latest.current.captureCompleteProject()) !== originalSignature || latest.current.isEditorBusy?.()) {
-        throw new Error("当前内容发生变化，已保留时间线。请保存后重试。");
+        throw new Error("Content has changed; the timeline has been preserved. Please save and retry.");
       }
       current?.unsubscribe?.(); current?.queue?.close(); binding.current = null;
       clearTimeout(captureTimer.current); pendingCapture.current = false;

@@ -1,6 +1,6 @@
 const keys = ["alignment", "yaw", "pitch", "timing", "reset"];
 const rows = {
-  zh: ["位置对齐", "水平倾斜", "俯仰倾斜", "时间与片段", "重置对齐"],
+  zh: ["Alignment", "Horizontal tilt", "Vertical tilt", "Timing and clip", "Reset alignment"],
   en: ["Alignment", "Horizontal tilt", "Vertical tilt", "Timing and clip", "Reset alignment"],
   ja: ["位置合わせ", "左右の傾き", "上下の傾き", "時間とクリップ", "位置をリセット"],
   ko: ["위치 맞춤", "좌우 기울기", "상하 기울기", "시간 및 클립", "정렬 초기화"],

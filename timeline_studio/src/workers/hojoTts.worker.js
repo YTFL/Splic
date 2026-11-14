@@ -84,7 +84,7 @@ async function downloadBundle(baseUrl) {
   let loaded = 0;
   const onChunk = (bytes) => {
     loaded += bytes;
-    postProgress("下载并校验模型分片", total ? (loaded / total) * 48 : 0);
+    postProgress("Downloading and verifying model shards", total ? (loaded / total) * 48 : 0);
   };
   const [llm, decoder, ...resourceBytes] = await Promise.all([
     assembleArtifact(baseUrl, manifest.graphs.llm, onChunk),
@@ -128,7 +128,7 @@ function buildTokenizerTables(bundle) {
     if (match) idToCode[id] = Number(match[1]);
   }
   speechEndId = vocab["[target_speech_end]"] ?? vocab["[speech_end]"];
-  if (speechEndId == null) throw new Error("分词器缺少 Hojo 结束标记");
+  if (speechEndId == null) throw new Error("Tokenizer missing end token");
 }
 
 function f16ToF32(value) {
@@ -149,7 +149,7 @@ async function createSessions(bundle) {
     executionProviders: ["webgpu"],
     graphOptimizationLevel: "all",
   });
-  postProgress("创建语音语言模型 · WebGPU", 66);
+  postProgress("Creating speech language model · WebGPU", 66);
   const decoder = await ort.InferenceSession.create(bundle.decoder, {
     // The autoregressive model benefits from WebGPU, but this one-shot
     // waveform decoder is audibly cleaner through the WASM execution provider.
@@ -162,11 +162,11 @@ async function createSessions(bundle) {
 async function load() {
   if (sessions) return;
   const started = performance.now();
-  postProgress("读取模型清单", 2);
+  postProgress("Reading model manifest", 2);
   const bundle = await loadFromMirrors();
   buildTokenizerTables(bundle);
   const referenceCodes = jsonResource(bundle, "reference-codes.json");
-  postProgress("初始化高性能 WebGPU", 52);
+  postProgress("Initializing high-performance WebGPU", 52);
   if (!self.navigator?.gpu) throw new Error("WEBGPU_UNAVAILABLE");
   sessions = await createSessions(bundle);
   for (const reference of bundle.manifest.references) {
@@ -280,13 +280,13 @@ async function generateCodes(promptIds, seed, maxTokens) {
     next = sample(logits, generated, random);
     generated.push(next);
     outputs.logits.dispose();
-    if (step % 8 === 0) postProgress(`生成语音 Token · ${step}`, Math.min(91, 78 + step / maxTokens * 13));
+    if (step % 8 === 0) postProgress(`Generating voice tokens · ${step}`, Math.min(91, 78 + step / maxTokens * 13));
   }
   past.flat().forEach((tensor) => tensor.dispose());
   const stop = generated.indexOf(speechEndId);
   const tail = stop >= 0 ? generated.slice(0, stop) : generated;
   const codes = tail.map((id) => idToCode[id]).filter((code) => code >= 0);
-  if (!codes.length) throw new Error("语言模型没有生成有效语音 Token");
+  if (!codes.length) throw new Error("Language model generated no valid tokens");
   return codes;
 }
 
@@ -309,14 +309,14 @@ async function generate(text, voiceId, seed) {
   if (!sessions) await load();
   cancelled = false;
   const reference = builtInVoices.get(voiceId);
-  if (!reference) throw new Error(`未知音色：${voiceId}`);
+  if (!reference) throw new Error(`Unknown voice profile: ${voiceId}`);
   const started = performance.now();
   const encoded = await tokenizer(promptFor(text, reference), { add_special_tokens: true });
   const promptIds = Array.from(encoded.input_ids.data, Number);
   const visibleLength = [...text.trim()].length;
   const maxTokens = Math.min(MAX_NEW_TOKENS, Math.max(140, visibleLength * 10 + 80));
   const codes = await generateCodes(promptIds, seed, maxTokens);
-  postProgress("解码 24 kHz 波形", 94);
+  postProgress("Decoding 24 kHz waveform", 94);
   const decoded = await sessions.decoder.run({ vq_codes: tensorIds(codes, [1, 1, codes.length]) });
   const waveformData = decoded.wav_24k.data;
   const waveform = waveformData instanceof Uint16Array

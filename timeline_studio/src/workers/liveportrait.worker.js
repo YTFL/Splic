@@ -38,7 +38,7 @@ async function fetchModelFile(file, modelBaseUrl) {
     const { response } = await fetchFirstAvailableModel(resolveModelUrls(file, modelBaseUrl));
     return response;
   } catch (error) {
-    throw new Error(`${file} 下载失败（${error?.message || String(error)}）`, { cause: error });
+    throw new Error(`${file} download failed (${error?.message || String(error)})`, { cause: error });
   }
 }
 
@@ -79,7 +79,7 @@ async function createSession(key, modelBaseUrl, downloadState, executionProvider
   downloadState.completed += bytes;
   postProgress(5 + (downloadState.completed / downloadState.total) * 55, "avatarProgressInitModel", { model: key });
   if (executionProvider === "webgpu" && !self.navigator?.gpu) {
-    throw new Error("当前浏览器没有可用的 WebGPU，无法运行全 GPU LivePortrait");
+    throw new Error("No WebGPU available in this browser; cannot run full-GPU LivePortrait");
   }
   const provider = executionProvider === "webgpu" && key.startsWith("generator")
     ? { name: "webgpu", preferredLayout: "NHWC" }
@@ -446,7 +446,7 @@ async function generateVideo({
       blobs.push(blobs[blobs.length - 1]);
       postProgress(68 + (outputFrame / frameCount) * 31, "avatarProgressDroppedCorruptFrame", { current: outputFrame + 1, total: frameCount });
     } else {
-      throw new Error("WebGPU 首帧连续异常，已阻止损坏画面写入视频；请释放其他 GPU 页面后重试");
+      throw new Error("WebGPU produced consecutive bad frames; corrupted output blocked from video; free other GPU pages and retry");
     }
     const encodeMs = performance.now() - encodeStarted;
     postProgress(68 + ((outputFrame + 1) / frameCount) * 31, "avatarProgressFrameEncoded", { current: outputFrame + 1, total: frameCount, seconds: (encodeMs / 1000).toFixed(1) });

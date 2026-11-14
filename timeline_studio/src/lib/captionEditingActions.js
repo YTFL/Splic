@@ -48,7 +48,7 @@ export function createCaptionEditingActions(d) {
 
   function updateCaptionSegmentText(segmentId, text) {
     if (d.trackLocks.caption) {
-      d.notify("字幕轨已锁定，无法编辑");
+      d.notify("Subtitle track is locked, cannot edit");
       return;
     }
     d.setCaptionSegments((items) => {
@@ -62,7 +62,7 @@ export function createCaptionEditingActions(d) {
 
   function toggleCaptionSegmentHidden(segmentId) {
     if (d.trackLocks.caption) {
-      d.notify("字幕轨已锁定，无法隐藏");
+      d.notify("Subtitle track is locked, cannot hide");
       return;
     }
     d.setCaptionSegments((items) =>
@@ -70,7 +70,7 @@ export function createCaptionEditingActions(d) {
         segment.id === segmentId ? { ...segment, hidden: !segment.hidden } : segment,
       ),
     );
-    d.notify("字幕显示状态已更新");
+    d.notify("Subtitle visibility updated");
   }
 
   function unlinkCaptionAudio(segmentId) {
@@ -217,7 +217,7 @@ export function createCaptionEditingActions(d) {
       }));
     }
     if (disableSmartCaptionAvoidance()) {
-      d.notify("已切回手动字幕位置，智能避让已关闭");
+      d.notify("Switched to manual subtitle position");
     }
   }
 
@@ -247,7 +247,7 @@ export function createCaptionEditingActions(d) {
   function startCaptionDrag(event, segmentId = d.currentCaptionSegment?.id) {
     if (event.button !== 0) return;
     if (d.trackLocks.caption) {
-      d.notify("字幕轨已锁定，无法拖动");
+      d.notify("Subtitle track is locked, cannot drag");
       return;
     }
 
@@ -302,8 +302,8 @@ export function createCaptionEditingActions(d) {
       frame?.removeAttribute("data-caption-guide-x");
       frame?.removeAttribute("data-caption-guide-y");
       if (moved) d.notify(disabledSmartAvoidance
-        ? "字幕位置已手动调整，智能避让已关闭"
-        : "字幕位置已调整");
+        ? "Subtitle position adjusted manually"
+        : "Subtitle position adjusted");
     };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
@@ -312,7 +312,7 @@ export function createCaptionEditingActions(d) {
 
   function commitCaptionSegments(nextSegments, message, nextSelectedIndex = 0) {
     if (d.trackLocks.caption) {
-      d.notify("字幕轨已锁定，无法修改片段");
+      d.notify("Subtitle track is locked, cannot modify clip");
       return;
     }
     let inheritedFontId = d.captionStyle?.fontId || "default";
@@ -333,18 +333,18 @@ export function createCaptionEditingActions(d) {
 
   function deleteCaptionSegment(segmentId = d.selectedSegmentId) {
     if (d.trackLocks.caption) {
-      d.notify("字幕轨已锁定，无法删除");
+      d.notify("Subtitle track is locked, cannot delete");
       return;
     }
     if (!d.captionSegments.length) {
-      d.notify("当前没有字幕片段可删除");
+      d.notify("No subtitle clip to delete");
       return;
     }
     const fallbackIndex = d.focusedSegmentIndex >= 0 ? d.focusedSegmentIndex : 0;
     const segmentIndex = d.captionSegments.findIndex((segment) => segment.id === segmentId);
     const index = segmentIndex >= 0 ? segmentIndex : fallbackIndex;
     const nextSegments = d.captionSegments.filter((_, currentIndex) => currentIndex !== index);
-    commitCaptionSegments(nextSegments, "已删除当前字幕片段", Math.max(0, index - 1));
+    commitCaptionSegments(nextSegments, "Deleted current subtitle clip", Math.max(0, index - 1));
   }
 
   return {

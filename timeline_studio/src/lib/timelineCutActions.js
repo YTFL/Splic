@@ -46,50 +46,50 @@ export function splitVisualSegmentState(source, firstDuration, secondDuration) {
 
 export function createTimelineCutActions(d) {
   const handleCutVisualSegment = () => {
-    if (d.trackLocks.image) return void d.notify("图片轨已锁定，无法剪切");
-    if (!d.imageSrc) return void d.notify("请先上传或选择图片/视频素材");
+    if (d.trackLocks.image) return void d.notify("Visual track is locked, cannot split");
+    if (!d.imageSrc) return void d.notify("Please upload or select media first");
     const segments = d.visualSegments.length ? d.visualSegments : [createVisualSegment(d.imageDuration || 0, d.getCurrentVisualAssetSnapshot())];
     const duration = getVisualSegmentsTotal(segments);
-    if (duration < MIN_VISUAL_SEGMENT_SECONDS * 2) return void d.notify("当前视觉片段太短，不适合继续剪切");
+    if (duration < MIN_VISUAL_SEGMENT_SECONDS * 2) return void d.notify("Current clip is too short to split");
     const time = Math.max(0, Math.min(duration, d.currentTime));
-    if (time < MIN_VISUAL_SEGMENT_SECONDS || time > duration - MIN_VISUAL_SEGMENT_SECONDS) return void d.notify("请把播放头放在视觉片段中间再剪切");
+    if (time < MIN_VISUAL_SEGMENT_SECONDS || time > duration - MIN_VISUAL_SEGMENT_SECONDS) return void d.notify("Position the playhead within the clip to split");
     const timeline = getVisualSegmentTimeline(segments);
     const index = timeline.findIndex((range) => time > range.start && time < range.end);
     const range = timeline[index]; const source = segments[index];
-    if (!source || !range) return void d.notify("请先选中要剪切的视觉片段");
+    if (!source || !range) return void d.notify("Please select a visual clip to split");
     const firstDuration = time - range.start; const secondDuration = range.end - time;
-    if (firstDuration < MIN_VISUAL_SEGMENT_SECONDS || secondDuration < MIN_VISUAL_SEGMENT_SECONDS) return void d.notify("切点离片段边缘太近，先把播放头移到片段中间");
+    if (firstDuration < MIN_VISUAL_SEGMENT_SECONDS || secondDuration < MIN_VISUAL_SEGMENT_SECONDS) return void d.notify("Split point is too close to the clip edge");
     const [first, second] = splitVisualSegmentState(source, firstDuration, secondDuration);
     const next = [...segments]; next.splice(index, 1, first, second);
-    d.commitVisualSegments(next, "已在播放头位置切开视觉片段", index + 1);
+    d.commitVisualSegments(next, "Split clip at playhead", index + 1);
   };
   const handleCutCaption = () => {
-    if (d.trackLocks.caption) return void d.notify("字幕轨已锁定，无法剪切");
+    if (d.trackLocks.caption) return void d.notify("Caption track is locked, cannot split");
     const index = d.selectedSegmentId ? d.selectedSegmentIndex : d.focusedSegmentIndex;
     const timedSegments = materializeCaptionTimings(d.captionSegments, d.captionTargetDuration);
     const source = timedSegments[index];
-    if (!source) return void d.notify("请先选择一个字幕片段");
+    if (!source) return void d.notify("Please select a caption segment");
     const splitTime = Math.max(source.start, Math.min(source.end, d.currentTime));
     if (
       splitTime <= source.start + MIN_CAPTION_SPLIT_SECONDS
       || splitTime >= source.end - MIN_CAPTION_SPLIT_SECONDS
     ) {
-      return void d.notify("请把播放头放在字幕片段中间再剪切");
+      return void d.notify("Position the playhead within the caption to split");
     }
     const next = [...timedSegments];
     next.splice(index, 1,
       { ...source, id: makeId("caption"), end: splitTime },
       { ...source, id: makeId("caption"), start: splitTime });
-    d.commitCaptionSegments(next, "已在播放头位置切开字幕片段", index + 1);
+    d.commitCaptionSegments(next, "Split caption at playhead", index + 1);
   };
   const handleCutAudioSegment = () => {
     const index = d.audioSegments.findIndex((segment) => segment.id === d.selectedAudioSegmentId);
     const source = d.audioSegments[index];
-    if (!source) return void d.notify("请先选择一个配音片段");
-    if (isTimedSegmentLaneLocked(d.audioSegments, source.id, d.trackLocks)) return void d.notify("配音轨已锁定，无法剪切");
+    if (!source) return void d.notify("Please select a voiceover clip");
+    if (isTimedSegmentLaneLocked(d.audioSegments, source.id, d.trackLocks)) return void d.notify("Voiceover track is locked, cannot split");
     const time = Math.max(source.start, Math.min(source.start + source.duration, d.currentTime));
     if (time <= source.start + 0.05 || time >= source.start + source.duration - 0.05) {
-      return void d.notify("请把播放头放在配音片段中间再剪切");
+      return void d.notify("Position the playhead within the voiceover clip to split");
     }
     const firstDuration = time - source.start;
     const secondDuration = source.duration - firstDuration;
@@ -129,11 +129,11 @@ export function createTimelineCutActions(d) {
       ? { ...caption, audioSegmentId: firstId, end: Math.min(caption.end, time) }
       : caption));
     d.setSelectedAudioSegmentId(secondId);
-    d.notify("已在播放头位置切开配音片段");
+    d.notify("Split voiceover clip at playhead");
   };
   const handleCutMusicSegment = () => {
-    if (d.trackLocks.music) return void d.notify("音乐轨已锁定，无法剪切");
-    if (!d.musicBlob || d.musicDuration <= 0) return void d.notify("请先添加背景音乐");
+    if (d.trackLocks.music) return void d.notify("Music track is locked, cannot split");
+    if (!d.musicBlob || d.musicDuration <= 0) return void d.notify("Please add background music first");
     const segments = d.musicSegments?.length ? d.musicSegments : [{
       id: "music-audio", start: d.musicStart || 0, duration: d.musicDuration,
       sourceStart: 0, peaks: d.musicPeaks || [],
@@ -144,7 +144,7 @@ export function createTimelineCutActions(d) {
       && d.currentTime < segment.start + segment.duration - 0.05
     ));
     const source = segments[index];
-    if (!source) return void d.notify("请把播放头放在音乐片段中间再剪切");
+    if (!source) return void d.notify("Position the playhead within the music clip to split");
     const firstDuration = d.currentTime - source.start;
     const secondDuration = source.duration - firstDuration;
     const playbackRate = Math.max(0.25, Math.min(4, Number(source.playbackRate) || 1));
@@ -161,20 +161,20 @@ export function createTimelineCutActions(d) {
     next.splice(index, 1, first, second);
     d.setMusicSegments(next);
     d.setSelectedMusicSegmentId?.(second.id);
-    d.notify("已在播放头位置切开音乐片段");
+    d.notify("Split music clip at playhead");
   };
   const handleCutOverlaySegment = () => {
     if (d.trackLocks.overlay) return void d.notify(d.t("effectClipLocked"));
     const index = d.visualOverlaySegments.findIndex((segment) => segment.id === d.selectedVisualOverlayId);
     const source = d.visualOverlaySegments[index];
-    if (!source) return void d.notify("请先选择一个画中画片段");
+    if (!source) return void d.notify("Please select an overlay clip");
     const start = Math.max(0, Number(source.start) || 0);
     const duration = Math.max(0, Number(source.duration) || 0);
     const time = Math.max(start, Math.min(start + duration, d.currentTime));
     const firstDuration = time - start;
     const secondDuration = duration - firstDuration;
     if (firstDuration < MIN_VISUAL_SEGMENT_SECONDS || secondDuration < MIN_VISUAL_SEGMENT_SECONDS) {
-      return void d.notify("切点离片段边缘太近，先把播放头移到片段中间");
+      return void d.notify("Split point is too close to the clip edge");
     }
     const firstId = makeId("overlay");
     const secondId = makeId("overlay");
@@ -186,7 +186,7 @@ export function createTimelineCutActions(d) {
     next.splice(index, 1, first, second);
     d.setVisualOverlaySegments(next);
     d.setSelectedVisualOverlayId(secondId);
-    d.notify("已在播放头位置切开视觉片段");
+    d.notify("Split clip at playhead");
   };
   const handleCutTrack = () => {
     if (d.selectedTrack === "effects") {
@@ -205,16 +205,16 @@ export function createTimelineCutActions(d) {
     if (d.selectedTrack === "audio" && d.selectedAudioSegmentId) return void handleCutAudioSegment();
     if (d.selectedTrack === "music" && d.selectedMusicSegmentId) return void handleCutMusicSegment();
     if (d.selectedTrack === "sticker" && d.selectedStickerSegmentId) {
-      if (d.trackLocks.sticker) return void d.notify("贴纸轨已锁定，无法剪切");
+      if (d.trackLocks.sticker) return void d.notify("Sticker track is locked, cannot split");
       const selected = d.selectedStickerSegmentId && d.stickerSegments.findIndex((segment) => segment.id === d.selectedStickerSegmentId);
       const index = selected >= 0 ? selected : d.currentStickerSegmentIndex >= 0 ? d.currentStickerSegmentIndex : 0;
-      const source = d.stickerSegments[index]; if (!source) return void d.notify("请先选择一个贴纸片段");
+      const source = d.stickerSegments[index]; if (!source) return void d.notify("Please select a sticker clip");
       const time = Math.max(source.start, Math.min(source.start + source.duration, d.currentTime));
-      if (time <= source.start + 0.35 || time >= source.start + source.duration - 0.35) return void d.notify("请把播放头放在贴纸片段中间再剪切");
+      if (time <= source.start + 0.35 || time >= source.start + source.duration - 0.35) return void d.notify("Position the playhead within the sticker clip to split");
       const first = { ...source, id: makeId("sticker"), duration: time - source.start };
       const second = { ...source, id: makeId("sticker"), start: time, duration: source.start + source.duration - time };
       const next = [...d.stickerSegments]; next.splice(index, 1, first, second);
-      return void d.commitStickerSegments(next, "已在播放头位置切开贴纸片段", second.id);
+      return void d.commitStickerSegments(next, "Split sticker clip at playhead", second.id);
     }
     // The toolbar split action should remain useful even after the user clicks a
     // track background (which clears clip selection). In that state, treat the

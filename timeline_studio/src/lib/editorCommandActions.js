@@ -50,7 +50,7 @@ export function createEditorCommandActions(d) {
   }
 
   function useHistoryItem(item) {
-    d.replaceAudio(item.blob, item.duration, item.peaks, `${item.voiceName} 已恢复`, {
+    d.replaceAudio(item.blob, item.duration, item.peaks, `${item.voiceName} restored`, {
       sourceKind: "ai-voice",
       voiceId: item.voiceId,
       voiceName: item.voiceName,
@@ -61,7 +61,7 @@ export function createEditorCommandActions(d) {
     d.setCaptionSegments(nextSegments);
     d.setSelectedSegmentId(nextSegments[0]?.id ?? "");
     d.setSelectedVoiceId(normalizeVoiceId(item.voiceId));
-    d.notify("历史配音已恢复到时间线");
+    d.notify("Previous voiceover restored to timeline");
   }
 
   return {

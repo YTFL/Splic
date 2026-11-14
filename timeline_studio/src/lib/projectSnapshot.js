@@ -45,19 +45,19 @@ export async function serializeProjectSnapshot(captured, { registerMedia, editor
   const refs = new Map();
   const registrations = new Map();
   const register = async (value, name, path) => {
-    if (!(value instanceof Blob) && typeof value !== "string") throw new Error(`无法保存媒体：${path}`);
+    if (!(value instanceof Blob) && typeof value !== "string") throw new Error(`Unable to save media: ${path}`);
     const loaded = value instanceof Blob ? loadedProjectMedia.get(value) : null;
     if (loaded) value = projectMediaUrl(loaded.projectId, loaded.ref);
     if (!registrations.has(value)) registrations.set(value, Promise.resolve(registerMedia(value, name, path)));
     const ref = await registrations.get(value);
     if (!ref || ref.kind !== "media" || typeof ref.entityId !== "string" || typeof ref.blobId !== "string") {
-      throw new Error(`媒体登记未完成：${path}`);
+      throw new Error(`Media registration not complete: ${path}`);
     }
     refs.set(referenceKey(ref), ref);
     return ref;
   };
   const walk = async (value, path, depth = 0) => {
-    if (depth > 64) throw new Error(`项目数据嵌套过深：${path}`);
+    if (depth > 64) throw new Error(`Project data is nested too deep: ${path}`);
     if (value === null || typeof value === "boolean" || typeof value === "string") {
       return value;
     }
@@ -67,18 +67,18 @@ export async function serializeProjectSnapshot(captured, { registerMedia, editor
       for (let index = 0; index < value.length; index++) result.push(await walk(value[index], `${path}[${index}]`, depth + 1));
       return result;
     }
-    if (!value || Object.getPrototypeOf(value) !== Object.prototype) throw new Error(`无法保存运行时对象：${path}`);
-    if (value.preparing) throw new Error(`素材尚未准备完成：${value.name || path}`);
+    if (!value || Object.getPrototypeOf(value) !== Object.prototype) throw new Error(`Cannot save runtime object: ${path}`);
+    if (value.preparing) throw new Error(`Asset not yet ready: ${value.name || path}`);
     const result = {};
     const bindings = {};
     for (const [field, ref] of Object.entries(value.projectMedia?.bindings || {})) {
-      if (ref?.kind !== "media" || !ref.entityId || !ref.blobId) throw new Error(`无效的媒体引用：${path}`);
+      if (ref?.kind !== "media" || !ref.entityId || !ref.blobId) throw new Error(`Invalid media reference: ${path}`);
       if (value[field] == null) bindings[field] = await register(projectMediaUrl(value.projectMedia.projectId, ref), value.name || path, `${path}.${field}`);
     }
     for (const [key, item] of Object.entries(value)) {
       if (key === "projectMedia") continue;
       if (cacheFields.has(key) || item === undefined) continue;
-      if (key === "bearer" || key === "bootstrapNonce" || key === "mediaBindings") throw new Error(`不允许的项目字段：${path}.${key}`);
+      if (key === "bearer" || key === "bootstrapNonce" || key === "mediaBindings") throw new Error(`Disallowed project field: ${path}.${key}`);
       if (mediaFields.has(key)) {
         if (item === null || item === "") continue;
         // A primary Blob and its playback URL identify the same bytes.
@@ -105,7 +105,7 @@ export async function serializeProjectSnapshot(captured, { registerMedia, editor
 }
 
 export function projectMediaUrl(projectId, ref) {
-  if (ref?.kind !== "media" || !ref.entityId || !ref.blobId) throw new Error("无效的项目媒体引用。");
+  if (ref?.kind !== "media" || !ref.entityId || !ref.blobId) throw new Error("Invalid project media reference.");
   return `/api/v1/projects/${encodeURIComponent(projectId)}/assets/${encodeURIComponent(ref.entityId)}/content?blobId=${encodeURIComponent(ref.blobId)}`;
 }
 
@@ -119,9 +119,9 @@ export async function loadProjectMediaBlob(item, field = "blob", signal) {
   if (item?.[field] instanceof Blob) return item[field];
   const ref = item?.projectMedia?.bindings?.[field];
   const source = ref ? projectMediaUrl(item.projectMedia.projectId, ref) : field === "blob" ? item?.src || item?.url : null;
-  if (!source) throw new Error(`缺少媒体来源：${item?.name || field}`);
+  if (!source) throw new Error(`Missing media source: ${item?.name || field}`);
   const response = await fetch(source, { credentials: "omit", cache: "no-store", signal });
-  if (!response.ok) throw new Error(`无法读取媒体（HTTP ${response.status}）`);
+  if (!response.ok) throw new Error(`Unable to read media (HTTP ${response.status})`);
   const blob = await response.blob();
   // Only bytes fetched from a known project binding can reuse its immutable identity.
   if (ref) loadedProjectMedia.set(blob, { projectId: item.projectMedia.projectId, ref: { ...ref } });
@@ -130,19 +130,19 @@ export async function loadProjectMediaBlob(item, field = "blob", signal) {
 
 export async function restoreProjectSnapshot(saved, projectId, { verifyMedia, signal } = {}) {
   if (saved?.format !== "timeline-studio-editor-snapshot" || saved.projectId !== projectId || !saved.payload || !Array.isArray(saved.refs)) {
-    throw new Error("无效的完整项目快照。");
+    throw new Error("Invalid complete project snapshot.");
   }
   const declared = new Set(saved.refs.map(referenceKey));
   const verified = new Map();
   const media = async (ref) => {
-    if (ref?.kind !== "media" || !declared.has(referenceKey(ref))) throw new Error("项目媒体引用不完整。");
+    if (ref?.kind !== "media" || !declared.has(referenceKey(ref))) throw new Error("Project media reference is incomplete.");
     const url = projectMediaUrl(projectId, ref);
     if (!verified.has(url)) {
       verified.set(url, (async () => {
         if (verifyMedia) await verifyMedia(url, ref);
         else {
           const response = await fetch(url, { method: "HEAD", credentials: "omit", cache: "no-store", signal });
-          if (!response.ok) throw new Error(`项目媒体不可用（HTTP ${response.status}）`);
+          if (!response.ok) throw new Error(`Project media unavailable (HTTP ${response.status})`);
         }
       })());
     }
@@ -150,7 +150,7 @@ export async function restoreProjectSnapshot(saved, projectId, { verifyMedia, si
     return url;
   };
   const walk = async (value, depth = 0) => {
-    if (depth > 64) throw new Error("项目数据嵌套过深。");
+    if (depth > 64) throw new Error("Project data is nested too deep.");
     if (!value || typeof value !== "object") return value;
     if (Array.isArray(value)) {
       const result = [];
@@ -164,7 +164,7 @@ export async function restoreProjectSnapshot(saved, projectId, { verifyMedia, si
     if (value.mediaBindings) {
       const bindings = structuredClone(value.mediaBindings);
       for (const [field, ref] of Object.entries(bindings)) {
-        if (!mediaFields.has(field)) throw new Error("项目包含不支持的媒体字段。");
+        if (!mediaFields.has(field)) throw new Error("Project contains unsupported media fields.");
         const url = await media(ref);
         result[field] = field.toLowerCase().endsWith("blob") ? null : url;
       }

@@ -380,21 +380,21 @@ export function useEditorHistory(d) {
   const undo = useCallback(() => {
     commitPending();
     const transition = undoEditorHistory(historyRef.current);
-    if (!transition.changed) return void d.notify("没有可撤销的编辑操作");
+    if (!transition.changed) return void d.notify("Nothing to undo");
     historyRef.current = transition.history;
     restoredSignatureRef.current = createEditorSnapshotSignature(transition.value);
     restoreSnapshot(transition.value, d);
-    d.notify("已撤销上一步编辑");
+    d.notify("Undid previous edit");
   }, [commitPending, d]);
 
   const redo = useCallback(() => {
     commitPending();
     const transition = redoEditorHistory(historyRef.current);
-    if (!transition.changed) return void d.notify("没有可重做的编辑操作");
+    if (!transition.changed) return void d.notify("Nothing to redo");
     historyRef.current = transition.history;
     restoredSignatureRef.current = createEditorSnapshotSignature(transition.value);
     restoreSnapshot(transition.value, d);
-    d.notify("已重做编辑");
+    d.notify("Redid edit");
   }, [commitPending, d]);
 
   useEffect(() => {

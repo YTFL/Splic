@@ -46,11 +46,11 @@ export function createStickerTimelineActions(d) {
 
   function addStickerAssetToTimeline(asset, options = {}) {
     if (d.trackLocks.sticker) {
-      d.notify("贴纸轨已锁定，无法添加贴纸");
+      d.notify("Sticker track is locked, cannot add sticker");
       return;
     }
     if (!asset?.src) {
-      d.notify("当前贴纸素材不可用");
+      d.notify("Current sticker asset is unavailable");
       return;
     }
     const requestedStartTime = Number.isFinite(options.startTime)
@@ -69,7 +69,7 @@ export function createStickerTimelineActions(d) {
     if (owner) { nextSegment.visualSegmentId = owner.id; nextSegment.duration = Math.min(nextSegment.duration, owner.end - startTime); }
     commitStickerSegments(
       [...d.stickerSegments, nextSegment],
-      d.t?.("stickerAddedToTrack") ?? "贴纸已添加到贴纸轨",
+      d.t?.("stickerAddedToTrack") ?? "Sticker added to sticker track",
       nextSegment.id,
     );
     d.seekTo(startTime);

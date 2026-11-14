@@ -312,7 +312,7 @@ export function App({ hostSession = null }) {
   const timelineMarkerEnd = useMemo(() => timelineMarkers.reduce(
     (end, marker) => Math.max(end, marker.type === "range" ? marker.endTime : marker.time), 0,
   ), [timelineMarkers]);
-  const { notify, toast } = useToast(2600, uiLanguage || "zh");
+  const { notify, toast } = useToast(2600, uiLanguage || "en");
   const [previewVideoMediaTime, setPreviewVideoMediaTime] = useState(0);
   const timelineScrubbingRef = useRef(false);
   const [sourceAudioDragTargetLane, setSourceAudioDragTargetLane] = useState(null);
@@ -348,7 +348,7 @@ export function App({ hostSession = null }) {
     voiceRecorderChunksRef, voiceRecorderRef, voiceRecorderStartedAtRef,
     voiceRecorderStreamRef, voiceRecorderTimerRef,
   } = useEditorRefs();
-  const activeLanguage = uiLanguage || "zh";
+  const activeLanguage = uiLanguage || "en";
   const aiMusic = useAiMusicGeneration({
     activeLanguage,
     imageUrlRefs,
@@ -561,7 +561,7 @@ export function App({ hostSession = null }) {
     currentTime - (selectedVisualRange?.start ?? 0),
   ));
   const updateSelectedVisualEffects = (change) => {
-    if (!selectedVisualSegment?.id || trackLocks.image) return notify("请先选择未锁定的 Visuals 片段");
+    if (!selectedVisualSegment?.id || trackLocks.image) return notify("Please select an unlocked Visuals clip");
     setVisualSegments((items) => {
       const nextItems = items.map((item) => {
         if (item.id !== selectedVisualSegment.id) return item;
@@ -1106,7 +1106,7 @@ export function App({ hostSession = null }) {
   };
   const deleteSelectedStickerSegment = () => {
     if (!selectedStickerSegment?.id) return;
-    commitStickerSegments(stickerSegments.filter((segment) => segment.id !== selectedStickerSegment.id), "已删除贴纸片段");
+    commitStickerSegments(stickerSegments.filter((segment) => segment.id !== selectedStickerSegment.id), "Sticker clip deleted");
   };
 
   const { generateAvatarAcceptanceFrame, openAvatarPanel } = useAvatarGeneration({
@@ -1142,11 +1142,11 @@ export function App({ hostSession = null }) {
     const id = crypto.randomUUID(); const src = URL.createObjectURL(blob); imageUrlRefs.current.add(src);
     const asset = {
       id, type: "audio", kind: "voiceover", name: `${sourceName || t("audioClip")} · ${profileName}`,
-      meta: `${t("voiceColorTab", "音色")} · ${decoded.duration.toFixed(1)}s`, src, previewSrc: src, blob,
+      meta: `${t("voiceColorTab", "Voice Color")} · ${decoded.duration.toFixed(1)}s`, src, previewSrc: src, blob,
       duration: decoded.duration, peaks: decoded.peaks, generated: true, provider: "OpenVoice V2 · ONNX"
     };
     setUserAssets((items) => [asset, ...items]); setSelectedLibraryAssetId(id);
-    notify(t("voiceColorSavedToAssets", "音色迁移结果已保存到我的素材")); return asset;
+    notify(t("voiceColorSavedToAssets", "Voice clone saved to My Assets")); return asset;
   };
   const applyVoiceColorToSelectedAudio = ({ blob, decoded, profileName, segment }) => {
     const url = URL.createObjectURL(blob); imageUrlRefs.current.add(url);
@@ -1179,7 +1179,7 @@ export function App({ hostSession = null }) {
       sourceAudioUrlRef.current = url; setSourceAudioBlob(blob); setSourceAudioUrl(url); setSourceAudioPeaks(decoded.peaks);
       setSourceAudioName(`${sourceVoiceColorOriginalRef.current.name || t("sourceTrack")} · ${profileName}`);
     } else { URL.revokeObjectURL(url); imageUrlRefs.current.delete(url); return false; }
-    notify(t("voiceColorClipReplaced", "已替换当前片段，可随时恢复原始声音"));
+    notify(t("voiceColorClipReplaced", "Replaced current clip; original voice can be restored anytime"));
     return true;
   };
   const restoreSelectedAudioVoiceColor = (segment) => {
@@ -1210,7 +1210,7 @@ export function App({ hostSession = null }) {
       setSourceAudioBlob(original.blob); setSourceAudioUrl(original.url); setSourceAudioPeaks(original.peaks);
       setSourceAudioName(original.name); setSourceAudioDuration(original.duration); sourceVoiceColorOriginalRef.current = null;
     } else return false;
-    notify(t("voiceColorOriginalRestored", "已恢复原始声音"));
+    notify(t("voiceColorOriginalRestored", "Original audio restored"));
     return true;
   };
 
@@ -1450,7 +1450,7 @@ export function App({ hostSession = null }) {
     setSelectedVisualOverlayId(overlay.id);
     setSelectedVisualSegmentId("");
     setSelectedTrack("overlay");
-    notify("已添加为画中画，可在预览中拖动、缩放和旋转");
+    notify("Added as overlay; drag, scale, and rotate in preview");
   };
   const updateVisualOverlayById = (overlayId, transform) => {
     if (!overlayId || trackLocks.overlay) return;
@@ -2599,9 +2599,9 @@ export function App({ hostSession = null }) {
       if (audioFile && targetTrack === "music") {
         try {
           const decoded = await decodeWaveform(audioFile, 96);
-          replaceMusic(audioFile, decoded.duration, decoded.peaks, audioFile.name, "音乐已安全加入时间线");
+          replaceMusic(audioFile, decoded.duration, decoded.peaks, audioFile.name, "Music added to timeline");
         } catch (error) {
-          notify(error instanceof Error ? `无法读取该音频：${error.message}` : "无法读取该音频文件");
+          notify(error instanceof Error ? `Cannot read audio: ${error.message}` : "Cannot read audio file");
         }
         return;
       }
@@ -3370,15 +3370,15 @@ export function App({ hostSession = null }) {
             filters: t("visualTabEffects"),
             animation: t("visualTabAnimation"),
             speed: t("visualTabSpeed"),
-            vector: t("vectorProperties", "矢量"),
-            timing: t("overlayTiming", "层级与时长"),
+            vector: t("vectorProperties", "Vector"),
+            timing: t("overlayTiming", "Layers & Duration"),
             repair: t("repairTab"),
             effects: t("effects"),
             caption: t("caption"),
             voice: t("aiVoice"),
             audio: t("mobileClipAudio"),
             fade: t("mobileClipFade"),
-            "voice-color": t("voiceColorTab", "音色"),
+            "voice-color": t("voiceColorTab", "Voice Color"),
             processing: getAudioProcessingCopy(uiLanguage).processing,
             sticker: t("stickerProperties"),
           }[mobileInspectorSection]) || (mobilePanelOrigin === "audio-clip"
@@ -3388,7 +3388,7 @@ export function App({ hostSession = null }) {
               : mobilePanelOrigin === "visual-clip"
                 ? t("visualPanelTitle")
                 : mobilePanelOrigin === "overlay-clip"
-                  ? t("pictureInPicture", "画中画")
+                  ? t("pictureInPicture", "Overlay (PiP)")
                   : mobilePanelOrigin === "caption-clip"
                     ? t("caption")
                     : activeTool === "specialEffects" ? SPECIAL_EFFECTS_LABELS[activeLanguage] : activeTool === "templates" ? templateCopy(activeLanguage).title : t(activeTool))}</strong>
@@ -3397,11 +3397,11 @@ export function App({ hostSession = null }) {
               <button className={mobilePanel === "tools" ? "is-active" : ""} type="button" role="tab" aria-selected={mobilePanel === "tools"} onClick={() => changeMobilePanel("tools")}>{t("mobileDrawerTools")}</button>
               <button className={mobilePanel === "inspector" ? "is-active" : ""} type="button" role="tab" aria-selected={mobilePanel === "inspector"} onClick={() => changeMobilePanel("inspector")}>{t("properties")}</button>
             </div> : null}
-            <button className="mobile-sheet-close" type="button" aria-label={t("close", "关闭")} onClick={() => changeMobilePanel("")}><X size={20} /></button>
+            <button className="mobile-sheet-close" type="button" aria-label={t("close", "Close")} onClick={() => changeMobilePanel("")}><X size={20} /></button>
           </div>
         </header>
       ) : null}
-      {mobilePanel ? <button className="mobile-sheet-backdrop" type="button" aria-label={t("close", "关闭")} onClick={() => changeMobilePanel("")} /> : null}
+      {mobilePanel ? <button className="mobile-sheet-backdrop" type="button" aria-label={t("close", "Close")} onClick={() => changeMobilePanel("")} /> : null}
 
       {replacementClip ? <VisualReplacementDialog key={replacementClip.id} language={activeLanguage} t={t}
         clip={replacementClip}

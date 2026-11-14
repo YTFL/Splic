@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import { ArrowsOutCardinal, Cursor, MouseRightClick, X } from "@phosphor-icons/react";
 
 const COPY = {
-  zh: { title: "两个常用操作", timeline: "在轨道片段上右键，可以打开剪切、复制、静音等快捷操作。", canvas: "点击画面后，可直接拖动位置，并用控制点缩放或旋转。", done: "知道了" },
+  zh: { title: "Two useful shortcuts", timeline: "Right-click a timeline clip to open quick actions such as cut, duplicate, and mute.", canvas: "Click the visual, then drag to move it or use the handles to resize and rotate.", done: "Got it" },
   en: { title: "Two useful shortcuts", timeline: "Right-click a timeline clip to open quick actions such as cut, duplicate, and mute.", canvas: "Click the visual, then drag to move it or use the handles to resize and rotate.", done: "Got it" },
   ja: { title: "便利な2つの操作", timeline: "タイムラインのクリップを右クリックすると、カット、複製、ミュートなどを操作できます。", canvas: "画面をクリックしてドラッグすると移動でき、ハンドルで拡大縮小や回転ができます。", done: "わかりました" },
   ko: { title: "유용한 두 가지 조작", timeline: "타임라인 클립을 마우스 오른쪽 버튼으로 클릭하면 자르기, 복제, 음소거 등의 메뉴가 열립니다.", canvas: "화면을 클릭한 뒤 드래그해 이동하고 핸들로 크기와 회전을 조절하세요.", done: "확인" },

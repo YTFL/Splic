@@ -34,7 +34,7 @@ export function useEditorLifecycle(d) {
     const nextRatio = RATIO_OPTIONS.find((option) => option.id === nextRatioId);
     d.setRatioId(nextRatioId);
     d.setFitMode("contain");
-    d.notify(`已根据素材自动切换为 ${nextRatio?.label ?? nextRatioId}`);
+    d.notify(`Automatically switched to ${nextRatio?.label ?? nextRatioId} based on the asset`);
   }, [d.ratioId, d.visualSegments]);
 
   useEffect(() => {

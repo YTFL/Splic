@@ -20,7 +20,7 @@ export function createWebUIAdapter() {
         seed: Number(request.seed),
       };
       if (request.mode === "img2img") {
-        if (!request.initImage) throw new Error("图生图需要先选择一张参考图片。");
+        if (!request.initImage) throw new Error("Image-to-image requires selecting a reference image first.");
         body.init_images = [request.initImage];
       }
       const result = await fetchLocalJson(`${connection.endpoint}/sdapi/v1/${request.mode}`, {
@@ -29,7 +29,7 @@ export function createWebUIAdapter() {
         body: JSON.stringify(body),
         signal,
       });
-      if (!Array.isArray(result?.images) || !result.images.length) throw new Error("WebUI 没有返回图片。");
+      if (!Array.isArray(result?.images) || !result.images.length) throw new Error("WebUI did not return an image.");
       const outputs = [];
       for (const [index, encoded] of result.images.entries()) {
         const blob = dataUrlToBlob(encoded);

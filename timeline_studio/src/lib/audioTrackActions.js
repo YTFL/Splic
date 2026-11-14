@@ -67,7 +67,7 @@ export function createAudioTrackActions(d) {
     return segment;
   }
 
-  function clearAudioTrack(message = "配音音频已从时间线移除") {
+  function clearAudioTrack(message = "Voiceover audio removed from timeline") {
     const removedAudioIds = new Set(d.audioSegments.map((segment) => segment.id));
     d.audioSegmentRefs.current.forEach((audio) => audio.pause());
     d.audioSegments.forEach((segment) => URL.revokeObjectURL(segment.url));
@@ -82,11 +82,11 @@ export function createAudioTrackActions(d) {
     d.setCurrentTime(0);
     d.setIsPlaying(false);
     d.setStatus("ready");
-    d.setStatusText("音频轨已清空");
+    d.setStatusText("Audio track cleared");
     d.notify(message);
   }
 
-  function replaceMusic(blob, duration, nextPeaks, nextName, message = "背景音乐已添加到时间线", options = {}) {
+  function replaceMusic(blob, duration, nextPeaks, nextName, message = "Background music added to timeline", options = {}) {
     // Replacing the source while the timeline is playing can leave React's
     // playback state active after the old object URL has been revoked. The new
     // audio element then mounts after the sync effect and never receives play().
@@ -117,7 +117,7 @@ export function createAudioTrackActions(d) {
     duration,
     nextPeaks,
     nextName,
-    message = "视频原声已分离到时间线",
+    message = "Source audio separated to timeline",
     timelineStart = 0,
     assetId = d.sourceAudioAssetId,
     options = {},
@@ -143,12 +143,12 @@ export function createAudioTrackActions(d) {
       d.setActiveTool("audio");
     }
     d.setStatus("done");
-    d.setStatusText("视频原声已分离");
+    d.setStatusText("Source audio separated");
     d.setProgress(100);
     d.notify(message);
   }
 
-  function clearSourceAudioTrack(message = "视频原声已从时间线移除") {
+  function clearSourceAudioTrack(message = "Source audio removed from timeline") {
     d.sourceAudioRef.current?.pause();
     if (d.sourceAudioUrlRef.current) {
       URL.revokeObjectURL(d.sourceAudioUrlRef.current);
@@ -176,7 +176,7 @@ export function createAudioTrackActions(d) {
     if (message) d.notify(message);
   }
 
-  function clearMusicTrack(message = "背景音乐已从时间线移除") {
+  function clearMusicTrack(message = "Background music removed from timeline") {
     d.musicRef.current?.pause();
     if (d.musicUrlRef.current) {
       URL.revokeObjectURL(d.musicUrlRef.current);

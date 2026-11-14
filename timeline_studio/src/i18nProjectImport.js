@@ -1,15 +1,15 @@
 // Keep import progress copy explicit in every supported interface language.
 export const PROJECT_IMPORT_COPY = {
   zh: {
-    title: "正在导入工程",
-    archive: "正在读取工程文件",
-    visuals: "正在恢复画面素材",
-    audio: "正在准备音频素材",
-    ready: "正在完成导入",
-    hint: "媒体恢复后即可编辑，缩略图会在后台完善。",
-    error: "无法导入工程，请检查文件后重试。",
-    completed: "已准备 {completed} 项",
-    count: "已准备 {completed} / {total} 项",
+    title: "Importing project",
+    archive: "Reading the project file",
+    visuals: "Restoring visual media",
+    audio: "Preparing audio",
+    ready: "Finishing the import",
+    hint: "You can edit once the media is restored. Thumbnails will continue to load in the background.",
+    error: "Unable to import the project. Check the file and try again.",
+    completed: "{completed} prepared",
+    count: "{completed} of {total} prepared",
   },
   en: {
     title: "Importing project",

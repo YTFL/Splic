@@ -3,7 +3,7 @@ const keys = [
   "beatSource", "tempo", "markers", "beatDivision", "quarter", "eighth", "shape", "circle", "star", "line",
 ];
 const rows = {
-  zh: ["三分屏卡点", "底色闪拍", "卡点推拉", "网点线描", "形状闪光", "卡点来源", "固定节拍", "时间轴标记", "节拍间隔", "四分音符", "八分音符", "形状", "圆形", "星形", "横线"],
+  zh: ["Three-panel beat montage", "Background beat flash", "Beat zoom", "Halftone ink", "Shape flash", "Beat source", "Fixed tempo", "Timeline markers", "Beat interval", "Quarter note", "Eighth note", "Shape", "Circle", "Star", "Horizontal line"],
   en: ["Three-panel beat montage", "Background beat flash", "Beat zoom", "Halftone ink", "Shape flash", "Beat source", "Fixed tempo", "Timeline markers", "Beat interval", "Quarter note", "Eighth note", "Shape", "Circle", "Star", "Horizontal line"],
   ja: ["3分割ビート編集", "背景ビートフラッシュ", "ビートズーム", "網点インク", "図形フラッシュ", "ビートの基準", "固定テンポ", "タイムラインマーカー", "ビート間隔", "四分音符", "八分音符", "図形", "円", "星", "横線"],
   ko: ["3분할 비트 몽타주", "배경 비트 플래시", "비트 줌", "망점 잉크", "도형 플래시", "비트 기준", "고정 템포", "타임라인 마커", "비트 간격", "4분음표", "8분음표", "도형", "원", "별", "가로선"],

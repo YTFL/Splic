@@ -2,19 +2,14 @@
 // Regenerate after adding user-visible t("…") keys.
 export const I18N_COMPLETION_COPY = {
   "zh": {
-    "complete": "完成",
-    "avatarKicker": "头像实验室·浏览器ONNX",
-    "cancel": "取消",
-    "canvasRatio": "画布比例",
-    "clipDuration": "剪辑持续时间",
-    "clipStart": "剪辑开始",
-    "languageKicker": "人工智能语音工作室",
-    "layer": "层",
-    "remasterCpuFallback": "CPU · WASM",
-    "remasterGpuActive": "GPU·WebGPU",
-    "smartFrame": "智能相框",
-    "visualBasic": "基本",
-    "visualTabAi": "人工智能"
+    "complete": "Complete",
+    "cancel": "Cancel",
+    "canvasRatio": "Canvas ratio",
+    "clipDuration": "Clip duration",
+    "clipStart": "Clip start",
+    "layer": "Layer",
+    "lock": "Lock",
+    "visualBasic": "Basic"
   },
   "en": {
     "complete": "Complete",

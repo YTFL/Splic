@@ -2,7 +2,7 @@ import { RELIGHTING_COPY } from "./lib/relightingCopy.js";
 // Task labels and actionable errors are direct translations in all 13 locales.
 const rows = {
   en: ["Analyze relighting", "Convert depth video", "Analyzing depth frames", "Encoding depth video", "Analyze this clip at the selected quality before enabling relighting."],
-  zh: ["分析视频打光", "转换深度视频", "正在分析深度帧", "正在编码深度视频", "请先以所选质量分析此片段，再启用打光。"],
+  zh: ["Analyze relighting", "Convert depth video", "Analyzing depth frames", "Encoding depth video", "Analyze this clip at the selected quality before enabling relighting."],
   ja: ["照明を解析", "深度動画に変換", "深度フレームを解析中", "深度動画をエンコード中", "照明を有効にする前に、選択した品質でこのクリップを解析してください。"],
   ko: ["조명 분석", "깊이 영상 변환", "깊이 프레임 분석 중", "깊이 영상 인코딩 중", "조명을 켜기 전에 선택한 품질로 이 클립을 분석하세요."],
   es: ["Analizar iluminación", "Convertir vídeo de profundidad", "Analizando fotogramas de profundidad", "Codificando vídeo de profundidad", "Analiza este clip con la calidad seleccionada antes de activar la iluminación."],
@@ -27,10 +27,10 @@ const descriptions = {
     "Choose a ready source of the type required by this task."
   ],
   "zh": [
-    "读取声音、转录、打光分析和深度视频能力，不运行模型。",
-    "使用当前 stateToken 准备配音、转录、打光分析或深度视频任务供审阅，不运行或下载模型。",
-    "使用唯一 requestId 并明确允许 allowModelDownload，启动已审阅的 aiId。深度视频进入我的资产；打光分析后需单独审阅参数修改。",
-    "请选择符合此任务类型的已就绪源素材。"
+    "Read voices, transcription, relighting analysis and depth-video capabilities without running models.",
+    "Prepare voiceover, transcription, relight-analysis or depth-map for review using the current stateToken. Does not run or download models.",
+    "Start the reviewed aiId with a unique requestId and explicit allowModelDownload. Depth videos go to My assets; relighting analysis requires a separate reviewed parameter edit.",
+    "Choose a ready source of the type required by this task."
   ],
   "ja": [
     "モデルを実行せず、音声・文字起こし・照明解析・深度動画の機能を確認します。",
@@ -104,7 +104,7 @@ for (const [locale, values] of Object.entries(descriptions)) Object.assign(WEBMC
 for (const [locale, copy] of Object.entries(RELIGHTING_COPY)) Object.assign(WEBMCP_DEPTH_COPY[locale], copy);
 
 const qualityLabels = {
-  en: ["Analysis quality", "Fast", "Standard", "Fine"], zh: ["分析质量", "快速", "标准", "精细"],
+  en: ["Analysis quality", "Fast", "Standard", "Fine"], zh: ["Analysis quality", "Fast", "Standard", "Fine"],
   ja: ["解析品質", "高速", "標準", "精細"], ko: ["분석 품질", "빠르게", "표준", "정밀"],
   es: ["Calidad del análisis", "Rápida", "Estándar", "Fina"], fr: ["Qualité d’analyse", "Rapide", "Standard", "Fine"],
   de: ["Analysequalität", "Schnell", "Standard", "Fein"], pt: ["Qualidade da análise", "Rápida", "Padrão", "Fina"],

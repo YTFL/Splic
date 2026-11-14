@@ -230,16 +230,16 @@ function VectorDesignRange({ label, value, min, max, step = 1, suffix = "", onCh
 }
 
 const VECTOR_PART_LABEL_KEYS = {
-  text: ["vectorPartText", "文字"],
-  rectangle: ["vectorPartRectangle", "矩形"],
-  rectangleGroup: ["vectorPartRectangleGroup", "矩形组合"],
-  circle: ["vectorPartCircle", "圆形"],
-  pointGroup: ["vectorPartPointGroup", "圆点组合"],
-  line: ["vectorPartLine", "线条"],
-  lineGroup: ["vectorPartLineGroup", "线条组合"],
-  textGroup: ["vectorPartTextGroup", "文字组合"],
-  group: ["vectorPartGroup", "图形组合"],
-  shape: ["vectorPartShape", "图形"],
+  text: ["vectorPartText", "Text"],
+  rectangle: ["vectorPartRectangle", "Rectangle"],
+  rectangleGroup: ["vectorPartRectangleGroup", "Rectangle Group"],
+  circle: ["vectorPartCircle", "Circle"],
+  pointGroup: ["vectorPartPointGroup", "Dot Group"],
+  line: ["vectorPartLine", "Line"],
+  lineGroup: ["vectorPartLineGroup", "Line Group"],
+  textGroup: ["vectorPartTextGroup", "Text Group"],
+  group: ["vectorPartGroup", "Graphic Group"],
+  shape: ["vectorPartShape", "Shape"],
 };
 
 function getVectorPartLabel(part, t) {
@@ -348,14 +348,14 @@ function VectorDesignDialog({ t, segment, onApply, onClose }) {
     }}>
       <section className="vector-design-dialog" role="dialog" aria-modal="true" aria-labelledby="vector-design-title">
         <header>
-          <div><span>{t("vectorAdvancedKicker", "矢量设计")}</span><h2 id="vector-design-title">{t("vectorAdvancedTitle", "高级矢量设计")}</h2></div>
-          <button type="button" aria-label={t("close", "关闭")} onClick={onClose}><X size={18} /></button>
+          <div><span>{t("vectorAdvancedKicker", "Vector Design")}</span><h2 id="vector-design-title">{t("vectorAdvancedTitle", "Advanced Vector Design")}</h2></div>
+          <button type="button" aria-label={t("close", "Close")} onClick={onClose}><X size={18} /></button>
         </header>
-        <nav className="vector-design-steps" aria-label={t("vectorDesignSteps", "编辑步骤")}>
+        <nav className="vector-design-steps" aria-label={t("vectorDesignSteps", "Steps")}>
           {[
-            [t("vectorStepSelect", "选择部分"), CursorClick],
-            [t("vectorStepAdjust", "调整样式"), SlidersHorizontal],
-            [t("vectorStepFinish", "完成"), CheckCircle],
+            [t("vectorStepSelect", "Select Part"), CursorClick],
+            [t("vectorStepAdjust", "Adjust Style"), SlidersHorizontal],
+            [t("vectorStepFinish", "Done"), CheckCircle],
           ].map(([label, Icon], index) => (
             <div className={`${activeStep === index ? "is-active" : ""} ${activeStep > index ? "is-complete" : ""}`} key={label}>
               <i>{activeStep > index ? <CheckCircle size={17} weight="fill" /> : <Icon size={16} />}</i>
@@ -372,22 +372,22 @@ function VectorDesignDialog({ t, segment, onApply, onClose }) {
               viewBox={previewViewBox}
               preserveAspectRatio="xMidYMid meet"
               role="img"
-              aria-label={t("vectorCanvasLabel", "可选择图形部分的矢量预览")}
+              aria-label={t("vectorCanvasLabel", "Vector preview with selectable parts")}
               onClick={handleCanvasPartSelection}
               onKeyDown={handleCanvasKeyDown}
               style={{ filter: appearance.filter, opacity: appearance.opacity, mixBlendMode: appearance.cssBlendMode }}
               dangerouslySetInnerHTML={{ __html: previewBody }}
             />
-            <div className="vector-design-stage-hint"><CursorClick size={15} /><span>{t("vectorCanvasHint", "点击画布或图层，选择要编辑的部分")}</span></div>
+            <div className="vector-design-stage-hint"><CursorClick size={15} /><span>{t("vectorCanvasHint", "Click the canvas or part list to edit")}</span></div>
           </div>
           <aside className="vector-parts-panel">
             <div className="vector-parts-heading">
-              <div><strong>{t("vectorPartsTitle", "图形部分")}</strong><span>{t("vectorPartsDetected", "已自动识别")}</span></div>
+              <div><strong>{t("vectorPartsTitle", "Vector Parts")}</strong><span>{t("vectorPartsDetected", "Auto-detected")}</span></div>
               <Info size={15} />
             </div>
-            <p>{t("vectorPartsHint", "每个图形会根据实际结构显示不同部分")}</p>
+            <p>{t("vectorPartsHint", "Parts are identified based on SVG structure")}</p>
             {documentState.parts.length ? (
-              <div className="vector-parts-list" role="listbox" aria-label={t("vectorPartsTitle", "图形部分")}>
+              <div className="vector-parts-list" role="listbox" aria-label={t("vectorPartsTitle", "Vector Parts")}>
                 {documentState.parts.map((part) => {
                   const active = part.id === selectedPart?.id;
                   const label = getVectorPartLabel(part, t);
@@ -405,31 +405,31 @@ function VectorDesignDialog({ t, segment, onApply, onClose }) {
                         <strong>{label}</strong>
                         <small>{part.count > 1
                           ? t("vectorPartItems", "{count} items").replace("{count}", part.count)
-                          : t("vectorPartSingle", "1 个元素")}</small>
+                          : t("vectorPartSingle", "1 element")}</small>
                       </span>
                       {active ? <i /> : <CaretRight size={15} />}
                     </button>
                   );
                 })}
               </div>
-            ) : <div className="vector-parts-empty">{t("vectorPartsUnavailable", "这个图形暂时只能进行整体调整")}</div>}
+            ) : <div className="vector-parts-empty">{t("vectorPartsUnavailable", "This graphic can only be adjusted as a whole")}</div>}
           </aside>
           <div className="vector-design-controls">
             <div className="vector-selected-heading">
-              <span>{t("vectorEditQuestion", "你想修改什么？")}</span>
-              <strong>{selectedPart ? getVectorPartLabel(selectedPart, t) : t("vectorWholeGraphic", "整个图形")}</strong>
+              <span>{t("vectorEditQuestion", "What would you like to edit?")}</span>
+              <strong>{selectedPart ? getVectorPartLabel(selectedPart, t) : t("vectorWholeGraphic", "Entire Graphic")}</strong>
             </div>
             {selectedPart ? <>
               <VectorPartAction
                 icon={<Drop size={20} weight="duotone" />}
-                title={t("vectorActionColor", "换颜色")}
-                hint={t("vectorActionColorHint", "更改这个部分的颜色")}
+                title={t("vectorActionColor", "Change Color")}
+                hint={t("vectorActionColorHint", "Change color for this part")}
                 active={openAction === "color"}
                 disabled={!selectedPart.supportsColor}
                 onClick={() => toggleAction("color")}
               >
                 <div className="vector-part-color-editor">
-                  <input aria-label={t("vectorActionColor", "换颜色")} type="color" value={selectedPart.color} onChange={(event) => updateSelectedPart({ color: event.target.value })} />
+                  <input aria-label={t("vectorActionColor", "Change Color")} type="color" value={selectedPart.color} onChange={(event) => updateSelectedPart({ color: event.target.value })} />
                   {["#e05638", "#4d96ff", "#ff5f65", "#ffde59", "#f5fbff"].map((color) => (
                     <button type="button" aria-label={color} style={{ "--vector-swatch": color }} onClick={() => updateSelectedPart({ color })} key={color} />
                   ))}
@@ -437,80 +437,80 @@ function VectorDesignDialog({ t, segment, onApply, onClose }) {
               </VectorPartAction>
               <VectorPartAction
                 icon={<SlidersHorizontal size={20} />}
-                title={t("vectorActionThickness", "调整粗细")}
-                hint={selectedPart.supportsStroke ? t("vectorActionThicknessHint", "让线条更粗或更细") : t("vectorActionUnavailable", "这个部分没有可调整的线条")}
+                title={t("vectorActionThickness", "Adjust Stroke")}
+                hint={selectedPart.supportsStroke ? t("vectorActionThicknessHint", "Make outline thicker or thinner") : t("vectorActionUnavailable", "No adjustable stroke on this part")}
                 active={openAction === "stroke"}
                 disabled={!selectedPart.supportsStroke}
                 onClick={() => toggleAction("stroke")}
               >
-                <VectorDesignRange label={t("vectorOutlineWidth", "轮廓宽度")} value={selectedPart.strokeWidth} min="1" max="120" suffix="px" onChange={(value) => updateSelectedPart({ strokeWidth: value })} />
+                <VectorDesignRange label={t("vectorOutlineWidth", "Stroke Width")} value={selectedPart.strokeWidth} min="1" max="120" suffix="px" onChange={(value) => updateSelectedPart({ strokeWidth: value })} />
               </VectorPartAction>
               <VectorPartAction
                 icon={<ArrowsOut size={20} />}
-                title={t("vectorActionTransform", "移动与缩放")}
-                hint={t("vectorActionTransformHint", "调整位置、大小或方向")}
+                title={t("vectorActionTransform", "Move & Scale")}
+                hint={t("vectorActionTransformHint", "Adjust position, scale, or orientation")}
                 active={openAction === "transform"}
                 onClick={() => toggleAction("transform")}
               >
                 <div className="vector-part-transform-grid">
                   <label><span>X</span><input type="number" value={selectedPart.translateX} onChange={(event) => updateSelectedPart({ translateX: event.target.value })} /></label>
                   <label><span>Y</span><input type="number" value={selectedPart.translateY} onChange={(event) => updateSelectedPart({ translateY: event.target.value })} /></label>
-                  <label className="is-wide"><span>{t("vectorScale", "大小")}</span><input type="range" min=".1" max="3" step=".05" value={selectedPart.scale} onChange={(event) => updateSelectedPart({ scale: event.target.value })} /><output>{Math.round(selectedPart.scale * 100)}%</output></label>
+                  <label className="is-wide"><span>{t("vectorScale", "Scale")}</span><input type="range" min=".1" max="3" step=".05" value={selectedPart.scale} onChange={(event) => updateSelectedPart({ scale: event.target.value })} /><output>{Math.round(selectedPart.scale * 100)}%</output></label>
                 </div>
               </VectorPartAction>
               <VectorPartAction
                 icon={<Sun size={20} />}
-                title={t("vectorActionShadow", "添加阴影")}
-                hint={t("vectorActionShadowHint", "为这个部分增加层次")}
+                title={t("vectorActionShadow", "Add Shadow")}
+                hint={t("vectorActionShadowHint", "Add depth to this part")}
                 active={openAction === "shadow"}
                 onClick={() => toggleAction("shadow")}
               >
                 <button type="button" className={`vector-part-shadow-toggle ${selectedPart.shadowEnabled ? "is-active" : ""}`} aria-pressed={selectedPart.shadowEnabled} onClick={() => updateSelectedPart({ shadowEnabled: !selectedPart.shadowEnabled })}>
-                  {selectedPart.shadowEnabled ? t("enabled", "已开启") : t("disabled", "已关闭")}
+                  {selectedPart.shadowEnabled ? t("enabled", "Enabled") : t("disabled", "Disabled")}
                 </button>
               </VectorPartAction>
             </> : null}
 
             <section className={`vector-professional-options ${professionalOpen ? "is-open" : ""}`}>
               <button type="button" aria-expanded={professionalOpen} onClick={() => setProfessionalOpen((value) => !value)}>
-                <span><Stack size={17} /><strong>{t("vectorProfessionalOptions", "显示专业选项")}</strong></span>
+                <span><Stack size={17} /><strong>{t("vectorProfessionalOptions", "Professional Options")}</strong></span>
                 {professionalOpen ? <CaretDown size={16} /> : <CaretRight size={16} />}
               </button>
-              <small>{t("vectorProfessionalHint", "渐变、整体外观与精度控制")}</small>
+              <small>{t("vectorProfessionalHint", "Gradients, appearance, and precision")}</small>
               {professionalOpen ? <div className="vector-professional-body">
                 <div className="vector-design-mode">
-                  <button type="button" className={!draft.paletteEnabled ? "is-active" : ""} onClick={() => update({ paletteEnabled: false })}>{t("vectorOriginalColors", "原始配色")}</button>
-                  <button type="button" className={draft.paletteEnabled ? "is-active" : ""} onClick={() => update({ paletteEnabled: true })}>{t("vectorCustomPalette", "自定义配色")}</button>
+                  <button type="button" className={!draft.paletteEnabled ? "is-active" : ""} onClick={() => update({ paletteEnabled: false })}>{t("vectorOriginalColors", "Original Colors")}</button>
+                  <button type="button" className={draft.paletteEnabled ? "is-active" : ""} onClick={() => update({ paletteEnabled: true })}>{t("vectorCustomPalette", "Custom Palette")}</button>
                 </div>
                 <div className="vector-design-colors">
                   {[
-                    ["primary", t("vectorPrimaryColor", "主色")],
-                    ["secondary", t("vectorSecondaryColor", "辅色")],
-                    ["accent", t("vectorAccentColor", "强调色")],
+                    ["primary", t("vectorPrimaryColor", "Primary Color")],
+                    ["secondary", t("vectorSecondaryColor", "Secondary Color")],
+                    ["accent", t("vectorAccentColor", "Accent Color")],
                   ].map(([key, label]) => (
                     <label key={key}><span>{label}</span><input type="color" value={draft[key]} onChange={(event) => update({ paletteEnabled: true, [key]: event.target.value })} /></label>
                   ))}
                 </div>
-                <VectorDesignRange label={t("vectorOpacity", "透明度")} value={Math.round(draft.opacity * 100)} min="0" max="100" suffix="%" onChange={(value) => update({ opacity: value / 100 })} />
-                <VectorDesignRange label={t("vectorSaturation", "饱和度")} value={draft.saturation} min="0" max="240" suffix="%" onChange={(value) => update({ saturation: value })} />
-                <VectorDesignRange label={t("vectorBrightness", "亮度")} value={draft.brightness} min="20" max="200" suffix="%" onChange={(value) => update({ brightness: value })} />
-                <VectorDesignRange label={t("vectorContrast", "对比度")} value={draft.contrast} min="20" max="200" suffix="%" onChange={(value) => update({ contrast: value })} />
-                <label className="vector-design-select"><span>{t("vectorBlendMode", "混合模式")}</span><select value={draft.blendMode} onChange={(event) => update({ blendMode: event.target.value })}>
-                  <option value="source-over">{t("vectorBlendNormal", "正常")}</option>
-                  <option value="multiply">{t("vectorBlendMultiply", "正片叠底")}</option>
-                  <option value="screen">{t("vectorBlendScreen", "滤色")}</option>
-                  <option value="overlay">{t("vectorBlendOverlay", "叠加")}</option>
+                <VectorDesignRange label={t("vectorOpacity", "Opacity")} value={Math.round(draft.opacity * 100)} min="0" max="100" suffix="%" onChange={(value) => update({ opacity: value / 100 })} />
+                <VectorDesignRange label={t("vectorSaturation", "Saturation")} value={draft.saturation} min="0" max="240" suffix="%" onChange={(value) => update({ saturation: value })} />
+                <VectorDesignRange label={t("vectorBrightness", "Brightness")} value={draft.brightness} min="20" max="200" suffix="%" onChange={(value) => update({ brightness: value })} />
+                <VectorDesignRange label={t("vectorContrast", "Contrast")} value={draft.contrast} min="20" max="200" suffix="%" onChange={(value) => update({ contrast: value })} />
+                <label className="vector-design-select"><span>{t("vectorBlendMode", "Blend Mode")}</span><select value={draft.blendMode} onChange={(event) => update({ blendMode: event.target.value })}>
+                  <option value="source-over">{t("vectorBlendNormal", "Normal")}</option>
+                  <option value="multiply">{t("vectorBlendMultiply", "Multiply")}</option>
+                  <option value="screen">{t("vectorBlendScreen", "Screen")}</option>
+                  <option value="overlay">{t("vectorBlendOverlay", "Overlay")}</option>
                 </select></label>
               </div> : null}
             </section>
-            <div className="vector-design-reassurance"><ShieldCheck size={16} /><span>{t("vectorReversibleHint", "不会破坏原始图形，随时可以重置")}</span></div>
+            <div className="vector-design-reassurance"><ShieldCheck size={16} /><span>{t("vectorReversibleHint", "Non-destructive; reset anytime")}</span></div>
           </div>
         </div>
         <footer>
-          <button type="button" className="panel-secondary" disabled={!hasChanges} onClick={resetAll}>{t("resetAll", "重置所有")}</button>
+          <button type="button" className="panel-secondary" disabled={!hasChanges} onClick={resetAll}>{t("resetAll", "Reset All")}</button>
           <span />
-          <button type="button" className="panel-secondary" onClick={onClose}>{t("cancel", "取消")}</button>
-          <button type="button" className="vector-design-apply" onClick={() => onApply({ design: draft, body: documentState.body })}>{t("apply", "应用")}</button>
+          <button type="button" className="panel-secondary" onClick={onClose}>{t("cancel", "Cancel")}</button>
+          <button type="button" className="vector-design-apply" onClick={() => onApply({ design: draft, body: documentState.body })}>{t("apply", "Apply")}</button>
         </footer>
       </section>
     </div>,
@@ -528,24 +528,24 @@ function VectorControls({ t, segment, onUpdate }) {
   return (
     <>
       <section className="vector-overlay-quick">
-        <div className="vector-overlay-quick-title"><div><strong>{t("vectorQuickStyle", "矢量样式")}</strong><span>{t("vectorQuickStyleHint", "常用属性即时生效")}</span></div><Sparkle size={17} weight="duotone" /></div>
+        <div className="vector-overlay-quick-title"><div><strong>{t("vectorQuickStyle", "Vector Style")}</strong><span>{t("vectorQuickStyleHint", "Properties take effect instantly")}</span></div><Sparkle size={17} weight="duotone" /></div>
         <div className="vector-design-mode">
-          <button type="button" className={!design.paletteEnabled ? "is-active" : ""} onClick={() => commit({ paletteEnabled: false })}>{t("vectorOriginalColors", "原始配色")}</button>
-          <button type="button" className={design.paletteEnabled ? "is-active" : ""} onClick={() => commit({ paletteEnabled: true })}>{t("vectorCustomPalette", "自定义配色")}</button>
+          <button type="button" className={!design.paletteEnabled ? "is-active" : ""} onClick={() => commit({ paletteEnabled: false })}>{t("vectorOriginalColors", "Original Colors")}</button>
+          <button type="button" className={design.paletteEnabled ? "is-active" : ""} onClick={() => commit({ paletteEnabled: true })}>{t("vectorCustomPalette", "Custom Palette")}</button>
         </div>
         <div className="vector-overlay-inline-colors">
           <label>
-            <span>{t("vectorPrimaryColor", "主色")}</span>
+            <span>{t("vectorPrimaryColor", "Primary Color")}</span>
             <span className="vector-color-value">
               <code>{design.primary.toUpperCase()}</code>
               <span className="vector-color-swatch" style={{ "--vector-quick-color": design.primary }}>
-                <input aria-label={t("vectorPrimaryColor", "主色")} type="color" value={design.primary} onChange={(event) => commit({ paletteEnabled: true, primary: event.target.value })} />
+                <input aria-label={t("vectorPrimaryColor", "Primary Color")} type="color" value={design.primary} onChange={(event) => commit({ paletteEnabled: true, primary: event.target.value })} />
               </span>
             </span>
           </label>
-          <label><span>{t("vectorOpacity", "透明度")}</span><input type="range" min="0" max="1" step="0.01" value={design.opacity} onChange={(event) => commit({ opacity: event.target.value })} /><output>{Math.round(design.opacity * 100)}%</output></label>
+          <label><span>{t("vectorOpacity", "Opacity")}</span><input type="range" min="0" max="1" step="0.01" value={design.opacity} onChange={(event) => commit({ opacity: event.target.value })} /><output>{Math.round(design.opacity * 100)}%</output></label>
         </div>
-        <button type="button" className="vector-advanced-open" onClick={() => setAdvancedOpen(true)}><Sparkle size={15} />{t("vectorOpenAdvanced", "高级设计…")}</button>
+        <button type="button" className="vector-advanced-open" onClick={() => setAdvancedOpen(true)}><Sparkle size={15} />{t("vectorOpenAdvanced", "Advanced Design...")}</button>
       </section>
       {advancedOpen ? <VectorDesignDialog
         t={t}
@@ -738,7 +738,7 @@ function CaptionContextPanel({
   return (
     <div className="caption-context-panel">
       <div className="caption-script-heading">
-        <label className="field-label" htmlFor="caption-context-input">{t("captionScriptLabel", "字幕文案")}</label>
+        <label className="field-label" htmlFor="caption-context-input">{t("captionScriptLabel", "Caption Text")}</label>
         <label className="caption-auto-switch" title={sourceAudioBlob || captionAudioTarget ? undefined : t("autoCaptionsNeedsSource")}>
           <span>{t("autoCaptionsTitle")}</span>
           {isGeneratingCaptions && <span className="caption-auto-progress">{Math.round(automaticCaptionProgress)}%</span>}
@@ -791,7 +791,7 @@ function CaptionContextPanel({
         <div className="caption-context-empty">
           <ClosedCaptioning size={28} weight="duotone" />
           <strong>{t("noCaptionSegments")}</strong>
-          <span>{t("captionEmptyHint", "字幕片段可拖动到字幕轨道，并在这里同步编辑。")}</span>
+          <span>{t("captionEmptyHint", "Caption clips can be dragged on the timeline and edited here.")}</span>
           <div className="caption-empty-actions">
             <button className="caption-add-button" type="button" onClick={handleAddCaption}>
               <Plus size={16} weight="bold" />{t("addCaption")}
@@ -855,7 +855,7 @@ function CaptionContextPanel({
           onClick={() => selectedCaptionSegment && toggleCaptionSegmentHidden(selectedCaptionSegment.id)}
         >
           {selectedCaptionSegment?.hidden ? <Eye size={15} /> : <EyeSlash size={15} />}
-          {selectedCaptionSegment?.hidden ? t("showCurrentCaption") : t("hideCurrentCaption", "隐藏当前字幕")}
+          {selectedCaptionSegment?.hidden ? t("showCurrentCaption") : t("hideCurrentCaption", "Hide current caption")}
         </button>
         <button
           className="panel-danger"
@@ -873,7 +873,7 @@ function CaptionContextPanel({
       ) : null}
 
       <div className="caption-context-heading">
-        <span><ListBullets size={16} />{t("captionList", "字幕列表")}</span>
+        <span><ListBullets size={16} />{t("captionList", "Caption List")}</span>
         {captionSegments.length ? (
           <>
             <button className="caption-add-inline" type="button" onClick={handleAddCaption}>
@@ -988,7 +988,7 @@ function AudioVoiceColorSection({ t, segment, voiceProfiles = [], onAssetReady, 
       recorder.onstop = () => {
         const blob = new Blob(recorderChunksRef.current, { type: recorder.mimeType || "audio/webm" });
         stream.getTracks().forEach((track) => track.stop()); recorderStreamRef.current = null; recorderRef.current = null; setRecording(false);
-        if (blob.size) chooseReference(blob, t("voiceColorRecordedReference", "录制参考声音"), "recording");
+        if (blob.size) chooseReference(blob, t("voiceColorRecordedReference", "Recorded reference voice"), "recording");
       };
       recorder.start(250); setRecording(true);
     } catch {
@@ -997,20 +997,20 @@ function AudioVoiceColorSection({ t, segment, voiceProfiles = [], onAssetReady, 
   };
   const runConversion = async () => {
     if (!segment?.blob || (!selectedProfile?.embedding && (!reference?.blob || !authorized))) return;
-    setJob({ state: "running", progress: 3, phase: t("voiceColorPreparing", "准备音色"), error: "" }); setResult(null);
+    setJob({ state: "running", progress: 3, phase: t("voiceColorPreparing", "Preparing voice profile"), error: "" }); setResult(null);
     try {
-      const embedding = selectedProfile?.embedding || await extractVoiceEmbedding(reference.blob, (event) => setJob((current) => ({ ...current, progress: Math.min(35, Math.round((event.progress || 0) * 0.35)), phase: event.phase || t("cloneEncoding", "提取音色") })));
+      const embedding = selectedProfile?.embedding || await extractVoiceEmbedding(reference.blob, (event) => setJob((current) => ({ ...current, progress: Math.min(35, Math.round((event.progress || 0) * 0.35)), phase: event.phase || t("cloneEncoding", "Extracting voice profile") })));
       const blob = await convertVoiceBlob(segment.blob, embedding, {
-        onProgress: (event) => setJob((current) => ({ ...current, progress: 35 + Math.round((event.progress || 0) * 0.65), phase: event.phase || t("voiceColorConverting", "迁移音色") })),
+        onProgress: (event) => setJob((current) => ({ ...current, progress: 35 + Math.round((event.progress || 0) * 0.65), phase: event.phase || t("voiceColorConverting", "Transferring voice") })),
       });
       const decoded = await decodeWaveform(blob, 96);
-      const profileName = selectedProfile?.name || reference?.name?.replace(/\.[^.]+$/, "") || t("myCloneVoice", "克隆音色");
+      const profileName = selectedProfile?.name || reference?.name?.replace(/\.[^.]+$/, "") || t("myCloneVoice", "Cloned Voice");
       const asset = await onAssetReady?.({ blob, decoded, profileName, sourceName: segment.name, sourceSegment: segment });
       setResult({ blob, decoded, profileName, assetId: asset?.id || "" });
-      setJob({ state: "ready", progress: 100, phase: t("voiceColorReady", "音色迁移完成"), error: "" });
+      setJob({ state: "ready", progress: 100, phase: t("voiceColorReady", "Voice transfer complete"), error: "" });
     } catch (error) {
       if (error?.name === "AbortError") return setJob({ state: "idle", progress: 0, phase: "", error: "" });
-      setJob({ state: "error", progress: 0, phase: "", error: error instanceof Error ? error.message : t("voiceColorFailed", "音色迁移失败") });
+      setJob({ state: "error", progress: 0, phase: "", error: error instanceof Error ? error.message : t("voiceColorFailed", "Voice transfer failed") });
     }
   };
   const cancel = () => { cancelOpenVoiceTasks(); setJob({ state: "idle", progress: 0, phase: "", error: "" }); };
@@ -1026,26 +1026,26 @@ function AudioVoiceColorSection({ t, segment, voiceProfiles = [], onAssetReady, 
 
   return <div className="audio-voice-color-section">
     <input ref={fileInputRef} hidden type="file" accept="audio/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) chooseReference(file, file.name, "upload"); event.target.value = ""; }} />
-    <div className="voice-color-source"><span>{t("voiceColorSource", "当前源音频")}</span><strong>{segment.name || t("audioClip")}</strong><em>{formatTime(segment.duration)}</em></div>
+    <div className="voice-color-source"><span>{t("voiceColorSource", "Current source audio")}</span><strong>{segment.name || t("audioClip")}</strong><em>{formatTime(segment.duration)}</em></div>
     <div className="voice-color-target">
-      <strong className="voice-color-target-label">{t("voiceColorTarget", "目标音色")}</strong>
+      <strong className="voice-color-target-label">{t("voiceColorTarget", "Target voice")}</strong>
       {voiceProfiles.length ? <div className="voice-color-profile-grid">
         {voiceProfiles.map((profile) => <button type="button" className={profileId === profile.id ? "is-selected" : ""} key={profile.id} onClick={() => { setProfileId(profile.id); setReference(null); setAuthorized(false); setResult(null); }}><Waveform size={16} weight="duotone" /><span>{profile.name}</span><CheckCircle size={14} weight={profileId === profile.id ? "fill" : "regular"} /></button>)}
-      </div> : <p className="voice-color-empty-target">{t("voiceColorChooseTemporary", "上传或录制参考声音")}</p>}
+      </div> : <p className="voice-color-empty-target">{t("voiceColorChooseTemporary", "Upload or record reference audio")}</p>}
       <div className="audio-context-actions voice-color-reference-actions">
-        <button className="panel-secondary" type="button" onClick={() => fileInputRef.current?.click()}><UploadSimple size={15} />{t("uploadVoice", "上传声音")}</button>
+        <button className="panel-secondary" type="button" onClick={() => fileInputRef.current?.click()}><UploadSimple size={15} />{t("uploadVoice", "Upload Voice")}</button>
         <button className={`panel-secondary${recording ? " is-recording" : ""}`} type="button" onClick={toggleRecording}><Waveform size={15} />{recording ? t("stopRecording") : t("recordVoice")}</button>
       </div>
-      {reference ? <div className="voice-color-reference"><strong>{reference.name}</strong><span>{t("voiceColorTemporaryReference", "仅用于本次音色迁移")}</span></div> : null}
+      {reference ? <div className="voice-color-reference"><strong>{reference.name}</strong><span>{t("voiceColorTemporaryReference", "Temporary reference for this transfer")}</span></div> : null}
       {reference ? <label className="clone-consent"><input type="checkbox" checked={authorized} onChange={(event) => setAuthorized(event.target.checked)} /><span>{t("cloneConsent")}</span></label> : null}
     </div>
-    {job.state === "running" ? <div className="voice-generation-loading voice-color-progress" role="status"><i className="voice-generation-spinner" /><div><strong>{job.phase}</strong><span>{t("cloneLocalHint", "声音只在当前浏览器中处理")}</span></div><em>{job.progress}%</em><div className="progress-track"><span style={{ width: `${job.progress}%` }} /></div></div> : null}
+    {job.state === "running" ? <div className="voice-generation-loading voice-color-progress" role="status"><i className="voice-generation-spinner" /><div><strong>{job.phase}</strong><span>{t("cloneLocalHint", "Audio processed locally in browser")}</span></div><em>{job.progress}%</em><div className="progress-track"><span style={{ width: `${job.progress}%` }} /></div></div> : null}
     {job.error ? <div className="clone-inline-error">{job.error}</div> : null}
-    {resultUrl ? <div className="voice-color-result"><span><CheckCircle size={17} weight="fill" /><strong>{t("voiceColorSavedToAssets", "结果已保存到我的素材")}</strong></span><audio controls preload="metadata" src={resultUrl} /></div> : null}
+    {resultUrl ? <div className="voice-color-result"><span><CheckCircle size={17} weight="fill" /><strong>{t("voiceColorSavedToAssets", "Saved to My Assets")}</strong></span><audio controls preload="metadata" src={resultUrl} /></div> : null}
     <div className="audio-context-actions voice-color-actions">
-      {job.state === "running" ? <button className="panel-secondary" type="button" onClick={cancel}>{t("cancel")}</button> : <button className="panel-secondary" type="button" disabled={!selectedProfile?.embedding && (!reference?.blob || !authorized)} onClick={runConversion}>{result ? t("voiceColorRetry", "重新转换") : t("voiceColorPreview", "试听迁移")}</button>}
-      <button type="button" className={`panel-secondary${applied ? " is-applied" : ""}`} disabled={!result || applied} onClick={applyResult}>{applied ? t("voiceColorApplied", "已替换") : t("voiceColorReplaceClip", "替换当前片段")}</button>
-      {applied || segment.voiceColorOriginalBlob ? <button className="panel-secondary voice-color-restore" type="button" onClick={restoreOriginal}>{t("voiceColorRestoreOriginal", "恢复原始声音")}</button> : null}
+      {job.state === "running" ? <button className="panel-secondary" type="button" onClick={cancel}>{t("cancel")}</button> : <button className="panel-secondary" type="button" disabled={!selectedProfile?.embedding && (!reference?.blob || !authorized)} onClick={runConversion}>{result ? t("voiceColorRetry", "Retry") : t("voiceColorPreview", "Preview Transfer")}</button>}
+      <button type="button" className={`panel-secondary${applied ? " is-applied" : ""}`} disabled={!result || applied} onClick={applyResult}>{applied ? t("voiceColorApplied", "Applied") : t("voiceColorReplaceClip", "Replace Current Clip")}</button>
+      {applied || segment.voiceColorOriginalBlob ? <button className="panel-secondary voice-color-restore" type="button" onClick={restoreOriginal}>{t("voiceColorRestoreOriginal", "Restore Original Audio")}</button> : null}
     </div>
   </div>;
 }
@@ -1068,7 +1068,7 @@ function AudioClipContextPanel({ t, language, visualAssociation, processingDisab
   return (
     <div className={`audio-clip-context-panel${requestedSection ? " is-single-section" : ""}${shownTab === "processing" ? " is-processing" : ""}`}>
       {!requestedSection ? <AudioInspectorTabs
-        items={[{id:"audio",label:t("mobileClipAudio")},...(canFade?[{id:"fade",label:t("mobileClipFade")}]:[]),...(canSpatial?[{id:"spatial",label:t("audioSpaceTab")}]:[]),...(canVoiceColor?[{id:"voice-color",label:t("voiceColorTab", "音色")}]:[]),{id:"processing",label:processingCopy.processing}]}
+        items={[{id:"audio",label:t("mobileClipAudio")},...(canFade?[{id:"fade",label:t("mobileClipFade")}]:[]),...(canSpatial?[{id:"spatial",label:t("audioSpaceTab")}]:[]),...(canVoiceColor?[{id:"voice-color",label:t("voiceColorTab", "Voice Color")}]:[]),{id:"processing",label:processingCopy.processing}]}
         value={shownTab} onChange={setActiveTab} label={t("audioClipProperties")} previous={processingCopy.previous} next={processingCopy.next}
       /> : null}
       {visualAssociation && <button className="panel-secondary timed-visual-link" type="button" disabled={visualAssociation.disabled} onClick={visualAssociation.toggle}>{getCaptionVisualLinkCopy(language)[visualAssociation.linked ? 1 : 0]}</button>}
@@ -1664,8 +1664,8 @@ export function VoicePanel({
     filters: t("visualTabEffects"),
     animation: t("visualTabAnimation"),
     speed: t("visualTabSpeed"),
-    vector: t("vectorProperties", "矢量"),
-    timing: t("overlayTiming", "层级与时长"),
+    vector: t("vectorProperties", "Vector"),
+    timing: t("overlayTiming", "Layers & Duration"),
     repair: t("repairTab"),
     caption: t("caption"),
     font: t("captionFont"),
@@ -1673,7 +1673,7 @@ export function VoicePanel({
     audio: t("mobileClipAudio"),
     fade: t("mobileClipFade"),
     spatial: t("audioSpaceTab"),
-    "voice-color": t("voiceColorTab", "音色"),
+    "voice-color": t("voiceColorTab", "Voice Color"),
     processing: getAudioProcessingCopy(uiLanguage).processing,
     sticker: t("stickerProperties"),
     effects: t("effects"),
@@ -1681,7 +1681,7 @@ export function VoicePanel({
     background: t("effectBackground"),
     edge: t("effectEdgeCleanup"),
   }[mobileInspectorSection];
-  const title = focusedSectionTitle || (isSilenceRemovalContext ? t("pauseTitle") : isPluginsContext ? getPluginCopy(uiLanguage).title : isFaceSwapContext ? t("faceSwapTitle") : isOpticalFlowContext ? t("effectVectorTracking") : isLineArtContext ? t("lineArtTitle") : isCinematicDepthContext ? t(effectsPanelMode === "relight" ? "relightTitle" : effectsPanelMode === "depth-map" ? "depthMapTitle" : "depthTitle") : isPhotoParallaxContext ? t("parallaxTitle") : isEffectsContext ? t("effects") : isAiMusicContext ? (AI_MUSIC_COPY[uiLanguage] || AI_MUSIC_COPY.en).title : isSmartAutoContext ? t("smartAutoEdit") : isSmartFrameContext ? t("smartFrame") : isAvatarContext ? t("avatarTitle") : isVectorOverlay || isVectorVisual ? t("vectorProperties", "矢量图形") : isOverlayContext ? t("pictureInPicture", "画中画") : isStickerContext ? t("stickerProperties") : isVisualContext ? t("visualPanelTitle") : isCaptionContext ? t("caption") : isAudioClipContext ? t("audioClipProperties") : t("aiVoice"));
+  const title = focusedSectionTitle || (isSilenceRemovalContext ? t("pauseTitle") : isPluginsContext ? getPluginCopy(uiLanguage).title : isFaceSwapContext ? t("faceSwapTitle") : isOpticalFlowContext ? t("effectVectorTracking") : isLineArtContext ? t("lineArtTitle") : isCinematicDepthContext ? t(effectsPanelMode === "relight" ? "relightTitle" : effectsPanelMode === "depth-map" ? "depthMapTitle" : "depthTitle") : isPhotoParallaxContext ? t("parallaxTitle") : isEffectsContext ? t("effects") : isAiMusicContext ? (AI_MUSIC_COPY[uiLanguage] || AI_MUSIC_COPY.en).title : isSmartAutoContext ? t("smartAutoEdit") : isSmartFrameContext ? t("smartFrame") : isAvatarContext ? t("avatarTitle") : isVectorOverlay || isVectorVisual ? t("vectorProperties", "Vector Graphic") : isOverlayContext ? t("pictureInPicture", "Overlay (PiP)") : isStickerContext ? t("stickerProperties") : isVisualContext ? t("visualPanelTitle") : isCaptionContext ? t("caption") : isAudioClipContext ? t("audioClipProperties") : t("aiVoice"));
   const panelStatusText = isSilenceRemovalContext ? t("pauseHint") : isFaceSwapContext
     ? faceSwap?.job?.running ? `${faceSwap.job.progress}%` : hasVisual ? t("smartVisualReady") : t("smartWaitingVisual")
     : isLineArtContext ? t("lineArtPreview")
@@ -1701,7 +1701,7 @@ export function VoicePanel({
         ? t("effectAnalysisPartial")
         : t(effectAnalysis?.targetKind === "object" ? "effectObjectAnalysisNeeded" : "effectAnalysisNeeded")) : isAiMusicContext ? (aiMusic?.job?.state === "running" ? `${Math.round((aiMusic.job.progress || 0) * 100)}%` : aiMusic?.job?.state === "complete" ? t("complete") : t("modelReady")) : isSmartAutoContext ? t(`autoEditStatus_${autoEdit?.support?.availability || "unknown"}`) : isSmartFrameContext ? (hasVisual ? t("smartVisualReady") : t("smartWaitingVisual")) : isCaptionContext
     ? captionSegments.length
-      ? `${captionSegments.length} ${t("captionSegmentsUnit", "条字幕")}`
+      ? `${captionSegments.length} ${t("captionSegmentsUnit", "captions")}`
       : t("noCaptionSegments")
     : isStickerContext
       ? `${selectedStickerSegment.start.toFixed(2)}s · ${selectedStickerSegment.duration.toFixed(2)}s`
@@ -1715,7 +1715,7 @@ export function VoicePanel({
       ? t("avatarPortingStatus")
     : isAudioClipContext
       ? `${formatTime(audioPropertySegment.duration)} · ${audioPropertySegment.start.toFixed(1)}s`
-    : statusText === "模型待命"
+    : statusText === "Model Ready" || statusText === "\u6a21\u578b\u5f85\u547d"
       ? t("modelReady")
     : localizedStatusText;
 
@@ -1742,7 +1742,7 @@ export function VoicePanel({
 
   return (
     <aside ref={panelRef} className={`voice-panel ${isCaptionContext ? "is-caption-context" : ""} ${isAvatarContext ? "is-avatar-context" : ""} ${isAudioClipContext ? "is-audio-clip-context" : ""} ${isStickerContext ? "is-sticker-context" : ""} ${isVisualContext ? "is-visual-context" : ""} ${isEffectsContext ? "is-effects-context" : ""} ${isCinematicDepthContext && effectsPanelMode === "relight" ? "is-relight-context" : ""} ${isPluginsContext ? "is-plugins-context" : ""} ${isVectorOverlay ? "is-vector-overlay-context" : ""} ${mobileInspectorSection ? "is-focused-mobile-section" : ""}`}>
-      {mobileInspectorSection ? <header className="focused-mobile-sheet-header"><strong>{title}</strong><button type="button" aria-label={t("close", "关闭")} onClick={onCloseMobileInspector}><X size={20} /></button></header> : null}
+      {mobileInspectorSection ? <header className="focused-mobile-sheet-header"><strong>{title}</strong><button type="button" aria-label={t("close", "Close")} onClick={onCloseMobileInspector}><X size={20} /></button></header> : null}
       <div className="panel-title-row">
         <h1>{title}</h1>
         {isVisualContext && !selectedVisualSegment ? null : (
@@ -1757,7 +1757,7 @@ export function VoicePanel({
           {[
             ["synthesis", t("voiceSynthesis")],
             ["mine", t("myVoices")],
-            ["favorites", t("favoriteVoicesTab", "收藏声音")],
+            ["favorites", t("favoriteVoicesTab", "Favorite Voices")],
             ["history", t("history")],
           ].map(([id, label]) => (
             <button
@@ -1773,7 +1773,7 @@ export function VoicePanel({
       ) : null}
 
       {isCaptionContext && !mobileInspectorSection ? (
-        <div className="tabs compact caption-context-tabs" role="tablist" aria-label={t("captionTools", "字幕工具")}>
+        <div className="tabs compact caption-context-tabs" role="tablist" aria-label={t("captionTools", "Caption Tools")}>
           <button
             className={captionPanelTab === "caption" ? "is-active" : ""}
             type="button"
@@ -1781,7 +1781,7 @@ export function VoicePanel({
             aria-selected={captionPanelTab === "caption"}
             onClick={() => setCaptionPanelTab("caption")}
           >
-            {t("caption", "字幕")}
+            {t("caption", "Captions")}
           </button>
           <button
             className={captionPanelTab === "voice" ? "is-active" : ""}
@@ -1790,7 +1790,7 @@ export function VoicePanel({
             aria-selected={captionPanelTab === "voice"}
             onClick={() => setCaptionPanelTab("voice")}
           >
-            {t("aiVoice", "AI 配音")}
+            {t("aiVoice", "AI Voiceover")}
           </button>
         </div>
       ) : null}
@@ -1953,8 +1953,8 @@ export function VoicePanel({
           <div className="caption-voice-panel">
             <p className="caption-voice-hint">
               {selectedCaptionSegment
-                ? t("captionVoiceHint", "仅为当前选中的字幕片段生成配音，并自动对齐到片段起点。")
-                : t("captionVoiceEmptyHint", "请先在时间线中选择一个字幕片段。")}
+                ? t("captionVoiceHint", "Generate voiceover for the selected caption clip, aligned to start.")
+                : t("captionVoiceEmptyHint", "Please select a caption clip on the timeline first.")}
             </p>
             <VoiceSynthesisPanel
               script={selectedCaptionSegment?.text ?? ""}

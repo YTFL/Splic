@@ -232,7 +232,7 @@ export function createPlaybackControls(deps) {
       deps.setIsPlaying(false);
       return;
     }
-    if (!deps.canPreview) return void deps.notify("请先上传图片/视频素材、生成配音或上传背景音乐");
+    if (!deps.canPreview) return void deps.notify("Please upload media, generate voiceover, or add background music first");
     if (deps.currentTimeRef.current >= deps.estimatedDuration - 0.02) seekTo(0);
     const timelineTime = deps.currentTimeRef.current;
     const playIf = (media, ready) => ready ? requestTimelineMediaPlay(media) : media?.pause();

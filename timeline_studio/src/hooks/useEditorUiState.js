@@ -3,7 +3,7 @@ import { DEFAULT_TRACK_LOCKS, DEFAULT_TRACK_VISIBILITY } from "../lib/projectTra
 
 export function useEditorUiState() {
   const [status, setStatus] = useState("ready");
-  const [statusText, setStatusText] = useState("模型待命");
+  const [statusText, setStatusText] = useState("Model ready");
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);

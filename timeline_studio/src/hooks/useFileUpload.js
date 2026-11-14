@@ -14,11 +14,11 @@ export function useFileUpload(deps) {
   return useCallback((files, { insertFirstVisual = true, quiet = false } = {}) => {
     const mediaFiles = Array.from(files ?? []).filter((file) =>
       SUPPORTED_MEDIA_TYPES.some((type) => file.type.startsWith(type)) || isSupportedMediaFile(file));
-    if (!mediaFiles.length) return void deps.notify("请选择图片、视频或音频素材");
+    if (!mediaFiles.length) return void deps.notify("Please select image, video, or audio media");
     const assets = mediaFiles.map((file) => {
       const src = URL.createObjectURL(file); deps.imageUrlRefs.current.add(src);
       const type = getMediaFileKind(file);
-      return { id: crypto.randomUUID(), type, src, name: file.name, meta: "读取中", blob: file,
+      return { id: crypto.randomUUID(), type, src, name: file.name, meta: "Loading...", blob: file,
         duration: type === "video" ? 0 : 4, width: 0, height: 0, trackFrames: [],
         preparing: type === "video", prepareProgress: type === "video" ? 0.08 : 1 };
     });
@@ -33,8 +33,8 @@ export function useFileUpload(deps) {
     const update = (id, patch) => deps.setUserAssets((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
     assets.forEach((asset) => {
       if (asset.type === "audio") {
-        decodeWaveform(asset.blob, 96).then((decoded) => update(asset.id, { meta: `音频 · ${formatTime(decoded.duration)}`, duration: decoded.duration, peaks: decoded.peaks }))
-          .catch(() => update(asset.id, { meta: "音频读取失败", mediaUnavailable: true }));
+        decodeWaveform(asset.blob, 96).then((decoded) => update(asset.id, { meta: `Audio · ${formatTime(decoded.duration)}`, duration: decoded.duration, peaks: decoded.peaks }))
+          .catch(() => update(asset.id, { meta: "Failed to read audio", mediaUnavailable: true }));
         return;
       }
       if (asset.type === "video") {
@@ -132,13 +132,13 @@ export function useFileUpload(deps) {
         const patch = { meta: `${image.naturalWidth || 0} x ${image.naturalHeight || 0}`, width: image.naturalWidth || 0, height: image.naturalHeight || 0, type: "image" };
         update(asset.id, patch); deps.updateVisualAssetInTimeline(asset.id, patch);
       };
-      image.onerror = () => update(asset.id, { meta: "读取失败", mediaUnavailable: true }); image.src = asset.src;
+      image.onerror = () => update(asset.id, { meta: "Failed to read image", mediaUnavailable: true }); image.src = asset.src;
     });
-    if (!quiet) deps.notify(mediaFiles.length > 1 ? `已上传 ${mediaFiles.length} 个素材${shouldAutoAddFirstVisual ? "，项目首个画面已加入时间线" : "，请拖到目标轨道使用"}`
+    if (!quiet) deps.notify(mediaFiles.length > 1 ? `Uploaded ${mediaFiles.length} assets${shouldAutoAddFirstVisual ? ", first clip added to timeline" : ", drag to timeline to use"}`
       : primaryVisual ? shouldAutoAddFirstVisual
-        ? `${primary.type === "video" ? "视频" : "图片"}已加入画布和时间线`
-        : `${primary.type === "video" ? "视频" : "图片"}已加入素材库，请拖到 Visuals 或画中画轨道`
-      : "音频已上传到素材库，可拖到音乐或配音轨");
+        ? `${primary.type === "video" ? "Video" : "Image"} added to canvas and timeline`
+        : `${primary.type === "video" ? "Video" : "Image"} added to assets, drag to timeline to use`
+      : "Audio uploaded to assets, drag to timeline to use");
     return assets;
   }, [deps]);
 }

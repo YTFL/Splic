@@ -21,7 +21,7 @@ function getWorker() {
 async function decodeMono(blob) {
   const Context = globalThis.AudioContext || globalThis.webkitAudioContext;
   const Offline = globalThis.OfflineAudioContext || globalThis.webkitOfflineAudioContext;
-  if (!Context || !Offline) throw new Error("当前浏览器不支持本地音频解码");
+  if (!Context || !Offline) throw new Error("Local audio decoding is not supported in this browser.");
   const decoder = new Context();
   try {
     const source = await decoder.decodeAudioData((await blob.arrayBuffer()).slice(0));
@@ -81,6 +81,6 @@ export async function applyVoiceOutputGain(blob, gain = 1) {
 
 export function cancelOpenVoiceTasks() {
   worker?.terminate(); worker = null;
-  for (const task of pending.values()) task.reject(new DOMException("已取消声音转换", "AbortError"));
+  for (const task of pending.values()) task.reject(new DOMException("Voice transfer cancelled", "AbortError"));
   pending.clear();
 }

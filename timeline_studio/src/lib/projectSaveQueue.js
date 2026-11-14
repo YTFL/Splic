@@ -43,7 +43,7 @@ export function createProjectSaveQueue({ hostSession, projectId, getEditorSessio
         const assetId = decodeURIComponent(parts[6]);
         const asset = await request(`${endpoint}/assets/${encodeURIComponent(assetId)}`, undefined, undefined, signal);
         if (asset.assetId !== assetId || asset.mediaRef?.entityId !== assetId || asset.mediaRef?.blobId !== url.searchParams.get("blobId")) {
-          throw new Error("项目媒体地址与当前素材身份不一致。");
+          throw new Error("Project media URL does not match the current asset identity.");
         }
         item.ref = asset.mediaRef;
         return item.ref;
@@ -51,7 +51,7 @@ export function createProjectSaveQueue({ hostSession, projectId, getEditorSessio
     }
     if (!item.blob) {
       const response = await fetchMedia(source, { credentials: "omit", cache: "no-store", signal });
-      if (!response.ok) throw new Error(`无法读取素材 ${name}（HTTP ${response.status}）`);
+      if (!response.ok) throw new Error(`Unable to read asset ${name} (HTTP ${response.status})`);
       item.blob = await response.blob();
     }
     if (!item.receipt) {
@@ -70,12 +70,12 @@ export function createProjectSaveQueue({ hostSession, projectId, getEditorSessio
         if (task.status === "failed" && task.resultId && task.saveId) {
           item.registrationRetry = { resultId: task.resultId, saveId: task.saveId, key: crypto.randomUUID() };
         }
-        throw Object.assign(new Error(task.error?.message || `素材登记失败：${name}`), { code: task.error?.code, taskId: task.taskId });
+        throw Object.assign(new Error(task.error?.message || `Asset registration failed: ${name}`), { code: task.error?.code, taskId: task.taskId });
       }
       if (task.status === "succeeded") {
         const asset = await request(`${endpoint}/assets/${encodeURIComponent(task.assetId)}`, undefined, undefined, signal);
         if (asset.assetId !== task.assetId || asset.mediaRef?.entityId !== task.assetId || asset.mediaRef?.kind !== "media") {
-          throw new Error("素材登记回执与素材身份不一致。");
+          throw new Error("Asset registration receipt does not match the asset identity.");
         }
         item.ref = asset.mediaRef;
         return item.ref;
@@ -113,14 +113,14 @@ export function createProjectSaveQueue({ hostSession, projectId, getEditorSessio
         for (;;) {
           const saved = await request(`/api/v1/saves/${encodeURIComponent(job.receipt.saveId)}`, undefined, undefined, controller.signal);
           if (saved.editorSnapshotId !== job.snapshotId || saved.editorSequence !== job.sequence) {
-            throw new Error("保存回执与当前快照不一致。");
+            throw new Error("Save receipt does not match the current snapshot.");
           }
           if (saved.status === "failed") {
             job.failed = true;
-            throw Object.assign(new Error(saved.error?.message || "项目保存失败。"), { code: saved.error?.code });
+            throw Object.assign(new Error(saved.error?.message || "Project save failed."), { code: saved.error?.code });
           }
           if (saved.status === "succeeded") {
-            if (!saved.savePointId) throw new Error("保存回执缺少完整保存点。");
+            if (!saved.savePointId) throw new Error("Save receipt is missing a complete save checkpoint.");
             pending.shift();
             publish({ savedSequence: job.sequence, lastSaved: new Date().toISOString() });
             break;
@@ -130,7 +130,7 @@ export function createProjectSaveQueue({ hostSession, projectId, getEditorSessio
       }
       if (!closed) publish({ status: "idle" });
     } catch (error) {
-      publish({ status: closed ? "closed" : "error", error: error instanceof Error ? error.message : "项目保存中断，请重试。", errorCode: error?.code || "" });
+      publish({ status: closed ? "closed" : "error", error: error instanceof Error ? error.message : "Project save was interrupted; please retry.", errorCode: error?.code || "" });
     } finally { active = null; }
   }
 
@@ -139,8 +139,8 @@ export function createProjectSaveQueue({ hostSession, projectId, getEditorSessio
     getSnapshot: () => snapshot,
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
     enqueue(captured) {
-      if (closed) throw new Error("项目保存队列已关闭。");
-      if (!Number.isSafeInteger(sequence + 1)) throw new Error("项目编辑序号超出支持范围。");
+      if (closed) throw new Error("Project save queue has been closed.");
+      if (!Number.isSafeInteger(sequence + 1)) throw new Error("Project edit sequence number exceeds the supported range.");
       pending.push({ captured, sequence: ++sequence, snapshotId: crypto.randomUUID(), key: crypto.randomUUID() });
       publish({});
       if (snapshot.status !== "error") void pump();
@@ -176,6 +176,6 @@ export function createProjectSaveQueue({ hostSession, projectId, getEditorSessio
     canAbandonUnsubmitted: () => !active && pending.every(job => job.failed || (!job.receipt && !job.unknownOutcome)),
     ownsPendingSnapshot: (id, sequence) => pending.some(job => job.snapshotId === id && job.sequence === sequence),
     busy: () => pending.length > 0 || active !== null,
-    close() { closed = true; active?.abort(new Error("项目保存已停止。")); publish({ status: "closed" }); listeners.clear(); },
+    close() { closed = true; active?.abort(new Error("Project save has been stopped.")); publish({ status: "closed" }); listeners.clear(); },
   };
 }

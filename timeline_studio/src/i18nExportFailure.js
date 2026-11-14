@@ -1,14 +1,14 @@
 export const EXPORT_FAILURE_COPY = {
   zh: {
-    title: "导出未完成",
-    close: "关闭",
-    retry: "按原设置重试",
-    generic: "视频未能导出。请重试，或关闭此窗口检查导出设置。",
-    network: "无法读取导出所需的媒体或组件。请检查网络和素材是否可用，然后重试。",
-    media: "无法读取部分媒体素材。请检查对应素材后重试。",
-    memory: "导出时可用内存不足。请关闭其他占用资源的页面后重试。",
-    unsupported: "当前浏览器无法使用所选编码设置。请关闭此窗口调整导出设置。",
-    audio: "未能生成完整的导出音轨。请检查音频素材或调整导出设置后重试。",
+    title: "Export not completed",
+    close: "Close",
+    retry: "Retry with the same settings",
+    generic: "The video could not be exported. Try again, or close this window to check your export settings.",
+    network: "Media or components needed for export could not be loaded. Check your connection and make sure your media is available, then try again.",
+    media: "Some media could not be loaded. Check the affected files and try again.",
+    memory: "There was not enough available memory to export. Close other pages using significant resources and try again.",
+    unsupported: "This browser cannot use the selected encoding settings. Close this window to adjust your export settings.",
+    audio: "The complete export audio track could not be generated. Check your audio files or adjust your export settings, then try again.",
   },
   en: {
     title: "Export not completed",

@@ -8,16 +8,16 @@ export function localizeAutoCaptionPhase(phase, t) {
     (result, [name, value]) => result.replace(`{${name}}`, value),
     t(key, fallback),
   );
-  if (text.includes("下载或读取") && text.includes("Whisper")) return t("asrDownloadingModel", text);
-  if (text.includes("识别音频语言")) return t("asrDetectingLanguage", text);
-  if (text.includes("初始化 WebGPU")) return t("asrInitializingWebGpu", text);
-  if (text.includes("初始化 WASM")) return t("asrInitializingWasm", text);
-  if (text.includes("WebGPU 初始化失败")) return t("asrFallingBackWasm", text);
-  if (text.includes("解码原声音频")) return t("asrDecodingAudio", text);
-  if (text.includes("Worker 不可用")) return t("asrWorkerFallback", text);
-  if (text.includes("Worker 结果异常")) return t("asrRetryingWasm", text);
-  if (text.includes("写入字幕轨道")) return t("asrWritingCaptions", text);
-  const languageMatch = text.match(/(?:检测为|按)\s+(.+?)\s+转写字幕/);
+  if (text.includes("Downloading or loading") && text.includes("Whisper")) return t("asrDownloadingModel", text);
+  if (text.includes("Detecting audio language")) return t("asrDetectingLanguage", text);
+  if (text.includes("Initializing WebGPU")) return t("asrInitializingWebGpu", text);
+  if (text.includes("Initializing WASM")) return t("asrInitializingWasm", text);
+  if (text.includes("WebGPU init failed") || text.includes("WebGPU initialization failed")) return t("asrFallingBackWasm", text);
+  if (text.includes("Decoding audio")) return t("asrDecodingAudio", text);
+  if (text.includes("Worker unavailable")) return t("asrWorkerFallback", text);
+  if (text.includes("Worker returned invalid result")) return t("asrRetryingWasm", text);
+  if (text.includes("Writing captions to track")) return t("asrWritingCaptions", text);
+  const languageMatch = text.match(/transcribing as\s+(.+?)\s+captions/i);
   if (languageMatch) return format("asrTranscribingLanguage", text, { language: languageMatch[1] });
   return text;
 }

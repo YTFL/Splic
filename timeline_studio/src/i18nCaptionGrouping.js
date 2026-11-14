@@ -1,5 +1,5 @@
 const rows = {
-  zh: ["字幕分段", "短句", "逐词", "按语音时间生成短句或逐词字幕", "未能获取词级时间，请重试自动字幕。现有字幕未更改。"],
+  zh: ["Caption grouping", "Short phrases", "Word by word", "Create short phrases or word-by-word captions timed to speech", "Word timing is unavailable. Retry automatic captions. Existing captions are unchanged."],
   en: ["Caption grouping", "Short phrases", "Word by word", "Create short phrases or word-by-word captions timed to speech", "Word timing is unavailable. Retry automatic captions. Existing captions are unchanged."],
   ja: ["字幕の区切り", "短いフレーズ", "単語ごと", "音声に合わせて短いフレーズまたは単語ごとの字幕を作成", "単語の時刻を取得できません。自動字幕を再試行してください。既存の字幕は変更されていません。"],
   ko: ["자막 분할", "짧은 구절", "단어별", "음성에 맞춰 짧은 구절 또는 단어별 자막 생성", "단어별 시간을 가져올 수 없습니다. 자동 자막을 다시 시도하세요. 기존 자막은 변경되지 않았습니다."],
@@ -18,7 +18,7 @@ export const CAPTION_GROUPING_COPY = Object.fromEntries(Object.entries(rows).map
 ]));
 
 const voiceHints = {
-  zh: "将当前字幕分成短句配音，并按每段实际音长生成字幕。",
+  zh: "Generate speech for this caption in short phrases, each timed to its actual audio duration.",
   en: "Generate speech for this caption in short phrases, each timed to its actual audio duration.",
   ja: "現在の字幕を短いフレーズで音声化し、各音声の実際の長さに字幕を合わせます。",
   ko: "현재 자막을 짧은 구절로 음성 생성하고 각 오디오의 실제 길이에 맞춰 자막을 배치합니다.",

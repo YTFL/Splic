@@ -11,7 +11,7 @@ let cpuSegmenterPromise = null;
 
 function assertImageSize(mask, width, height) {
   if (!Number.isFinite(width) || !Number.isFinite(height) || mask.length !== width * height) {
-    throw new Error("MediaPipe 返回了无效的人物蒙版尺寸。");
+    throw new Error("MediaPipe returned invalid person mask dimensions.");
   }
 }
 
@@ -226,7 +226,7 @@ export async function getMediaPipePersonSegmenter(options = {}) {
       try {
         return await createSegmenter("GPU");
       } catch (error) {
-        console.warn("MediaPipe GPU 分割不可用，回退 CPU。", error);
+        console.warn("MediaPipe GPU segmentation unavailable; falling back to CPU.", error);
         return createSegmenter("CPU");
       }
     })().catch((error) => {
@@ -280,7 +280,7 @@ export async function segmentMediaPipePerson(image, options = {}) {
     }).sort((left, right) => right.rank - left.rank);
     const selected = rankedMasks[0];
     const confidenceMask = selected?.mask;
-    if (!confidenceMask) throw new Error("MediaPipe 没有返回人物置信度蒙版。");
+    if (!confidenceMask) throw new Error("MediaPipe did not return a person confidence mask.");
     const probabilities = selected.probabilities;
     const alpha = new Uint8ClampedArray(probabilities.length);
     for (let index = 0; index < probabilities.length; index += 1) {
@@ -304,7 +304,7 @@ export async function segmentMediaPipePerson(image, options = {}) {
 export async function segmentMediaPipePersonRoi(image, targetBox, options = {}) {
   const size = imageSourceSize(image);
   if (!size.width || !size.height || !targetBox) {
-    throw new Error("MediaPipe ROI 分割缺少图像尺寸或人物目标框。");
+    throw new Error("MediaPipe ROI segmentation is missing image dimensions or person target box.");
   }
   const box = expandedPixelBox(
     targetBox,

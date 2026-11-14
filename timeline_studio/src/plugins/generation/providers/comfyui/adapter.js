@@ -16,9 +16,9 @@ function applyWorkflowVariables(value, variables) {
 
 function parseWorkflow(template, variables) {
   let parsed;
-  try { parsed = JSON.parse(template); } catch { throw new Error("工作流 JSON 无法解析。请从 ComfyUI 导出 API Format 工作流后再粘贴。"); }
+  try { parsed = JSON.parse(template); } catch { throw new Error("Workflow JSON cannot be parsed. Please export the workflow in API Format from ComfyUI and paste it again."); }
   const workflow = parsed?.prompt && typeof parsed.prompt === "object" ? parsed.prompt : parsed;
-  if (!workflow || Array.isArray(workflow) || typeof workflow !== "object") throw new Error("工作流必须是 ComfyUI API Format 的对象。");
+  if (!workflow || Array.isArray(workflow) || typeof workflow !== "object") throw new Error("The workflow must be a ComfyUI API Format object.");
   return applyWorkflowVariables(workflow, variables);
 }
 
@@ -62,27 +62,27 @@ export function createComfyUIAdapter() {
         body: JSON.stringify({ prompt: workflow, client_id: crypto.randomUUID() }),
         signal,
       });
-      if (!queued?.prompt_id) throw new Error("ComfyUI 没有返回 prompt_id。");
+      if (!queued?.prompt_id) throw new Error("ComfyUI did not return a prompt_id.");
       const startedAt = Date.now();
       let historyItem;
       onState?.("running");
       while (!historyItem) {
-        if (Date.now() - startedAt > JOB_TIMEOUT_MS) throw new Error("ComfyUI 任务等待超过 15 分钟。");
+        if (Date.now() - startedAt > JOB_TIMEOUT_MS) throw new Error("ComfyUI job wait exceeded 15 minutes.");
         await sleep(900, signal);
         const history = await fetchLocalJson(`${endpoint}/history/${encodeURIComponent(queued.prompt_id)}`, { signal });
         historyItem = history?.[queued.prompt_id];
         const status = historyItem?.status;
         if (status?.status_str === "error" || status?.completed === false && status?.messages?.some?.((item) => item?.[0] === "execution_error")) {
-          throw new Error("ComfyUI 工作流执行失败，请在 ComfyUI 控制台查看出错节点。");
+          throw new Error("ComfyUI workflow execution failed. Check the ComfyUI console for the failing node.");
         }
       }
       const files = collectOutputs(historyItem);
-      if (!files.length) throw new Error("工作流已完成，但没有找到可导入的图片或视频输出。");
+      if (!files.length) throw new Error("Workflow completed, but no importable image or video output was found.");
       const outputs = [];
       for (const file of files) {
         const query = new URLSearchParams({ filename: file.filename, subfolder: file.subfolder || "", type: file.type || "output" });
         const response = await fetch(`${endpoint}/view?${query}`, { signal });
-        if (!response.ok) throw new Error(`无法读取 ComfyUI 输出：HTTP ${response.status}`);
+        if (!response.ok) throw new Error(`Unable to read ComfyUI output: HTTP ${response.status}`);
         const blob = await response.blob();
         const isVideo = file.outputType === "video" || ["mp4", "webm", "mov", "mkv"].includes(file.filename.split(".").pop()?.toLowerCase());
         const info = isVideo ? await inspectVideoBlob(blob) : await inspectImageBlob(blob);

@@ -1,5 +1,5 @@
 const copy = {
-  zh: ['文字对齐','左对齐','居中','右对齐','背景左右留白','背景上下留白'],
+  zh: ['Text alignment','Left','Center','Right','Background horizontal padding','Background vertical padding'],
   en: ['Text alignment','Left','Center','Right','Background horizontal padding','Background vertical padding'],
   ja: ['文字揃え','左揃え','中央揃え','右揃え','背景の左右余白','背景の上下余白'],
   ko: ['텍스트 정렬','왼쪽','가운데','오른쪽','배경 좌우 여백','배경 상하 여백'],
@@ -16,7 +16,7 @@ const copy = {
 export const getCaptionEditingCopy = language => copy[language] || copy.en;
 
 const sourceEnd = {
-  zh: "视频已到源素材末尾。延长运动画面需要更多素材或调整播放速度。",
+  zh: "The video has reached the source end. Use more footage or adjust playback speed to extend motion.",
   en: "The video has reached the source end. Use more footage or adjust playback speed to extend motion.",
   ja: "元動画の末尾です。動きを延長するには素材を追加するか再生速度を調整してください。",
   ko: "원본 영상의 끝입니다. 움직임을 늘리려면 영상을 추가하거나 재생 속도를 조절하세요.",
@@ -33,7 +33,7 @@ const sourceEnd = {
 export const getVideoSourceEndCopy = language => sourceEnd[language] || sourceEnd.en;
 
 const spacingCopy = {
-  zh: ['字间距', '行间距'], en: ['Letter spacing', 'Line spacing'],
+  zh: ['Letter spacing', 'Line spacing'], en: ['Letter spacing', 'Line spacing'],
   ja: ['文字間隔', '行間隔'], ko: ['자간', '줄 간격'],
   es: ['Espaciado de letras', 'Interlineado'], fr: ['Espacement des lettres', 'Interligne'],
   de: ['Zeichenabstand', 'Zeilenabstand'], pt: ['Espaçamento entre letras', 'Entrelinha'],
@@ -44,7 +44,7 @@ const spacingCopy = {
 export const getCaptionSpacingCopy = language => spacingCopy[language] || spacingCopy.en;
 
 const keywordCopy = {
-  zh: ['关键词高亮', '高亮颜色', '输入词语或短语，用逗号或换行分隔；清空后关闭高亮。英文不区分大小写。'],
+  zh: ['Keyword highlighting', 'Highlight color', 'Separate words or phrases with commas or new lines. Clear to disable. Matching ignores case.'],
   en: ['Keyword highlighting', 'Highlight color', 'Separate words or phrases with commas or new lines. Clear to disable. Matching ignores case.'],
   ja: ['キーワード強調', '強調色', '単語やフレーズをカンマまたは改行で区切ります。空欄で無効。英字の大小は区別しません。'],
   ko: ['키워드 강조', '강조 색상', '단어나 구를 쉼표 또는 줄바꿈으로 구분하세요. 비우면 꺼집니다. 대소문자를 구분하지 않습니다.'],
@@ -61,12 +61,12 @@ const keywordCopy = {
 export const getCaptionKeywordCopy = language => keywordCopy[language] || keywordCopy.en;
 
 const visualLinkCopy = {
- zh:["关联对应画面","解除画面关联"],en:["Link to matching visual","Unlink visual"],ja:["対応する映像にリンク","映像のリンクを解除"],ko:["해당 화면에 연결","화면 연결 해제"],es:["Vincular al clip correspondiente","Desvincular imagen"],fr:["Lier au plan correspondant","Dissocier le plan"],de:["Mit passendem Bildclip verknüpfen","Bildverknüpfung lösen"],pt:["Vincular ao clipe correspondente","Desvincular imagem"],th:["เชื่อมกับภาพที่ตรงกัน","ยกเลิกการเชื่อมภาพ"],vi:["Liên kết với cảnh tương ứng","Bỏ liên kết cảnh"],ru:["Связать с соответствующим кадром","Отвязать изображение"],it:["Collega alla clip corrispondente","Scollega immagine"],id:["Tautkan ke klip yang sesuai","Lepas tautan gambar"]
+ zh:["Link to matching visual","Unlink visual"],en:["Link to matching visual","Unlink visual"],ja:["対応する映像にリンク","映像のリンクを解除"],ko:["해당 화면에 연결","화면 연결 해제"],es:["Vincular al clip correspondiente","Desvincular imagen"],fr:["Lier au plan correspondant","Dissocier le plan"],de:["Mit passendem Bildclip verknüpfen","Bildverknüpfung lösen"],pt:["Vincular ao clipe correspondente","Desvincular imagem"],th:["เชื่อมกับภาพที่ตรงกัน","ยกเลิกการเชื่อมภาพ"],vi:["Liên kết với cảnh tương ứng","Bỏ liên kết cảnh"],ru:["Связать с соответствующим кадром","Отвязать изображение"],it:["Collega alla clip corrispondente","Scollega immagine"],id:["Tautkan ke klip yang sesuai","Lepas tautan gambar"]
 };
 export const getCaptionVisualLinkCopy = language => visualLinkCopy[language] || visualLinkCopy.en;
 
 const selectionHighlightCopy = {
- zh:["高亮选中文字","清除本段高亮","选中文案中的文字，再点击高亮；仅应用于本字幕段。"],
+ zh:["Highlight selection","Clear this caption’s highlights","Select text, then highlight. Applies only to this caption."],
  en:["Highlight selection","Clear this caption’s highlights","Select text, then highlight. Applies only to this caption."],
  ja:["選択文字を強調","この字幕の強調を消去","文字を選択して強調します。この字幕だけに適用されます。"],
  ko:["선택한 글자 강조","이 자막의 강조 지우기","글자를 선택한 뒤 강조하세요. 이 자막에만 적용됩니다."],

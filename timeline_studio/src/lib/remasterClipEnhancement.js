@@ -4,7 +4,7 @@ import { enhanceRemasterFrame } from "./remasterEnhancement.js";
 let aacEncoderRegistered = false;
 
 function createAbortError() {
-  const error = new Error("整段增强已取消");
+  const error = new Error("Clip enhancement has been cancelled");
   error.name = "AbortError";
   return error;
 }
@@ -23,14 +23,14 @@ function waitForVideo(video, eventName, signal, timeoutMs = 15000) {
       window.clearTimeout(timer);
     };
     const ready = () => { cleanup(); resolve(); };
-    const failed = () => { cleanup(); reject(new Error("无法读取待增强视频")); };
+    const failed = () => { cleanup(); reject(new Error("Unable to read the video to be enhanced")); };
     const aborted = () => { cleanup(); reject(createAbortError()); };
     video.addEventListener(eventName, ready, { once: true });
     video.addEventListener("error", failed, { once: true });
     signal?.addEventListener("abort", aborted, { once: true });
     timer = window.setTimeout(() => {
       if (video.readyState >= 2) ready();
-      else { cleanup(); reject(new Error("读取视频帧超时，请重新选择片段后重试")); }
+      else { cleanup(); reject(new Error("Timed out reading video frames; please reselect the clip and retry")); }
     }, timeoutMs);
   });
 }
@@ -66,7 +66,7 @@ function getInferenceSize(width, height, maxLongEdge) {
 async function getSegmentBlob(segment, signal) {
   if (segment.blob instanceof Blob) return segment.blob;
   const response = await fetch(segment.src, { signal });
-  if (!response.ok) throw new Error(`无法读取视频源（HTTP ${response.status}）`);
+  if (!response.ok) throw new Error(`Unable to read video source (HTTP ${response.status})`);
   return response.blob();
 }
 
@@ -108,7 +108,7 @@ async function decodeAudioRange(input, start, duration, signal, AudioBufferSink)
 }
 
 async function enhanceRemasterClipWebCodecs({ segment, frameRate = 0, maxLongEdge = 960, strength = 1, signal, onProgress, frameEnhancer = enhanceRemasterFrame, preserveResolution = false, requireSourceAudio = false }) {
-  if (typeof VideoDecoder === "undefined" || typeof VideoEncoder === "undefined") throw new Error("当前浏览器不支持 WebCodecs");
+  if (typeof VideoDecoder === "undefined" || typeof VideoEncoder === "undefined") throw new Error("This browsernot supported WebCodecs");
   const [{ ALL_FORMATS, AudioBufferSink, AudioBufferSource, BlobSource, BufferTarget, CanvasSink, CanvasSource, Input, Mp4OutputFormat, Output }, { registerAacEncoder }] = await Promise.all([
     import("mediabunny"),
     import("@mediabunny/aac-encoder"),
@@ -119,7 +119,7 @@ async function enhanceRemasterClipWebCodecs({ segment, frameRate = 0, maxLongEdg
   let output = null;
   try {
     const track = await input.getPrimaryVideoTrack();
-    if (!track || !(await track.canDecode())) throw new Error("WebCodecs 无法解码该视频格式");
+    if (!track || !(await track.canDecode())) throw new Error("WebCodecs cannot decode this video format");
     const [stats, displayWidth, displayHeight, sourceTrackDuration] = await Promise.all([
       track.computePacketStats(120),
       track.getDisplayWidth(),
@@ -180,7 +180,7 @@ async function enhanceRemasterClipWebCodecs({ segment, frameRate = 0, maxLongEdg
       for (let index = 0; index < totalFrames; index += 1) {
         throwIfAborted(signal);
         const decoded = await nextDecoded;
-        if (decoded.done || !decoded.value?.canvas) throw new Error(`无法解码第 ${index + 1} 帧`);
+        if (decoded.done || !decoded.value?.canvas) throw new Error(`Unable to decode frame ${index + 1}`);
         const bitmap = await createImageBitmap(decoded.value.canvas);
         nextDecoded = iterator.next();
         const result = await frameEnhancer({
@@ -221,7 +221,7 @@ async function enhanceRemasterClipWebCodecs({ segment, frameRate = 0, maxLongEdg
     } finally {
       signal?.removeEventListener("abort", abortOutput);
     }
-    if (!target.buffer) throw new Error("WebCodecs 没有生成视频数据");
+    if (!target.buffer) throw new Error("WebCodecs did not produce any video data");
     return {
       blob: new Blob([target.buffer], { type: "video/mp4" }),
       width: size.width,
@@ -240,7 +240,7 @@ async function enhanceRemasterClipWebCodecs({ segment, frameRate = 0, maxLongEdg
 }
 
 async function enhanceRemasterClipLegacy({ segment, videoElement = null, frameRate = 12, maxLongEdge = 960, strength = 1, signal, onProgress, frameEnhancer = enhanceRemasterFrame }) {
-  if (!segment?.src || segment.type !== "video") throw new Error("请选择一个视频片段");
+  if (!segment?.src || segment.type !== "video") throw new Error("Please select a video clip");
   throwIfAborted(signal);
   onProgress?.({ progress: 1, phaseKey: "remasterPhaseReadClip", frameIndex: 0, totalFrames: 0 });
   const expectedSrc = new URL(segment.src, window.location.href).href;
@@ -327,7 +327,7 @@ async function enhanceRemasterClipLegacy({ segment, videoElement = null, frameRa
 }
 
 export async function enhanceRemasterClip(options) {
-  if (!options?.segment?.src || options.segment.type !== "video") throw new Error("请选择一个视频片段");
+  if (!options?.segment?.src || options.segment.type !== "video") throw new Error("Please select a video clip");
   throwIfAborted(options.signal);
   options.onProgress?.({ progress: 1, phaseKey: "remasterPhaseReadClip", frameIndex: 0, totalFrames: 0, pipeline: "webcodecs-stream" });
   try {

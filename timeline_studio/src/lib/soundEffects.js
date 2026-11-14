@@ -45,7 +45,7 @@ export function getSoundEffectAssets(language) {
       name: variant ? `${label} · ${variant}` : label,
       src: `/assets/sound-effects/${id}.mp3`,
       previewPeaks: getPreviewPeaks(peaks),
-      keywords: `${getRecordedSoundLabel("en", key)} ${spokenEnglish ? "English 英语" : ""}`,
+      keywords: `${getRecordedSoundLabel("en", key)} ${spokenEnglish ? "English" : ""}`,
     };
   });
   return [...originals, ...recordings].map((asset) => ({

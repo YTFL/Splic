@@ -17,7 +17,7 @@ export function createAssetDropActions(d) {
   async function resolveRemoteAsset(asset, onProgress) {
     if (!asset?.src || asset.blob || !/^https?:/i.test(asset.src)) return asset;
     try {
-      d.notify(tr("remoteAssetDownloading", "正在下载在线素材…"));
+      d.notify(tr("remoteAssetDownloading", "Downloading online asset…"));
       const blob = await getRemoteAssetBlob(asset, (progress) => {
         d.onRemoteAssetProgress?.(asset.id, progress);
         onProgress?.(progress);
@@ -28,7 +28,7 @@ export function createAssetDropActions(d) {
       return { ...asset, src, blob, remoteSrc: asset.src };
     } catch (error) {
       console.warn("Remote asset download failed", asset?.src || "", error);
-      d.notify(tr("remoteAssetDownloadFailed", "在线素材下载失败，请稍后重试或打开来源页下载"));
+      d.notify(tr("remoteAssetDownloadFailed", "Failed to download asset, please retry"));
       return null;
     }
   }
@@ -36,7 +36,7 @@ export function createAssetDropActions(d) {
   async function applyAssetToTrack(asset, track, options = {}) {
     if (asset?.type === "audio" && asset.kind === "music") track = "music";
     if (!d.canDropAssetOnTrack(asset, track)) {
-      d.notify(tr("assetTrackMismatch", "请把素材拖到匹配的轨道"));
+      d.notify(tr("assetTrackMismatch", "Drag asset to matching track"));
       return;
     }
     if (asset.kind === "sound-effect") {
@@ -78,7 +78,7 @@ export function createAssetDropActions(d) {
         preparing: true,
         prepareStage: "download",
         prepareProgress: 0,
-      }, { message: tr("remoteAssetDownloading", "正在下载在线素材…"), insertIndex: options.insertIndex });
+      }, { message: tr("remoteAssetDownloading", "Downloading online asset…"), insertIndex: options.insertIndex });
       d.onFirstVisualDropped?.();
     }
     asset = await resolveRemoteAsset(asset, pendingSegment ? (progress) => {
@@ -90,7 +90,7 @@ export function createAssetDropActions(d) {
     if (!asset) {
       if (pendingSegment) {
         if (hadVisualBefore) d.setVisualSegments((segments) => segments.filter((segment) => segment.id !== pendingSegment.id));
-        else d.clearImageTrack?.(tr("remoteAssetRemovedAfterFailure", "在线素材下载失败，已移除临时片段"));
+        else d.clearImageTrack?.(tr("remoteAssetRemovedAfterFailure", "Asset download failed, removed temporary clip"));
       }
       return;
     }
@@ -108,7 +108,7 @@ export function createAssetDropActions(d) {
           prepareProgress: asset.type === "video" ? 0.02 : 1,
         });
         if (asset.type === "video") {
-          d.notify(tr("remoteAssetPreparing", "在线素材正在准备"));
+          d.notify(tr("remoteAssetPreparing", "Online asset is preparing"));
           progressBucket = -1;
           let trackFrames = [];
           try {
@@ -160,7 +160,7 @@ export function createAssetDropActions(d) {
     if (track === "audio") {
       let blob;
       try { blob = await loadProjectMediaBlob(asset); }
-      catch (error) { console.warn("Audio asset could not be loaded", error); d.notify(tr("audioAssetUnavailable", "当前音频素材不可用，请重新上传")); return; }
+      catch (error) { console.warn("Audio asset could not be loaded", error); d.notify(tr("audioAssetUnavailable", "Audio asset unavailable, please re-upload")); return; }
       const hasValidDuration = Number.isFinite(Number(asset.duration)) && Number(asset.duration) > 0;
       const decoded = asset.peaks?.length && hasValidDuration
         ? { duration: Number(asset.duration), peaks: asset.peaks }
@@ -173,7 +173,7 @@ export function createAssetDropActions(d) {
       const { trackLocks, trackVisibility } = d.audioDropTracksRef.current;
       if (trackLocks.audio || trackVisibility.audio === false) return;
       const isDrop = Number.isInteger(options.audioLane);
-      const segment = d.replaceAudio(blob, decoded.duration, decoded.peaks, "音频已写入配音轨", {
+      const segment = d.replaceAudio(blob, decoded.duration, decoded.peaks, "Audio placed on voiceover track", {
         sourceKind: "upload",
         assetId: asset.id,
         name: asset.name,
@@ -187,7 +187,7 @@ export function createAssetDropActions(d) {
       });
       if (isDrop) d.revealAudioSegment(segment.id, true);
       d.setSelectedTrack("audio");
-      d.notify(tr("audioDroppedOnVoiceTrack", "音频已拖入配音音频轨"));
+      d.notify(tr("audioDroppedOnVoiceTrack", "Audio placed on voiceover track"));
       return;
     }
     if (track === "source") {
@@ -244,7 +244,7 @@ export function createAssetDropActions(d) {
     const clip = event.target.closest?.("[data-timeline-segment-id]");
     const segmentId = clip?.dataset.timelineSegmentId;
     if (!segmentId) {
-      d.notify("请将效果或转场拖到具体的画面片段上");
+      d.notify("Please drag effect or transition onto a visual clip");
       return;
     }
     event.preventDefault();
@@ -258,7 +258,7 @@ export function createAssetDropActions(d) {
     d.setSelectedTrack("image");
     if (kind === "effect") d.setSelectedFilterId(styleId);
     else d.setSelectedTransitionId(styleId);
-    d.notify(kind === "effect" ? "效果已应用到该画面片段" : "转场已绑定到该片段的结尾");
+    d.notify(kind === "effect" ? "Effect applied to visual clip" : "Transition applied to clip end");
   }
 
   return { applyAssetToTrack, handleTrackAssetDrop, handleVisualStyleDrop };

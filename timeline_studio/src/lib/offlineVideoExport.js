@@ -442,7 +442,7 @@ export async function renderOfflineFrames(options, times) {
 export async function exportOfflineVideo(options) {
   throwIfExportAborted(options.signal);
   await ensureFaceAttachmentAssets(options.effectClips || []);
-  if (typeof VideoEncoder === "undefined") throw new Error("当前浏览器不支持 WebCodecs 离线编码。");
+  if (typeof VideoEncoder === "undefined") throw new Error("This browser does not support WebCodecs offline encoding.");
   const settings = options.exportSettings || {};
   const width = Math.max(2, Math.round(Number(settings.width) || options.ratio.width));
   const height = Math.max(2, Math.round(Number(settings.height) || options.ratio.height));
@@ -450,7 +450,7 @@ export async function exportOfflineVideo(options) {
   const canvas = document.createElement("canvas");
   canvas.width = width; canvas.height = height;
   const context = canvas.getContext("2d", { alpha: false, desynchronized: false });
-  if (!context) throw new Error("无法创建离线导出画布。");
+  if (!context) throw new Error("Unable to create offline export canvas.");
   options.onProgress?.({ progress: 4, phaseKey: "exportOfflinePreparing" });
   const frames = createOfflineFramePlan(options.duration, settings.frameRate, settings.keyFrameInterval);
   const timelineOffset = Math.max(0, Number(options.timelineOffset) || 0);

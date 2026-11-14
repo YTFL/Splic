@@ -16,20 +16,20 @@ const keys = [
 ];
 const rows = {
   zh: [
-    "画面特效",
-    "人物特效",
-    "猫耳",
-    "小恶魔",
-    "正在检测并跟踪人脸",
-    "人脸跟踪已就绪",
-    "此区间未检测到可用人脸",
-    "人脸分析失败，请重试",
-    "重新分析",
-    "取消分析",
-    "请先添加图片或视频",
-    "大小",
-    "人脸分析已取消",
-    "人物特效分析尚未完成，请完成分析后导出。",
+    "Frame effects",
+    "Face effects",
+    "Cat ears",
+    "Little devil",
+    "Detecting and tracking faces",
+    "Face tracking ready",
+    "No usable face in this interval",
+    "Face analysis failed. Please retry",
+    "Reanalyze",
+    "Cancel analysis",
+    "Add an image or video first",
+    "Size",
+    "Face analysis cancelled",
+    "Finish face-effect analysis before exporting.",
   ],
   en: [
     "Frame effects",
@@ -225,7 +225,7 @@ const rows = {
   ],
 };
 const catFaceNames = {
-  zh: "猫脸",
+  zh: "Cat face",
   en: "Cat face",
   ja: "猫フェイス",
   ko: "고양이 얼굴",

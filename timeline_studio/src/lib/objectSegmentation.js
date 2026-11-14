@@ -20,7 +20,7 @@ function requestId(prefix) {
 }
 
 function abortError() {
-  const error = new Error("实物描边分析已取消。");
+  const error = new Error("Object outline analysis has been cancelled.");
   error.name = "AbortError";
   return error;
 }
@@ -39,10 +39,10 @@ function getDetectorWorker() {
     pendingDetectionRequests.delete(message.requestId);
     pending.signal?.removeEventListener("abort", pending.handleAbort);
     if (message.type === "result") pending.resolve(message.result);
-    else pending.reject(new Error(message.error || "NanoDet-Plus 实物检测失败。"));
+    else pending.reject(new Error(message.error || "NanoDet-Plus object detection failed."));
   });
   detectorWorker.addEventListener("error", (event) => {
-    const error = new Error(event.message || "NanoDet-Plus Worker 运行失败。");
+    const error = new Error(event.message || "NanoDet-Plus Worker encountered an error.");
     pendingDetectionRequests.forEach((pending) => pending.reject(error));
     pendingDetectionRequests.clear();
     detectorWorker?.terminate();
@@ -135,7 +135,7 @@ async function getMagicTouch() {
       try {
         return await create("GPU");
       } catch (error) {
-        console.warn("MagicTouch GPU 初始化失败，回退 CPU。", error);
+        console.warn("MagicTouch GPU initialization failed; falling back to CPU.", error);
         return create("CPU");
       }
     })().catch((error) => {
@@ -195,7 +195,7 @@ export async function segmentObjectWithMagicTouch(image, point, options = {}) {
   const inferenceMs = performance.now() - inferenceStartedAt;
   try {
     const mask = result.confidenceMasks?.[1] || result.confidenceMasks?.at(-1);
-    if (!mask) throw new Error("MagicTouch 没有返回实物蒙版。");
+    if (!mask) throw new Error("MagicTouch did not return an object mask.");
     const probabilities = mask.getAsFloat32Array();
     const raw = new Uint8ClampedArray(probabilities.length);
     const threshold = Math.max(0.2, Math.min(0.8, Number(options.threshold) || 0.5));

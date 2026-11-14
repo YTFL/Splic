@@ -4,7 +4,7 @@ import { loadProjectMediaBlob } from "../lib/projectSnapshot.js";
 import { loadImage, loadVideo, decodeWaveform } from "../lib/media.js";
 
 const sleep = () => new Promise(resolve => setTimeout(resolve, 500));
-const trusted = event => { if (!event?.isTrusted) throw new Error("请直接点击当前计划的确认按钮。"); };
+const trusted = event => { if (!event?.isTrusted) throw new Error("Please click the confirmation button for the current plan directly."); };
 async function digest(value) {
   const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(value)));
   return [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, "0")).join("");
@@ -19,7 +19,7 @@ export function useExecutionPlan(getEditor, getSession) {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; cancelled.current = true; }; }, []);
   const api = () => {
     const service = getEditor().completeProject?.execution;
-    if (!service) throw new Error("请先打开完整项目。");
+    if (!service) throw new Error("Please open the full project first.");
     return service;
   };
   const show = value => { current.current = value; if (mounted.current) {
@@ -34,28 +34,28 @@ export function useExecutionPlan(getEditor, getSession) {
   const projectDigest = () => digest(getSession().executionBasis());
   const assertBasis = async plan => {
     const context = await api().context();
-    if (context.projectId !== plan.projectId || await projectDigest() !== plan.content.editorDigest) throw new Error("时间线或项目已变化，请重新准备并审阅计划。");
-    if (await digest(getSession().executionModels(plan.content.steps)) !== await digest(plan.content.modelBasis)) throw new Error("处理模型或组件身份已变化，请重新准备并授权计划。");
+    if (context.projectId !== plan.projectId || await projectDigest() !== plan.content.editorDigest) throw new Error("The timeline or project has changed. Please re-prepare and review the plan.");
+    if (await digest(getSession().executionModels(plan.content.steps)) !== await digest(plan.content.modelBasis)) throw new Error("Processing model or component identity has changed. Please re-prepare and authorize the plan.");
   };
   const write = async (action, body, plan = current.current) => {
     const context = await api().context();
     const path = action === "create" ? "plans" : `plans/${encodeURIComponent(plan.planId)}/${action}`;
     if (!pending.current) pending.current = { projectId: context.projectId, path, body: { expectedRevision: plan?.revision ?? 0, ...body }, key: crypto.randomUUID() };
     const operation = pending.current;
-    if (operation.projectId !== context.projectId) throw new Error("上一项目的计划保存尚未完成，请返回该项目重试。");
+    if (operation.projectId !== context.projectId) throw new Error("The plan save for the previous project has not completed. Please return to that project and retry.");
     const saved = await api().request(operation.path, operation.body, operation.key);
     if (saved.saveStatus !== "succeeded") {
-      if (saved.saveStatus === "failed") { pending.current = null; throw new Error("计划保存失败，原保存点保留。请重试当前操作。"); }
-      throw new Error("计划保存结果尚未确定，请重试保存，不要重新执行处理。");
+      if (saved.saveStatus === "failed") { pending.current = null; throw new Error("Plan save failed; the original checkpoint has been preserved. Please retry the current operation."); }
+      throw new Error("Plan save result is uncertain. Please retry saving without re-running the processing.");
     }
     pending.current = null;
     return show(saved.record);
   };
   const perform = async (action, resume = false) => {
-    if (active.current) throw new Error("正在执行当前计划操作。");
+    if (active.current) throw new Error("The current plan operation is in progress.");
     active.current = true; setBusy(true); setError("");
     try {
-      if (pending.current && !resume) throw new Error("请先重试计划记录保存，再执行其他操作。");
+      if (pending.current && !resume) throw new Error("Please retry saving the plan record before performing other operations.");
       return await action();
     }
     catch (error) { if (mounted.current) setError(error.message); throw error; }
@@ -67,10 +67,10 @@ export function useExecutionPlan(getEditor, getSession) {
     if (current.current) show(plans.items.find(plan => plan.planId === current.current.planId) ?? null);
   });
   const prepare = async input => {
-    if (pending.current) throw new Error("请先完成上一计划记录的保存。");
+    if (pending.current) throw new Error("Please complete saving the previous plan record first.");
     const context = await api().context();
     const state = await invoke("timeline_project_inspect", {});
-    if (input.stateToken !== state.stateToken) throw new Error("编辑状态已变化，请重新读取时间线。");
+    if (input.stateToken !== state.stateToken) throw new Error("The edit state has changed. Please reload the timeline.");
     const content = { intent: input.intent, stateToken: input.stateToken, editorDigest: await projectDigest(),
       scriptRef: input.scriptRef ?? null, inputRefs: input.inputRefs ?? [], sourceMappings: input.sourceMappings ?? [],
       steps: structuredClone(input.steps), modelBasis: getSession().executionModels(input.steps), allowModelDownload: input.allowModelDownload === true };
@@ -80,7 +80,7 @@ export function useExecutionPlan(getEditor, getSession) {
     const assetIds = new Set(content.steps.flatMap(step => [...step.operations.map(operation => operation.assetId), step.request?.assetId]).filter(Boolean));
     for (const assetId of assetIds) {
       const asset = getEditor().assets.find(asset => (asset.assetId || asset.id) === assetId);
-      if (!asset) throw new Error("计划素材不存在。");
+      if (!asset) throw new Error("Plan asset does not exist.");
       const mediaRef = await api().registerMedia(asset);
       const metadata = await api().request(`assets/${encodeURIComponent(mediaRef.entityId)}`);
       getEditor().bindExecutionAsset(asset.id, mediaRef, context.projectId);
@@ -91,10 +91,10 @@ export function useExecutionPlan(getEditor, getSession) {
       content.inputRefs.push(mediaRef, { kind: "asset", entityId: metadata.assetId, revision: metadata.revision });
     }
     getSession().validateExecution(content);
-    if (await projectDigest() !== content.editorDigest) throw new Error("准备计划期间编辑状态发生变化，请重新准备。");
+    if (await projectDigest() !== content.editorDigest) throw new Error("The edit state changed during plan preparation. Please re-prepare.");
     const created = await write("create", { planId: input.planId ?? crypto.randomUUID(), content }, null);
-    if (created.projectId !== context.projectId) throw new Error("计划项目不一致。");
-    setPhase("等待处理授权"); preview.current = null;
+    if (created.projectId !== context.projectId) throw new Error("Plan project is inconsistent.");
+    setPhase("Awaiting processing authorization"); preview.current = null;
     return created;
   };
   const ensureAssets = async assetIds => {
@@ -114,7 +114,7 @@ export function useExecutionPlan(getEditor, getSession) {
         if (asset.kind === "video") { metadata.removeAttribute("src"); metadata.load(); }
       } finally { URL.revokeObjectURL(src); }
     }
-    if ((await api().context()).projectId !== context.projectId) throw new Error("当前项目已切换。");
+    if ((await api().context()).projectId !== context.projectId) throw new Error("The current project has switched.");
     if (loaded.length) getEditor().addExecutionAssets(loaded);
   };
   const fromScript = script => perform(async () => {
@@ -122,7 +122,7 @@ export function useExecutionPlan(getEditor, getSession) {
     const editor = getEditor(), state = await invoke("timeline_project_inspect", {});
     const mapped = scriptEditOperations(script, editor.assets, editor.visualSegments.length,
       editor.visualSegments.reduce((total, clip) => total + Number(clip.duration), 0));
-    return prepare({ intent: `追加脚本：${script.draft.content.title}`, stateToken: state.stateToken,
+    return prepare({ intent: `Append script: ${script.draft.content.title}`, stateToken: state.stateToken,
       scriptRef: { kind: "script", entityId: script.scriptId, revision: script.revision },
       inputRefs: script.draft.sources.flatMap(source => [source.assetRef, source.mediaRef, ...(source.analysisRef ? [source.analysisRef] : [])]),
       sourceMappings: mapped.mappings, steps: [{ stepId: "script-edit", kind: "edit", dependsOn: [], operations: mapped.operations, request: null }], allowModelDownload: false });
@@ -132,7 +132,7 @@ export function useExecutionPlan(getEditor, getSession) {
     const context = await api().context();
     for (const placement of job.result.placements ?? []) {
       const asset = getEditor().assets.find(asset => asset.id === placement.assetId);
-      if (!asset) throw new Error("完整产物不在当前页面，请恢复已保存素材，不能重跑此步骤。");
+      if (!asset) throw new Error("The complete artifact is not on the current page; restore the saved asset — this step cannot be re-run.");
       const mediaRef = await api().registerMedia(asset);
       resultRefs.push(mediaRef);
       getEditor().bindExecutionAsset(asset.id, mediaRef, context.projectId);
@@ -153,19 +153,19 @@ export function useExecutionPlan(getEditor, getSession) {
         !["remote_status_unknown", "registration_pending"].includes(latest(step.stepId)?.status) && step.dependsOn.every(id => latest(id)?.status === "succeeded"));
       if (!step) break;
       attempted.add(step.stepId);
-      if (getEditor().isBusy?.() || getSession().isAiRunning()) { setPhase("等待编辑器空闲"); await sleep(); attempted.delete(step.stepId); continue; }
+      if (getEditor().isBusy?.() || getSession().isAiRunning()) { setPhase("Waiting for editor to become idle"); await sleep(); attempted.delete(step.stepId); continue; }
       await assertBasis(plan);
       plan = await write("claims", { stepId: step.stepId }, plan);
-      if (plan.attempts.at(-1)?.status !== "running") throw new Error("该次执行已中断，请刷新计划后重试未完成步骤。");
+      if (plan.attempts.at(-1)?.status !== "running") throw new Error("This execution was interrupted; please refresh the plan and retry incomplete steps.");
       const attemptId = plan.attempts.at(-1).attemptId;
-      setPhase(`处理中：${step.stepId}`);
+      setPhase(`Processing: ${step.stepId}`);
       let jobId, heartbeatAt = Date.now(), outcome;
       try {
         if (step.kind === "edit") {
           getSession().validateExecution(plan.content);
           outcome = { status: "succeeded", operations: step.operations, resultRefs: [], error: null };
         } else {
-          if (!plan.content.allowModelDownload) throw new Error("本计划未授权现有模型组件按需下载，请修订处理范围后重新授权。");
+          if (!plan.content.allowModelDownload) throw new Error("This plan has not authorized on-demand model component downloads. Please revise the processing scope and re-authorize.");
           const state = await invoke("timeline_project_inspect", {});
           const prepared = await invoke("timeline_ai_prepare", { stateToken: state.stateToken, request: step.request });
           const started = await invoke("timeline_ai_start", { aiId: prepared.aiId, requestId: attemptId, allowModelDownload: true });
@@ -196,7 +196,7 @@ export function useExecutionPlan(getEditor, getSession) {
           if (job.status === "succeeded") {
             pendingOutput.current = { planId: plan.planId, attemptId, job };
             await write("completions", { attemptId, status: "registration_pending", operations: [], resultRefs: [], error: error.message }, plan);
-            setPhase("处理已完成，结果登记待恢复"); throw error;
+            setPhase("Processing complete; result registration pending recovery"); throw error;
           }
         }
         outcome = { status: "failed", operations: [], resultRefs: [], error: error.message };
@@ -205,7 +205,7 @@ export function useExecutionPlan(getEditor, getSession) {
       pendingOutput.current = null;
     }
     const completed = plan.content.steps.filter(step => plan.attempts.findLast(attempt => attempt.stepId === step.stepId)?.status === "succeeded").length;
-    setPhase(cancelled.current ? "已停止调度" : completed === plan.content.steps.length ? "处理完成，等待结果预览" : `部分完成：${completed}/${plan.content.steps.length}`);
+    setPhase(cancelled.current ? "Scheduling stopped" : completed === plan.content.steps.length ? "Processing complete; waiting for result preview" : `Partially complete: ${completed}/${plan.content.steps.length}`);
   };
   const authorize = event => perform(async () => {
     trusted(event); await assertBasis(current.current);
@@ -217,7 +217,7 @@ export function useExecutionPlan(getEditor, getSession) {
   const previewResults = event => perform(async () => {
     trusted(event); const plan = current.current; await assertBasis(plan);
     const { record: latest } = await api().request(`plans/${encodeURIComponent(plan.planId)}/validations`, { expectedRevision: plan.revision }, crypto.randomUUID());
-    if (latest.revision !== plan.revision) throw new Error("计划已变化，请刷新。");
+    if (latest.revision !== plan.revision) throw new Error("Plan has changed; please refresh.");
     const selected = [], visited = new Set();
     const collect = step => {
       if (visited.has(step.stepId)) return;
@@ -228,7 +228,7 @@ export function useExecutionPlan(getEditor, getSession) {
     };
     plan.content.steps.forEach(collect);
     const operations = selected.flatMap(attempt => attempt.operations);
-    if (!operations.length) throw new Error("尚无可应用的处理结果。");
+    if (!operations.length) throw new Error("No processing results available to apply yet.");
     await ensureAssets(new Set(operations.map(operation => operation.assetId).filter(Boolean)));
     await assertBasis(plan);
     const state = await invoke("timeline_project_inspect", {});
@@ -238,7 +238,7 @@ export function useExecutionPlan(getEditor, getSession) {
     const saved = await write("preview-receipts", { proposalId: crypto.randomUUID(), previewId: result.previewId,
       previewDigest, stateToken: state.stateToken, stepIds, at: new Date().toISOString() }, plan);
     preview.current = { previewId: result.previewId, previewDigest, planId: plan.planId, revision: saved.revision, stepIds };
-    setPhase("等待确认应用到时间线");
+    setPhase("Waiting for confirmation to apply to timeline");
   });
   return { record, items, scripts, busy, error, phase, refresh, fromScript, authorize, previewResults, hasPending: Boolean(pending.current),
     prepare: input => perform(() => prepare(input)),
@@ -254,7 +254,7 @@ export function useExecutionPlan(getEditor, getSession) {
       }
       if (pendingOutput.current) {
         const output = pendingOutput.current;
-        if (output.planId !== current.current?.planId) throw new Error("请返回等待登记的原计划。");
+        if (output.planId !== current.current?.planId) throw new Error("Please return to the original plan awaiting registration.");
         await write("completions", { attemptId: output.attemptId, ...await registerResult(output.job) });
         pendingOutput.current = null;
       }
@@ -264,7 +264,7 @@ export function useExecutionPlan(getEditor, getSession) {
       if (preview.current?.previewId !== previewId) return;
       trusted(event); await assertBasis(current.current);
       const { record: fresh } = await api().request(`plans/${encodeURIComponent(current.current.planId)}/validations`, { expectedRevision: current.current.revision }, crypto.randomUUID());
-      if (fresh.revision !== preview.current.revision) throw new Error("计划已变化，请重新预览。");
+      if (fresh.revision !== preview.current.revision) throw new Error("Plan has changed; please re-preview.");
       const confirmation = await api().request(`plans/${encodeURIComponent(current.current.planId)}/application-confirmations`,
         { expectedRevision: current.current.revision, digest: preview.current.previewDigest });
       preview.current.confirmationId = confirmation.confirmationId;
@@ -272,7 +272,7 @@ export function useExecutionPlan(getEditor, getSession) {
     },
     async afterApply(previewId, result) {
       if (preview.current?.previewId !== previewId) return;
-      setPhase("已应用，完整项目自动保存中");
+      setPhase("Applied; full project is auto-saving");
       await write("application-receipts", { previewId, transactionId: result.transactionId, stateToken: result.stateToken,
         stepIds: preview.current.stepIds, at: new Date().toISOString(), confirmationId: preview.current.confirmationId });
     },

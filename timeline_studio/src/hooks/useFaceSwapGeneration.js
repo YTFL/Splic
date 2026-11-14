@@ -78,7 +78,7 @@ export function useFaceSwapGeneration(d) {
       const targetBlob = d.previewVisualSegment?.blob instanceof Blob
         ? d.previewVisualSegment.blob
         : await fetch(d.previewVisualSrc, { signal: controller.signal }).then((response) => {
-            if (!response.ok) throw new Error(`读取目标素材失败（HTTP ${response.status}）`);
+            if (!response.ok) throw new Error(`Failed to read target asset (HTTP ${response.status})`);
             return response.blob();
           });
       await prepareFaceSwapSource({

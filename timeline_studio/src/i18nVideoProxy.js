@@ -1,14 +1,14 @@
 const rows = {
   zh: [
-    "预览画质",
-    "自动代理",
-    "原片",
-    "代理已就绪",
-    "生成代理",
-    "仅预览使用代理，导出始终使用原片。播放或拖动期间不切换媒体。",
-    "取消代理",
-    "清除代理缓存",
-    "导出需要原片，请恢复原始媒体后重试。",
+    "Preview quality",
+    "Auto proxy",
+    "Original",
+    "Proxy ready",
+    "Preparing proxy",
+    "Proxies are for preview only. Export uses originals. Sources switch only while idle.",
+    "Cancel proxy",
+    "Clear proxy cache",
+    "Export requires the original media. Restore it and try again.",
   ],
   en: [
     "Preview quality",
@@ -163,7 +163,7 @@ export const VIDEO_PROXY_COPY = Object.fromEntries(
 
 const menuKeys = ["desktopTimelineGroup", "proxyCacheManage", "proxyCacheDescription", "proxyExportHint", "proxyUsing", "proxyVideo", "proxyNoVideo"];
 const menuRows = {
-  zh: "时间线|代理缓存管理|只清理可重新生成的代理，不影响原片和项目。清理后预览切回原片。|导出始终使用原片|当前使用：{source}|代理视频|选择视频以查看代理状态",
+  zh: "Timeline|Manage proxy cache|Remove only rebuildable proxies. Original media and projects stay intact. Preview returns to originals.|Export always uses original media|Currently using: {source}|Proxy video|Select a video to see proxy status",
   en: "Timeline|Manage proxy cache|Remove only rebuildable proxies. Original media and projects stay intact. Preview returns to originals.|Export always uses original media|Currently using: {source}|Proxy video|Select a video to see proxy status",
   ja: "タイムライン|プロキシキャッシュ管理|再生成できるプロキシのみ削除します。元のメディアとプロジェクトは保持され、プレビューは元映像に戻ります。|書き出しには常に元のメディアを使用|現在のソース：{source}|プロキシ動画|動画を選択するとプロキシの状態を表示",
   ko: "타임라인|프록시 캐시 관리|다시 생성할 수 있는 프록시만 삭제합니다. 원본과 프로젝트는 유지되며 미리보기는 원본으로 돌아갑니다.|내보내기는 항상 원본 사용|현재 사용: {source}|프록시 동영상|동영상을 선택하면 프록시 상태 표시",

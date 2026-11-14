@@ -1,10 +1,10 @@
 export const TIMELINE_GAIN_COPY = {
   "zh": {
-    "timelineGain": "音量（分贝）",
-    "timelineGainHint": "上下拖动调整音量，双击恢复 0 dB",
-    "videoWaveformLoading": "正在生成波形…",
-    "videoWaveformUnavailable": "无可用原声波形",
-    "returnToPlayhead": "回到播放头"
+    "timelineGain": "Volume (decibels)",
+    "timelineGainHint": "Drag vertically to adjust volume; double-click to reset to 0 dB",
+    "videoWaveformLoading": "Preparing waveform…",
+    "videoWaveformUnavailable": "Source waveform unavailable",
+    "returnToPlayhead": "Return to playhead"
   },
   "en": {
     "timelineGain": "Volume (decibels)",

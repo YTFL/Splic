@@ -23,7 +23,7 @@ function loadRuntime(requestId) {
     if (event?.status !== "progress") return;
     postStatus(
       requestId,
-      `SlimSAM 模型 · ${event.file ?? "下载"} · ${Math.round(event.progress ?? 0)}%`,
+      `SlimSAM model · ${event.file ?? "Downloading"} · ${Math.round(event.progress ?? 0)}%`,
       Number(event.progress) || 0,
     );
   };
@@ -147,7 +147,7 @@ function chooseMask(masks, scores, box, positivePoint, negativePoints) {
 async function segment(requestId, blob, normalizedBox, normalizedPoint = null, normalizedNegativePoints = []) {
   const totalStarted = performance.now();
   const [model, processor] = await loadRuntime(requestId);
-  postStatus(requestId, "SlimSAM 解码人物帧");
+  postStatus(requestId, "SlimSAM decoding person frame");
   const image = await RawImage.read(blob);
   const width = image.width;
   const height = image.height;
@@ -165,7 +165,7 @@ async function segment(requestId, blob, normalizedBox, normalizedPoint = null, n
       box[1] + (box[3] - box[1]) * verticalPosition,
     ]);
   const positivePoint = positivePoints[Math.floor(positivePoints.length / 2)];
-  postStatus(requestId, "SlimSAM 生成人物蒙版");
+  postStatus(requestId, "SlimSAM generating person mask");
   const inputs = await processor(image, {
     input_points: [[ [...positivePoints, ...negativePoints] ]],
     input_labels: [[ [
